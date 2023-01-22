@@ -26,7 +26,16 @@ from convlab2.dialog_agent import Agent
 
 
 class RnnRolloutAgent(Agent):
-    def __init__(self, model, args, name='Alice', allow_no_agreement=True, train=False, diverse=False, max_dec_len=20):
+    def __init__(
+        self,
+        model,
+        args,
+        name="Alice",
+        allow_no_agreement=True,
+        train=False,
+        diverse=False,
+        max_dec_len=20,
+    ):
         self.model = model
         self.model.eval()
         self.args = args
@@ -69,18 +78,27 @@ class RnnRolloutAgent(Agent):
     def feed_partner_context(self, partner_context):
         pass
 
-    def update(self, agree, reward, choice=None, partner_choice=None,
-            partner_input=None, partner_reward=None):
+    def update(
+        self,
+        agree,
+        reward,
+        choice=None,
+        partner_choice=None,
+        partner_input=None,
+        partner_reward=None,
+    ):
         pass
 
     def read(self, inpt):
-        self.sents.append(Variable(self._encode(['THEM:'] + inpt, self.model.word_dict)))
+        self.sents.append(
+            Variable(self._encode(["THEM:"] + inpt, self.model.word_dict))
+        )
         inpt = self._encode(inpt, self.model.word_dict)
         lang_hs, self.lang_h = self.model.read(Variable(inpt), self.lang_h, self.ctx_h)
         self.lang_hs.append(lang_hs.squeeze(1))
-        self.words.append(self.model.word2var('THEM:').unsqueeze(0))
+        self.words.append(self.model.word2var("THEM:").unsqueeze(0))
         self.words.append(Variable(inpt))
-        assert (torch.cat(self.words).size(0) == torch.cat(self.lang_hs).size(0))
+        assert torch.cat(self.words).size(0) == torch.cat(self.lang_hs).size(0)
 
     def _make_idxs(self, sents):
         lens, rev_idxs, hid_idxs = [], [], []
@@ -99,7 +117,9 @@ class RnnRolloutAgent(Agent):
     def _choose(self, sample=False):
         sents = self.sents[:-1]
         lens, rev_idxs, hid_idxs = self._make_idxs(sents)
-        sel_out = self.sel_model.forward(sents, lens, rev_idxs, hid_idxs, Variable(self.ctx))
+        sel_out = self.sel_model.forward(
+            sents, lens, rev_idxs, hid_idxs, Variable(self.ctx)
+        )
 
         choices = self.domain.generate_choices(self.context, with_disagreement=True)
 
@@ -109,7 +129,9 @@ class RnnRolloutAgent(Agent):
             idxs = Variable(torch.Tensor(idxs).long())
             choices_logits.append(torch.gather(sel_out[i], 0, idxs).unsqueeze(1))
 
-        choice_logit = torch.sum(torch.cat(choices_logits, 1), 1, keepdim=True).squeeze(1)
+        choice_logit = torch.sum(torch.cat(choices_logits, 1), 1, keepdim=True).squeeze(
+            1
+        )
         choice_logit = choice_logit.sub(choice_logit.max(0)[0].item())
         prob = F.softmax(choice_logit, dim=0)
 
@@ -123,7 +145,11 @@ class RnnRolloutAgent(Agent):
         p_agree = prob[idx.item()]
 
         # Pick only your choice
-        return choices[idx.item()][:self.domain.selection_length()], logprob, p_agree.item()
+        return (
+            choices[idx.item()][: self.domain.selection_length()],
+            logprob,
+            p_agree.item(),
+        )
 
     def choose(self):
         choice, _, _ = self._choose()
@@ -132,7 +158,9 @@ class RnnRolloutAgent(Agent):
     def __choose(self, local_sents, sample=False):
         sents = local_sents[:-1]
         lens, rev_idxs, hid_idxs = self._make_idxs(sents)
-        sel_out = self.sel_model.forward(sents, lens, rev_idxs, hid_idxs, Variable(self.ctx))
+        sel_out = self.sel_model.forward(
+            sents, lens, rev_idxs, hid_idxs, Variable(self.ctx)
+        )
 
         choices = self.domain.generate_choices(self.context, with_disagreement=True)
 
@@ -142,7 +170,9 @@ class RnnRolloutAgent(Agent):
             idxs = Variable(torch.Tensor(idxs).long())
             choices_logits.append(torch.gather(sel_out[i], 0, idxs).unsqueeze(1))
 
-        choice_logit = torch.sum(torch.cat(choices_logits, 1), 1, keepdim=True).squeeze(1)
+        choice_logit = torch.sum(torch.cat(choices_logits, 1), 1, keepdim=True).squeeze(
+            1
+        )
         choice_logit = choice_logit.sub(choice_logit.max(0)[0].item())
         prob = F.softmax(choice_logit, dim=0)
 
@@ -156,10 +186,14 @@ class RnnRolloutAgent(Agent):
         p_agree = prob[idx.item()]
 
         # Pick only your choice
-        return choices[idx.item()][:self.domain.selection_length()], logprob, p_agree.item()
+        return (
+            choices[idx.item()][: self.domain.selection_length()],
+            logprob,
+            p_agree.item(),
+        )
 
     def write(self, max_words=20):
-        
+
         # print('\t\trollout write')
         best_score = -1
         res = None
@@ -168,18 +202,26 @@ class RnnRolloutAgent(Agent):
         for _ in range(self.ncandidate):
             # print('\tcandidate')
             _, move, move_lang_h, move_lang_hs = self.model.write(
-                self.lang_h, self.ctx_h, max_words, self.args.temperature)
+                self.lang_h, self.ctx_h, max_words, self.args.temperature
+            )
 
-            is_selection = len(move) == 1 and \
-                self.model.word_dict.get_word(move.data[0][0]) == '<selection>'  # whether the candidate is a terminated
+            is_selection = (
+                len(move) == 1
+                and self.model.word_dict.get_word(move.data[0][0]) == "<selection>"
+            )  # whether the candidate is a terminated
 
             score = 0
             for _ in range(self.nrollout):
                 # print('\trollout')
                 combined_lang_hs = self.lang_hs + [move_lang_hs]
-                combined_words = self.words + [self.model.word2var('YOU:').view(1, 1), move]
+                combined_words = self.words + [
+                    self.model.word2var("YOU:").view(1, 1),
+                    move,
+                ]
                 combined_sents = copy.deepcopy(self.sents)
-                combined_sents.append(torch.cat([self.model.word2var('YOU:').unsqueeze(1), move], 0))
+                combined_sents.append(
+                    torch.cat([self.model.word2var("YOU:").unsqueeze(1), move], 0)
+                )
 
                 last_lang_h = move_lang_h
                 if not is_selection:  # if not terminated
@@ -190,11 +232,18 @@ class RnnRolloutAgent(Agent):
                     side_tag = False
                     rollout_len = 0
                     for _ in range(10):
-                        acts, outs, last_lang_h, lang_hs = self.model.write(last_lang_h, self.ctx_h,
-                                                                            max_words, self.args.temperature)
-                        tag = 'YOU:' if side_tag else 'THEM:'
-                        is_select = len(outs) == 1 and self.model.word_dict.get_word(outs.data[0][0]) == '<selection>'
-                        combined_sents.append(torch.cat([self.model.word2var(tag).unsqueeze(1), outs], 0))
+                        acts, outs, last_lang_h, lang_hs = self.model.write(
+                            last_lang_h, self.ctx_h, max_words, self.args.temperature
+                        )
+                        tag = "YOU:" if side_tag else "THEM:"
+                        is_select = (
+                            len(outs) == 1
+                            and self.model.word_dict.get_word(outs.data[0][0])
+                            == "<selection>"
+                        )
+                        combined_sents.append(
+                            torch.cat([self.model.word2var(tag).unsqueeze(1), outs], 0)
+                        )
                         combined_lang_hs += [lang_hs]
                         combined_words += [outs]
                         rollout_len += 1
@@ -222,7 +271,9 @@ class RnnRolloutAgent(Agent):
         outs, lang_h, lang_hs = res
         self.lang_h = lang_h
         self.lang_hs.append(lang_hs)
-        self.words.append(self.model.word2var('YOU:').unsqueeze(0))
+        self.words.append(self.model.word2var("YOU:").unsqueeze(0))
         self.words.append(outs)
-        self.sents.append(torch.cat([self.model.word2var('YOU:').unsqueeze(1), outs], 0))
+        self.sents.append(
+            torch.cat([self.model.word2var("YOU:").unsqueeze(1), outs], 0)
+        )
         return self._decode(outs, self.model.word_dict)

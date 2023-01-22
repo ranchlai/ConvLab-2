@@ -6,7 +6,9 @@ from collections import Counter
 from nltk.util import ngrams
 from convlab2.policy.larl.multiwoz.latent_dialog.corpora import SYS, USR, BOS, EOS
 import json
-from convlab2.policy.larl.multiwoz.latent_dialog.normalizer.delexicalize import normalize
+from convlab2.policy.larl.multiwoz.latent_dialog.normalizer.delexicalize import (
+    normalize,
+)
 import sqlite3
 import os
 import random
@@ -76,14 +78,17 @@ class BLEUScorer(object):
                         refcnts = Counter(ngrams(ref, i + 1))
                         for ng in hypcnts:
                             max_counts[ng] = max(max_counts.get(ng, 0), refcnts[ng])
-                    clipcnt = dict((ng, min(count, max_counts[ng])) \
-                                   for ng, count in hypcnts.items())
+                    clipcnt = dict(
+                        (ng, min(count, max_counts[ng]))
+                        for ng, count in hypcnts.items()
+                    )
                     clip_count[i] += sum(clipcnt.values())
 
                 # accumulate r & c
                 bestmatch = [1000, 1000]
                 for ref in refs:
-                    if bestmatch[0] == 0: break
+                    if bestmatch[0] == 0:
+                        break
                     diff = abs(len(ref) - len(hyp))
                     if diff < bestmatch[0]:
                         bestmatch[0] = diff
@@ -95,10 +100,8 @@ class BLEUScorer(object):
         # computing bleu score
         p0 = 1e-7
         bp = 1 if c > r else math.exp(1 - float(r) / float(c))
-        p_ns = [float(clip_count[i]) / float(count[i] + p0) + p0 \
-                for i in range(4)]
-        s = math.fsum(w * math.log(p_n) \
-                      for w, p_n in zip(weights, p_ns) if p_n)
+        p_ns = [float(clip_count[i]) / float(count[i] + p0) + p0 for i in range(4)]
+        s = math.fsum(w * math.log(p_n) for w, p_n in zip(weights, p_ns) if p_n)
         bleu = bp * math.exp(s)
         return bleu
 
@@ -119,7 +122,7 @@ class BleuEvaluator(BaseEvaluator):
 
     def get_report(self):
         tokenize = get_tokenize()
-        print('Generate report for {} samples'.format(len(self.hyps)))
+        print("Generate report for {} samples".format(len(self.hyps)))
         refs, hyps = [], []
         for label, hyp in zip(self.labels, self.hyps):
             # label = label.replace(EOS, '')
@@ -131,19 +134,28 @@ class BleuEvaluator(BaseEvaluator):
             refs.append([ref_tokens])
             hyps.append(hyp_tokens)
         bleu = corpus_bleu(refs, hyps, smoothing_function=SmoothingFunction().method1)
-        report = '\n===== BLEU = %f =====\n' % (bleu,)
-        return '\n===== REPORT FOR DATASET {} ====={}'.format(self.data_name, report)
+        report = "\n===== BLEU = %f =====\n" % (bleu,)
+        return "\n===== REPORT FOR DATASET {} ====={}".format(self.data_name, report)
 
 
 class MultiWozDB(object):
     # loading databases
-    domains = ['restaurant', 'hotel', 'attraction', 'train', 'taxi', 'hospital']  # , 'police']
+    domains = [
+        "restaurant",
+        "hotel",
+        "attraction",
+        "train",
+        "taxi",
+        "hospital",
+    ]  # , 'police']
     dbs = {}
-    CUR_DIR = os.path.dirname(__file__).replace('latent_dialog', '')
+    CUR_DIR = os.path.dirname(__file__).replace("latent_dialog", "")
 
     for domain in domains:
-        print(os.path.join(CUR_DIR, 'data/norm-multi-woz/db/{}-dbase.db'.format(domain)))
-        db = os.path.join(CUR_DIR, 'data/norm-multi-woz/db/{}-dbase.db'.format(domain))
+        print(
+            os.path.join(CUR_DIR, "data/norm-multi-woz/db/{}-dbase.db".format(domain))
+        )
+        db = os.path.join(CUR_DIR, "data/norm-multi-woz/db/{}-dbase.db".format(domain))
         conn = sqlite3.connect(db)
         c = conn.cursor()
         dbs[domain] = c
@@ -155,20 +167,27 @@ class MultiWozDB(object):
         if real_belief == True:
             items = turn.items()
         else:
-            items = turn['metadata'][domain]['semi'].items()
+            items = turn["metadata"][domain]["semi"].items()
 
         flag = True
         for key, val in items:
-            if val == "" or val == "dontcare" or val == 'not mentioned' or val == "don't care" or val == "dont care" or val == "do n't care":
+            if (
+                val == ""
+                or val == "dontcare"
+                or val == "not mentioned"
+                or val == "don't care"
+                or val == "dont care"
+                or val == "do n't care"
+            ):
                 pass
             else:
                 if flag:
                     sql_query += " where "
                     val2 = val.replace("'", "''")
                     val2 = normalize(val2)
-                    if key == 'leaveAt':
+                    if key == "leaveAt":
                         sql_query += r" " + key + " > " + r"'" + val2 + r"'"
-                    elif key == 'arriveBy':
+                    elif key == "arriveBy":
                         sql_query += r" " + key + " < " + r"'" + val2 + r"'"
                     else:
                         sql_query += r" " + key + "=" + r"'" + val2 + r"'"
@@ -176,9 +195,9 @@ class MultiWozDB(object):
                 else:
                     val2 = val.replace("'", "''")
                     val2 = normalize(val2)
-                    if key == 'leaveAt':
+                    if key == "leaveAt":
                         sql_query += r" and " + key + " > " + r"'" + val2 + r"'"
-                    elif key == 'arriveBy':
+                    elif key == "arriveBy":
                         sql_query += r" and " + key + " < " + r"'" + val2 + r"'"
                     else:
                         sql_query += r" and " + key + "=" + r"'" + val2 + r"'"
@@ -190,12 +209,15 @@ class MultiWozDB(object):
 
 
 class MultiWozEvaluator(BaseEvaluator):
-    CUR_DIR = os.path.dirname(__file__).replace('latent_dialog', '')
+    CUR_DIR = os.path.dirname(__file__).replace("latent_dialog", "")
     logger = logging.getLogger()
+
     def __init__(self, data_name):
         self.data_name = data_name
         self.slot_dict = delex.prepareSlotValuesIndependent()
-        self.delex_dialogues = json.load(open(os.path.join(self.CUR_DIR, 'data/norm-multi-woz/delex.json')))
+        self.delex_dialogues = json.load(
+            open(os.path.join(self.CUR_DIR, "data/norm-multi-woz/delex.json"))
+        )
         self.db = MultiWozDB()
         self.labels = list()
         self.hyps = list()
@@ -211,44 +233,46 @@ class MultiWozEvaluator(BaseEvaluator):
     def _parseGoal(self, goal, d, domain):
         """Parses user goal into dictionary format."""
         goal[domain] = {}
-        goal[domain] = {'informable': [], 'requestable': [], 'booking': []}
-        if 'info' in d['goal'][domain]:
-        # if d['goal'][domain].has_key('info'):
-            if domain == 'train':
+        goal[domain] = {"informable": [], "requestable": [], "booking": []}
+        if "info" in d["goal"][domain]:
+            # if d['goal'][domain].has_key('info'):
+            if domain == "train":
                 # we consider dialogues only where train had to be booked!
-                if 'book' in d['goal'][domain]:
-                # if d['goal'][domain].has_key('book'):
-                    goal[domain]['requestable'].append('reference')
-                if 'reqt' in d['goal'][domain]:
-                # if d['goal'][domain].has_key('reqt'):
-                    if 'trainID' in d['goal'][domain]['reqt']:
-                        goal[domain]['requestable'].append('id')
+                if "book" in d["goal"][domain]:
+                    # if d['goal'][domain].has_key('book'):
+                    goal[domain]["requestable"].append("reference")
+                if "reqt" in d["goal"][domain]:
+                    # if d['goal'][domain].has_key('reqt'):
+                    if "trainID" in d["goal"][domain]["reqt"]:
+                        goal[domain]["requestable"].append("id")
             else:
-                if 'reqt' in d['goal'][domain]:
-                # if d['goal'][domain].has_key('reqt'):
-                    for s in d['goal'][domain]['reqt']:  # addtional requests:
-                        if s in ['phone', 'address', 'postcode', 'reference', 'id']:
+                if "reqt" in d["goal"][domain]:
+                    # if d['goal'][domain].has_key('reqt'):
+                    for s in d["goal"][domain]["reqt"]:  # addtional requests:
+                        if s in ["phone", "address", "postcode", "reference", "id"]:
                             # ones that can be easily delexicalized
-                            goal[domain]['requestable'].append(s)
-                if 'book' in d['goal'][domain]:
-                # if d['goal'][domain].has_key('book'):
-                    goal[domain]['requestable'].append("reference")
+                            goal[domain]["requestable"].append(s)
+                if "book" in d["goal"][domain]:
+                    # if d['goal'][domain].has_key('book'):
+                    goal[domain]["requestable"].append("reference")
 
-            goal[domain]["informable"] = d['goal'][domain]['info']
-            if 'book' in d['goal'][domain]:
-            # if d['goal'][domain].has_key('book'):
-                goal[domain]["booking"] = d['goal'][domain]['book']
+            goal[domain]["informable"] = d["goal"][domain]["info"]
+            if "book" in d["goal"][domain]:
+                # if d['goal'][domain].has_key('book'):
+                goal[domain]["booking"] = d["goal"][domain]["book"]
 
         return goal
 
-    def _evaluateGeneratedDialogue(self, dialog, goal, realDialogue, real_requestables, soft_acc=False):
+    def _evaluateGeneratedDialogue(
+        self, dialog, goal, realDialogue, real_requestables, soft_acc=False
+    ):
         """Evaluates the dialogue created by the model.
         First we load the user goal of the dialogue, then for each turn
         generated by the system we look for key-words.
         For the Inform rate we look whether the entity was proposed.
         For the Success rate we look for requestables slots"""
         # for computing corpus success
-        requestables = ['phone', 'address', 'postcode', 'reference', 'id']
+        requestables = ["phone", "address", "postcode", "reference", "id"]
 
         # CHECK IF MATCH HAPPENED
         provided_requestables = {}
@@ -263,10 +287,12 @@ class MultiWozEvaluator(BaseEvaluator):
         for t, sent_t in enumerate(dialog):
             for domain in goal.keys():
                 # for computing success
-                if '[' + domain + '_name]' in sent_t or '_id' in sent_t:
-                    if domain in ['restaurant', 'hotel', 'attraction', 'train']:
+                if "[" + domain + "_name]" in sent_t or "_id" in sent_t:
+                    if domain in ["restaurant", "hotel", "attraction", "train"]:
                         # HERE YOU CAN PUT YOUR BELIEF STATE ESTIMATION
-                        venues = self.db.queryResultVenues(domain, realDialogue['log'][t * 2 + 1])
+                        venues = self.db.queryResultVenues(
+                            domain, realDialogue["log"][t * 2 + 1]
+                        )
 
                         # if venue has changed
                         if len(venue_offered[domain]) == 0 and venues:
@@ -277,55 +303,63 @@ class MultiWozEvaluator(BaseEvaluator):
                                 if venue_offered[domain][0] == ven:
                                     flag = True
                                     break
-                            if not flag and venues:  # sometimes there are no results so sample won't work
+                            if (
+                                not flag and venues
+                            ):  # sometimes there are no results so sample won't work
                                 # print venues
                                 venue_offered[domain] = random.sample(venues, 1)
                     else:  # not limited so we can provide one
-                        venue_offered[domain] = '[' + domain + '_name]'
+                        venue_offered[domain] = "[" + domain + "_name]"
 
                 # ATTENTION: assumption here - we didn't provide phone or address twice! etc
                 for requestable in requestables:
-                    if requestable == 'reference':
-                        if domain + '_reference' in sent_t:
-                            if 'restaurant_reference' in sent_t:
-                                if realDialogue['log'][t * 2]['db_pointer'][
-                                    -5] == 1:  # if pointer was allowing for that?
-                                    provided_requestables[domain].append('reference')
+                    if requestable == "reference":
+                        if domain + "_reference" in sent_t:
+                            if "restaurant_reference" in sent_t:
+                                if (
+                                    realDialogue["log"][t * 2]["db_pointer"][-5] == 1
+                                ):  # if pointer was allowing for that?
+                                    provided_requestables[domain].append("reference")
 
-                            elif 'hotel_reference' in sent_t:
-                                if realDialogue['log'][t * 2]['db_pointer'][
-                                    -3] == 1:  # if pointer was allowing for that?
-                                    provided_requestables[domain].append('reference')
+                            elif "hotel_reference" in sent_t:
+                                if (
+                                    realDialogue["log"][t * 2]["db_pointer"][-3] == 1
+                                ):  # if pointer was allowing for that?
+                                    provided_requestables[domain].append("reference")
 
-                            elif 'train_reference' in sent_t:
-                                if realDialogue['log'][t * 2]['db_pointer'][
-                                    -1] == 1:  # if pointer was allowing for that?
-                                    provided_requestables[domain].append('reference')
+                            elif "train_reference" in sent_t:
+                                if (
+                                    realDialogue["log"][t * 2]["db_pointer"][-1] == 1
+                                ):  # if pointer was allowing for that?
+                                    provided_requestables[domain].append("reference")
 
                             else:
-                                provided_requestables[domain].append('reference')
+                                provided_requestables[domain].append("reference")
                     else:
-                        if domain + '_' + requestable + ']' in sent_t:
+                        if domain + "_" + requestable + "]" in sent_t:
                             provided_requestables[domain].append(requestable)
 
         # if name was given in the task
         for domain in goal.keys():
             # if name was provided for the user, the match is being done automatically
             # if realDialogue['goal'][domain].has_key('info'):
-            if 'info' in realDialogue['goal'][domain]:
+            if "info" in realDialogue["goal"][domain]:
                 # if realDialogue['goal'][domain]['info'].has_key('name'):
-                if 'name' in realDialogue['goal'][domain]['info']:
-                    venue_offered[domain] = '[' + domain + '_name]'
+                if "name" in realDialogue["goal"][domain]["info"]:
+                    venue_offered[domain] = "[" + domain + "_name]"
 
             # special domains - entity does not need to be provided
-            if domain in ['taxi', 'police', 'hospital']:
-                venue_offered[domain] = '[' + domain + '_name]'
+            if domain in ["taxi", "police", "hospital"]:
+                venue_offered[domain] = "[" + domain + "_name]"
 
-            if domain == 'train':
+            if domain == "train":
                 if not venue_offered[domain]:
                     # if realDialogue['goal'][domain].has_key('reqt') and 'id' not in realDialogue['goal'][domain]['reqt']:
-                    if 'reqt' in realDialogue['goal'][domain] and 'id' not in realDialogue['goal'][domain]['reqt']:
-                        venue_offered[domain] = '[' + domain + '_name]'
+                    if (
+                        "reqt" in realDialogue["goal"][domain]
+                        and "id" not in realDialogue["goal"][domain]["reqt"]
+                    ):
+                        venue_offered[domain] = "[" + domain + "_name]"
 
         """
         Given all inform and requestable slots
@@ -335,25 +369,39 @@ class MultiWozEvaluator(BaseEvaluator):
         The dialogue is successful if that's the case for all domains.
         """
         # HARD EVAL
-        stats = {'restaurant': [0, 0, 0], 'hotel': [0, 0, 0], 'attraction': [0, 0, 0], 'train': [0, 0, 0],
-                 'taxi': [0, 0, 0],
-                 'hospital': [0, 0, 0], 'police': [0, 0, 0]}
+        stats = {
+            "restaurant": [0, 0, 0],
+            "hotel": [0, 0, 0],
+            "attraction": [0, 0, 0],
+            "train": [0, 0, 0],
+            "taxi": [0, 0, 0],
+            "hospital": [0, 0, 0],
+            "police": [0, 0, 0],
+        }
 
         match = 0
         success = 0
         # MATCH
         for domain in goal.keys():
             match_stat = 0
-            if domain in ['restaurant', 'hotel', 'attraction', 'train']:
-                goal_venues = self.db.queryResultVenues(domain, goal[domain]['informable'], real_belief=True)
-                if type(venue_offered[domain]) is str and '_name' in venue_offered[domain]:
+            if domain in ["restaurant", "hotel", "attraction", "train"]:
+                goal_venues = self.db.queryResultVenues(
+                    domain, goal[domain]["informable"], real_belief=True
+                )
+                if (
+                    type(venue_offered[domain]) is str
+                    and "_name" in venue_offered[domain]
+                ):
                     match += 1
                     match_stat = 1
-                elif len(venue_offered[domain]) > 0 and venue_offered[domain][0] in goal_venues:
+                elif (
+                    len(venue_offered[domain]) > 0
+                    and venue_offered[domain][0] in goal_venues
+                ):
                     match += 1
                     match_stat = 1
             else:
-                if domain + '_name]' in venue_offered[domain]:
+                if domain + "_name]" in venue_offered[domain]:
                     match += 1
                     match_stat = 1
 
@@ -361,7 +409,7 @@ class MultiWozEvaluator(BaseEvaluator):
             stats[domain][2] = 1
 
         if soft_acc:
-            match = float(match)/len(goal.keys())
+            match = float(match) / len(goal.keys())
         else:
             if match == len(goal.keys()):
                 match = 1.0
@@ -391,7 +439,7 @@ class MultiWozEvaluator(BaseEvaluator):
 
             # final eval
             if soft_acc:
-                success = float(success)/len(real_requestables)
+                success = float(success) / len(real_requestables)
             else:
                 if success >= len(real_requestables):
                     success = 1
@@ -405,14 +453,22 @@ class MultiWozEvaluator(BaseEvaluator):
         """Evaluation of the real dialogue.
         First we loads the user goal and then go through the dialogue history.
         Similar to evaluateGeneratedDialogue above."""
-        domains = ['restaurant', 'hotel', 'attraction', 'train', 'taxi', 'hospital', 'police']
-        requestables = ['phone', 'address', 'postcode', 'reference', 'id']
+        domains = [
+            "restaurant",
+            "hotel",
+            "attraction",
+            "train",
+            "taxi",
+            "hospital",
+            "police",
+        ]
+        requestables = ["phone", "address", "postcode", "reference", "id"]
 
         # get the list of domains in the goal
         domains_in_goal = []
         goal = {}
         for domain in domains:
-            if dialog['goal'][domain]:
+            if dialog["goal"][domain]:
                 goal = self._parseGoal(goal, dialog, domain)
                 domains_in_goal.append(domain)
 
@@ -423,18 +479,22 @@ class MultiWozEvaluator(BaseEvaluator):
         for domain in goal.keys():
             provided_requestables[domain] = []
             venue_offered[domain] = []
-            real_requestables[domain] = goal[domain]['requestable']
+            real_requestables[domain] = goal[domain]["requestable"]
 
         # iterate each turn
-        m_targetutt = [turn['text'] for idx, turn in enumerate(dialog['log']) if idx % 2 == 1]
+        m_targetutt = [
+            turn["text"] for idx, turn in enumerate(dialog["log"]) if idx % 2 == 1
+        ]
         for t in range(len(m_targetutt)):
             for domain in domains_in_goal:
                 sent_t = m_targetutt[t]
                 # for computing match - where there are limited entities
-                if domain + '_name' in sent_t or '_id' in sent_t:
-                    if domain in ['restaurant', 'hotel', 'attraction', 'train']:
+                if domain + "_name" in sent_t or "_id" in sent_t:
+                    if domain in ["restaurant", "hotel", "attraction", "train"]:
                         # HERE YOU CAN PUT YOUR BELIEF STATE ESTIMATION
-                        venues = self.db.queryResultVenues(domain, dialog['log'][t * 2 + 1])
+                        venues = self.db.queryResultVenues(
+                            domain, dialog["log"][t * 2 + 1]
+                        )
 
                         # if venue has changed
                         if len(venue_offered[domain]) == 0 and venues:
@@ -445,73 +505,97 @@ class MultiWozEvaluator(BaseEvaluator):
                                 if venue_offered[domain][0] == ven:
                                     flag = True
                                     break
-                            if not flag and venues:  # sometimes there are no results so sample won't work
+                            if (
+                                not flag and venues
+                            ):  # sometimes there are no results so sample won't work
                                 # print venues
                                 venue_offered[domain] = random.sample(venues, 1)
                     else:  # not limited so we can provide one
-                        venue_offered[domain] = '[' + domain + '_name]'
+                        venue_offered[domain] = "[" + domain + "_name]"
 
                 for requestable in requestables:
                     # check if reference could be issued
-                    if requestable == 'reference':
-                        if domain + '_reference' in sent_t:
-                            if 'restaurant_reference' in sent_t:
-                                if dialog['log'][t * 2]['db_pointer'][-5] == 1:  # if pointer was allowing for that?
-                                    provided_requestables[domain].append('reference')
+                    if requestable == "reference":
+                        if domain + "_reference" in sent_t:
+                            if "restaurant_reference" in sent_t:
+                                if (
+                                    dialog["log"][t * 2]["db_pointer"][-5] == 1
+                                ):  # if pointer was allowing for that?
+                                    provided_requestables[domain].append("reference")
 
-                            elif 'hotel_reference' in sent_t:
-                                if dialog['log'][t * 2]['db_pointer'][-3] == 1:  # if pointer was allowing for that?
-                                    provided_requestables[domain].append('reference')
+                            elif "hotel_reference" in sent_t:
+                                if (
+                                    dialog["log"][t * 2]["db_pointer"][-3] == 1
+                                ):  # if pointer was allowing for that?
+                                    provided_requestables[domain].append("reference")
 
                                     # return goal, 0, match, real_requestables
-                            elif 'train_reference' in sent_t:
-                                if dialog['log'][t * 2]['db_pointer'][-1] == 1:  # if pointer was allowing for that?
-                                    provided_requestables[domain].append('reference')
+                            elif "train_reference" in sent_t:
+                                if (
+                                    dialog["log"][t * 2]["db_pointer"][-1] == 1
+                                ):  # if pointer was allowing for that?
+                                    provided_requestables[domain].append("reference")
 
                             else:
-                                provided_requestables[domain].append('reference')
+                                provided_requestables[domain].append("reference")
                     else:
-                        if domain + '_' + requestable in sent_t:
+                        if domain + "_" + requestable in sent_t:
                             provided_requestables[domain].append(requestable)
 
         # offer was made?
         for domain in domains_in_goal:
             # if name was provided for the user, the match is being done automatically
             # if dialog['goal'][domain].has_key('info'):
-            if 'info' in dialog['goal'][domain]:
+            if "info" in dialog["goal"][domain]:
                 # if dialog['goal'][domain]['info'].has_key('name'):
-                if 'name' in dialog['goal'][domain]['info']:
-                    venue_offered[domain] = '[' + domain + '_name]'
+                if "name" in dialog["goal"][domain]["info"]:
+                    venue_offered[domain] = "[" + domain + "_name]"
 
             # special domains - entity does not need to be provided
-            if domain in ['taxi', 'police', 'hospital']:
-                venue_offered[domain] = '[' + domain + '_name]'
+            if domain in ["taxi", "police", "hospital"]:
+                venue_offered[domain] = "[" + domain + "_name]"
 
             # if id was not requested but train was found we dont want to override it to check if we booked the right train
-            if domain == 'train' and (not venue_offered[domain] and 'id' not in goal['train']['requestable']):
-                venue_offered[domain] = '[' + domain + '_name]'
+            if domain == "train" and (
+                not venue_offered[domain] and "id" not in goal["train"]["requestable"]
+            ):
+                venue_offered[domain] = "[" + domain + "_name]"
 
         # HARD (0-1) EVAL
-        stats = {'restaurant': [0, 0, 0], 'hotel': [0, 0, 0], 'attraction': [0, 0, 0], 'train': [0, 0, 0],
-                 'taxi': [0, 0, 0],
-                 'hospital': [0, 0, 0], 'police': [0, 0, 0]}
+        stats = {
+            "restaurant": [0, 0, 0],
+            "hotel": [0, 0, 0],
+            "attraction": [0, 0, 0],
+            "train": [0, 0, 0],
+            "taxi": [0, 0, 0],
+            "hospital": [0, 0, 0],
+            "police": [0, 0, 0],
+        }
 
         match, success = 0, 0
         # MATCH
         for domain in goal.keys():
             match_stat = 0
-            if domain in ['restaurant', 'hotel', 'attraction', 'train']:
-                goal_venues = self.db.queryResultVenues(domain, dialog['goal'][domain]['info'], real_belief=True)
+            if domain in ["restaurant", "hotel", "attraction", "train"]:
+                goal_venues = self.db.queryResultVenues(
+                    domain, dialog["goal"][domain]["info"], real_belief=True
+                )
                 # print(goal_venues)
-                if type(venue_offered[domain]) is str and '_name' in venue_offered[domain]:
+                if (
+                    type(venue_offered[domain]) is str
+                    and "_name" in venue_offered[domain]
+                ):
                     match += 1
                     match_stat = 1
-                elif len(venue_offered[domain]) > 0 and venue_offered[domain][0] in goal_venues:
+                elif (
+                    len(venue_offered[domain]) > 0
+                    and venue_offered[domain][0] in goal_venues
+                ):
                     match += 1
                     match_stat = 1
 
             else:
-                if domain + '_name' in venue_offered[domain]:
+                if domain + "_name" in venue_offered[domain]:
                     match += 1
                     match_stat = 1
 
@@ -554,14 +638,22 @@ class MultiWozEvaluator(BaseEvaluator):
         return goal, success, match, real_requestables, stats
 
     def _evaluateRolloutDialogue(self, dialog):
-        domains = ['restaurant', 'hotel', 'attraction', 'train', 'taxi', 'hospital', 'police']
-        requestables = ['phone', 'address', 'postcode', 'reference', 'id']
+        domains = [
+            "restaurant",
+            "hotel",
+            "attraction",
+            "train",
+            "taxi",
+            "hospital",
+            "police",
+        ]
+        requestables = ["phone", "address", "postcode", "reference", "id"]
 
         # get the list of domains in the goal
         domains_in_goal = []
         goal = {}
         for domain in domains:
-            if dialog['goal'][domain]:
+            if dialog["goal"][domain]:
                 goal = self._parseGoal(goal, dialog, domain)
                 domains_in_goal.append(domain)
 
@@ -572,17 +664,19 @@ class MultiWozEvaluator(BaseEvaluator):
         for domain in goal.keys():
             provided_requestables[domain] = []
             venue_offered[domain] = []
-            real_requestables[domain] = goal[domain]['requestable']
+            real_requestables[domain] = goal[domain]["requestable"]
 
         # iterate each turn
-        m_targetutt = [turn['text'] for idx, turn in enumerate(dialog['log']) if idx % 2 == 1]
+        m_targetutt = [
+            turn["text"] for idx, turn in enumerate(dialog["log"]) if idx % 2 == 1
+        ]
         for t in range(len(m_targetutt)):
             for domain in domains_in_goal:
                 sent_t = m_targetutt[t]
                 # for computing match - where there are limited entities
-                if domain + '_name' in sent_t or domain+'_id' in sent_t:
-                    if domain in ['restaurant', 'hotel', 'attraction', 'train']:
-                        venue_offered[domain] = '[' + domain + '_name]'
+                if domain + "_name" in sent_t or domain + "_id" in sent_t:
+                    if domain in ["restaurant", "hotel", "attraction", "train"]:
+                        venue_offered[domain] = "[" + domain + "_name]"
                         """
                         venues = self.db.queryResultVenues(domain, dialog['log'][t * 2 + 1])
                         if len(venue_offered[domain]) == 0 and venues:
@@ -598,64 +692,87 @@ class MultiWozEvaluator(BaseEvaluator):
                                 venue_offered[domain] = random.sample(venues, 1)
                         """
                     else:  # not limited so we can provide one
-                        venue_offered[domain] = '[' + domain + '_name]'
+                        venue_offered[domain] = "[" + domain + "_name]"
 
                 for requestable in requestables:
                     # check if reference could be issued
-                    if requestable == 'reference':
-                        if domain + '_reference' in sent_t:
-                            if 'restaurant_reference' in sent_t:
-                                if True or dialog['log'][t * 2]['db_pointer'][-5] == 1:  # if pointer was allowing for that?
-                                    provided_requestables[domain].append('reference')
+                    if requestable == "reference":
+                        if domain + "_reference" in sent_t:
+                            if "restaurant_reference" in sent_t:
+                                if (
+                                    True or dialog["log"][t * 2]["db_pointer"][-5] == 1
+                                ):  # if pointer was allowing for that?
+                                    provided_requestables[domain].append("reference")
 
-                            elif 'hotel_reference' in sent_t:
-                                if True or dialog['log'][t * 2]['db_pointer'][-3] == 1:  # if pointer was allowing for that?
-                                    provided_requestables[domain].append('reference')
+                            elif "hotel_reference" in sent_t:
+                                if (
+                                    True or dialog["log"][t * 2]["db_pointer"][-3] == 1
+                                ):  # if pointer was allowing for that?
+                                    provided_requestables[domain].append("reference")
                                     # return goal, 0, match, real_requestables
-                            elif 'train_reference' in sent_t:
-                                if True or dialog['log'][t * 2]['db_pointer'][-1] == 1:  # if pointer was allowing for that?
-                                    provided_requestables[domain].append('reference')
+                            elif "train_reference" in sent_t:
+                                if (
+                                    True or dialog["log"][t * 2]["db_pointer"][-1] == 1
+                                ):  # if pointer was allowing for that?
+                                    provided_requestables[domain].append("reference")
 
                             else:
-                                provided_requestables[domain].append('reference')
+                                provided_requestables[domain].append("reference")
                     else:
-                        if domain + '_' + requestable in sent_t:
+                        if domain + "_" + requestable in sent_t:
                             provided_requestables[domain].append(requestable)
 
         # offer was made?
         for domain in domains_in_goal:
             # if name was provided for the user, the match is being done automatically
             # if dialog['goal'][domain].has_key('info'):
-            if 'info' in dialog['goal'][domain]:
+            if "info" in dialog["goal"][domain]:
                 # if dialog['goal'][domain]['info'].has_key('name'):
-                if 'name' in dialog['goal'][domain]['info']:
-                    venue_offered[domain] = '[' + domain + '_name]'
+                if "name" in dialog["goal"][domain]["info"]:
+                    venue_offered[domain] = "[" + domain + "_name]"
 
             # special domains - entity does not need to be provided
-            if domain in ['taxi', 'police', 'hospital']:
-                venue_offered[domain] = '[' + domain + '_name]'
+            if domain in ["taxi", "police", "hospital"]:
+                venue_offered[domain] = "[" + domain + "_name]"
 
             # if id was not requested but train was found we dont want to override it to check if we booked the right train
-            if domain == 'train' and (not venue_offered[domain] and 'id' not in goal['train']['requestable']):
-                venue_offered[domain] = '[' + domain + '_name]'
+            if domain == "train" and (
+                not venue_offered[domain] and "id" not in goal["train"]["requestable"]
+            ):
+                venue_offered[domain] = "[" + domain + "_name]"
 
         # REWARD CALCULATION
-        stats = {'restaurant': [0, 0, 0], 'hotel': [0, 0, 0], 'attraction': [0, 0, 0], 'train': [0, 0, 0],
-                 'taxi': [0, 0, 0], 'hospital': [0, 0, 0], 'police': [0, 0, 0]}
+        stats = {
+            "restaurant": [0, 0, 0],
+            "hotel": [0, 0, 0],
+            "attraction": [0, 0, 0],
+            "train": [0, 0, 0],
+            "taxi": [0, 0, 0],
+            "hospital": [0, 0, 0],
+            "police": [0, 0, 0],
+        }
         match, success = 0.0, 0.0
         # MATCH
         for domain in goal.keys():
             match_stat = 0
-            if domain in ['restaurant', 'hotel', 'attraction', 'train']:
-                goal_venues = self.db.queryResultVenues(domain, dialog['goal'][domain]['info'], real_belief=True)
-                if type(venue_offered[domain]) is str and '_name' in venue_offered[domain]:
+            if domain in ["restaurant", "hotel", "attraction", "train"]:
+                goal_venues = self.db.queryResultVenues(
+                    domain, dialog["goal"][domain]["info"], real_belief=True
+                )
+                if (
+                    type(venue_offered[domain]) is str
+                    and "_name" in venue_offered[domain]
+                ):
                     match += 1
                     match_stat = 1
-                elif len(venue_offered[domain]) > 0 and venue_offered[domain][0] in goal_venues:
+                elif (
+                    len(venue_offered[domain]) > 0
+                    and venue_offered[domain][0] in goal_venues
+                ):
                     match += 1
                     match_stat = 1
             else:
-                if domain + '_name' in venue_offered[domain]:
+                if domain + "_name" in venue_offered[domain]:
                     match += 1
                     match_stat = 1
 
@@ -694,30 +811,46 @@ class MultiWozEvaluator(BaseEvaluator):
     def _parse_entities(self, tokens):
         entities = []
         for t in tokens:
-            if '[' in t and ']' in t:
+            if "[" in t and "]" in t:
                 entities.append(t)
         return entities
 
-    def evaluateModel(self, dialogues, mode='valid'):
+    def evaluateModel(self, dialogues, mode="valid"):
         """Gathers statistics for the whole sets."""
         delex_dialogues = self.delex_dialogues
         successes, matches = 0, 0
         total = 0
 
-        gen_stats = {'restaurant': [0, 0, 0], 'hotel': [0, 0, 0], 'attraction': [0, 0, 0], 'train': [0, 0, 0],
-                     'taxi': [0, 0, 0],
-                     'hospital': [0, 0, 0], 'police': [0, 0, 0]}
-        sng_gen_stats = {'restaurant': [0, 0, 0], 'hotel': [0, 0, 0], 'attraction': [0, 0, 0], 'train': [0, 0, 0],
-                         'taxi': [0, 0, 0], 'hospital': [0, 0, 0], 'police': [0, 0, 0]}
+        gen_stats = {
+            "restaurant": [0, 0, 0],
+            "hotel": [0, 0, 0],
+            "attraction": [0, 0, 0],
+            "train": [0, 0, 0],
+            "taxi": [0, 0, 0],
+            "hospital": [0, 0, 0],
+            "police": [0, 0, 0],
+        }
+        sng_gen_stats = {
+            "restaurant": [0, 0, 0],
+            "hotel": [0, 0, 0],
+            "attraction": [0, 0, 0],
+            "train": [0, 0, 0],
+            "taxi": [0, 0, 0],
+            "hospital": [0, 0, 0],
+            "police": [0, 0, 0],
+        }
 
         for filename, dial in dialogues.items():
-            if mode == 'rollout':
+            if mode == "rollout":
                 success, match, stats = self._evaluateRolloutDialogue(dial)
             else:
                 data = delex_dialogues[filename]
-                goal, success, match, requestables, _ = self._evaluateRealDialogue(data, filename)
-                success, match, stats = self._evaluateGeneratedDialogue(dial, goal, data, requestables,
-                                                                        soft_acc=mode =='offline_rl')
+                goal, success, match, requestables, _ = self._evaluateRealDialogue(
+                    data, filename
+                )
+                success, match, stats = self._evaluateGeneratedDialogue(
+                    dial, goal, data, requestables, soft_acc=mode == "offline_rl"
+                )
 
             successes += success
             matches += match
@@ -728,27 +861,41 @@ class MultiWozEvaluator(BaseEvaluator):
                 gen_stats[domain][1] += stats[domain][1]
                 gen_stats[domain][2] += stats[domain][2]
 
-            if 'SNG' in filename:
+            if "SNG" in filename:
                 for domain in gen_stats.keys():
                     sng_gen_stats[domain][0] += stats[domain][0]
                     sng_gen_stats[domain][1] += stats[domain][1]
                     sng_gen_stats[domain][2] += stats[domain][2]
 
         report = ""
-        report += '{} Corpus Matches : {:2.2f}%'.format(mode, (matches / float(total) * 100)) + "\n"
-        report += '{} Corpus Success : {:2.2f}%'.format(mode, (successes / float(total) * 100)) + "\n"
-        report += 'Total number of dialogues: %s ' % total
+        report += (
+            "{} Corpus Matches : {:2.2f}%".format(mode, (matches / float(total) * 100))
+            + "\n"
+        )
+        report += (
+            "{} Corpus Success : {:2.2f}%".format(
+                mode, (successes / float(total) * 100)
+            )
+            + "\n"
+        )
+        report += "Total number of dialogues: %s " % total
         # self.logger.info(report)
-        return report, successes/float(total), matches/float(total)
+        return report, successes / float(total), matches / float(total)
 
     def get_report(self):
         tokenize = lambda x: x.split()
-        print('Generate report for {} samples'.format(len(self.hyps)))
+        print("Generate report for {} samples".format(len(self.hyps)))
         refs, hyps = [], []
         tp, fp, fn = 0, 0, 0
         for label, hyp in zip(self.labels, self.hyps):
-            ref_tokens = [BOS] + tokenize(label.replace(SYS, '').replace(USR, '').strip()) + [EOS]
-            hyp_tokens = [BOS] + tokenize(hyp.replace(SYS, '').replace(USR, '').strip()) + [EOS]
+            ref_tokens = (
+                [BOS]
+                + tokenize(label.replace(SYS, "").replace(USR, "").strip())
+                + [EOS]
+            )
+            hyp_tokens = (
+                [BOS] + tokenize(hyp.replace(SYS, "").replace(USR, "").strip()) + [EOS]
+            )
             refs.append([ref_tokens])
             hyps.append(hyp_tokens)
 
@@ -762,6 +909,7 @@ class MultiWozEvaluator(BaseEvaluator):
         # bleu = corpus_bleu(refs, hyps, smoothing_function=SmoothingFunction().method1)
         bleu = BLEUScorer().score(hyps, refs)
         prec, rec, f1 = self._get_prec_recall(tp, fp, fn)
-        report = "\nBLEU score {}\nEntity precision {:.4f} recall {:.4f} and f1 {:.4f}\n".format(bleu, prec, rec, f1)
+        report = "\nBLEU score {}\nEntity precision {:.4f} recall {:.4f} and f1 {:.4f}\n".format(
+            bleu, prec, rec, f1
+        )
         return report, bleu, prec, rec, f1
-

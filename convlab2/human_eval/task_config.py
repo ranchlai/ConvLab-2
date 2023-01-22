@@ -7,24 +7,27 @@ task_config = {}
 On the Amazon Mechanical Turk web site, the HIT title appears in search results,
 and everywhere the HIT is mentioned.
 """
-task_config['hit_title'] = 'Chat and evaluate bot with a specified goal'
+task_config["hit_title"] = "Chat and evaluate bot with a specified goal"
 
 """A description includes detailed information about the kind of task the HIT contains.
 On the Amazon Mechanical Turk web site, the HIT description appears in the expanded
 view of search results, and in the HIT and assignment screens.
 """
-task_config['hit_description'] = 'You will chat to a tour information bot and then evaluate that bot, type "success" or "fail" once finished'
+task_config[
+    "hit_description"
+] = 'You will chat to a tour information bot and then evaluate that bot, type "success" or "fail" once finished'
 
 """One or more words or phrases that describe the HIT, separated by commas.
 On MTurk website, these words are used in searches to find HITs.
 """
-task_config['hit_keywords'] = 'chat,dialog, dialogue, evaluation'
+task_config["hit_keywords"] = "chat,dialog, dialogue, evaluation"
 
 """A detailed task description that will be shown on the HIT task preview page
 and on the left side of the chat page. Supports HTML formatting.
 """
-task_config['task_description'] = \
-    """
+task_config[
+    "task_description"
+] = """
     (You can keep accepting new HITs after you finish your current one, so keep working on it if you like the task!)
     <br>
     <br>

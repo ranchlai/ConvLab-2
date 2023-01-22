@@ -4,7 +4,10 @@ Created on Tue Dec 31 10:57:51 2019
 @author: truthless
 """
 import sys, os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+sys.path.append(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 import numpy as np
 import torch
 from torch import multiprocessing as mp
@@ -20,9 +23,10 @@ from argparse import ArgumentParser
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 try:
-    mp = mp.get_context('spawn')
+    mp = mp.get_context("spawn")
 except RuntimeError:
     pass
+
 
 def sampler(pid, queue, evt, env, policy, batchsz):
     """
@@ -68,7 +72,13 @@ def sampler(pid, queue, evt, env, policy, batchsz):
             next_s_vec = torch.Tensor(policy.vector.state_vectorize(next_s))
 
             # save to queue
-            buff.push(s_vec.numpy(), policy.vector.action_vectorize(a), 0, next_s_vec.numpy(), mask)
+            buff.push(
+                s_vec.numpy(),
+                policy.vector.action_vectorize(a),
+                0,
+                next_s_vec.numpy(),
+                mask,
+            )
 
             # update per step
             s = next_s
@@ -92,10 +102,10 @@ def sample(env, policy, batchsz, process_num):
     """
     Given batchsz number of task, the batchsz will be splited equally to each processes
     and when processes return, it merge all data and return
-	:param env:
-	:param policy:
+        :param env:
+        :param policy:
     :param batchsz:
-	:param process_num:
+        :param process_num:
     :return: batch
     """
 
@@ -151,12 +161,23 @@ def update(env, policy, batchsz, epoch, process_num, rewarder):
     policy.update(epoch, batchsz_real, s, a, next_s, mask, rewarder)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--load_path", type=str, default="", help="path of model to load")
-    parser.add_argument("--batchsz", type=int, default=1024, help="batch size of trajactory sampling")
-    parser.add_argument("--epoch", type=int, default=200, help="number of epochs to train")
-    parser.add_argument("--process_num", type=int, default=8, help="number of processes of trajactory sampling")
+    parser.add_argument(
+        "--load_path", type=str, default="", help="path of model to load"
+    )
+    parser.add_argument(
+        "--batchsz", type=int, default=1024, help="batch size of trajactory sampling"
+    )
+    parser.add_argument(
+        "--epoch", type=int, default=200, help="number of epochs to train"
+    )
+    parser.add_argument(
+        "--process_num",
+        type=int,
+        default=8,
+        help="number of processes of trajactory sampling",
+    )
     args = parser.parse_args()
     # simple rule DST
     dst_sys = RuleDST()
@@ -168,9 +189,9 @@ if __name__ == '__main__':
     # not use dst
     dst_usr = None
     # rule policy
-    policy_usr = RulePolicy(character='usr')
+    policy_usr = RulePolicy(character="usr")
     # assemble
-    simulator = PipelineAgent(None, None, policy_usr, None, 'user')
+    simulator = PipelineAgent(None, None, policy_usr, None, "user")
 
     env = Environment(None, simulator, None, dst_sys)
 

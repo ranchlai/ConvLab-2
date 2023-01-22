@@ -4,7 +4,7 @@
 """
 """
 
-__time__ = '2019/1/31 10:24'
+__time__ = "2019/1/31 10:24"
 
 import json
 import os
@@ -14,16 +14,16 @@ import logging
 from convlab2.policy.policy import Policy
 from convlab2.task.camrest.goal_generator import GoalGenerator
 
-DEF_VAL_UNK = '?'  # Unknown
-DEF_VAL_DNC = 'dontcare'  # Do not care
-DEF_VAL_NUL = 'none'  # for none
-DEF_VAL_BOOKED = 'yes'  # for booked
-DEF_VAL_NOBOOK = 'no'  # for booked
+DEF_VAL_UNK = "?"  # Unknown
+DEF_VAL_DNC = "dontcare"  # Do not care
+DEF_VAL_NUL = "none"  # for none
+DEF_VAL_BOOKED = "yes"  # for booked
+DEF_VAL_NOBOOK = "no"  # for booked
 NOT_SURE_VALS = [DEF_VAL_UNK, DEF_VAL_DNC, DEF_VAL_NUL, DEF_VAL_NOBOOK]
 
 
 class UserPolicyAgendaCamrest(Policy):
-    """ The rule-based user policy model by agenda. Derived from the UserPolicy class """
+    """The rule-based user policy model by agenda. Derived from the UserPolicy class"""
 
     def __init__(self):
         """
@@ -32,9 +32,16 @@ class UserPolicyAgendaCamrest(Policy):
         self.max_turn = 40
         self.max_initiative = 4
 
-        self.goal_generator = GoalGenerator(corpus_path=os.path.join(os.path.dirname(
-                os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))),
-                'data/camrest/CamRest676_v2.json'))
+        self.goal_generator = GoalGenerator(
+            corpus_path=os.path.join(
+                os.path.dirname(
+                    os.path.dirname(
+                        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                    )
+                ),
+                "data/camrest/CamRest676_v2.json",
+            )
+        )
 
         self.__turn = 0
         self.goal = None
@@ -43,7 +50,7 @@ class UserPolicyAgendaCamrest(Policy):
         Policy.__init__(self)
 
     def init_session(self):
-        """ Build new Goal and Agenda for next session """
+        """Build new Goal and Agenda for next session"""
         self.__turn = 0
         self.goal = Goal(self.goal_generator)
         self.domain_goals = self.goal.domain_goals
@@ -116,12 +123,12 @@ class UserPolicyAgendaCamrest(Policy):
     def _transform_sysact_in(cls, action):
         new_action = {}
         if not isinstance(action, dict):
-            logging.warning('illegal da: {}'.format(action))
+            logging.warning("illegal da: {}".format(action))
             return new_action
 
         for act in action.keys():
             if not isinstance(act, str):
-                logging.warning('illegal act: {}'.format(act))
+                logging.warning("illegal act: {}".format(act))
                 continue
 
             new_action[act] = action[act]
@@ -130,7 +137,7 @@ class UserPolicyAgendaCamrest(Policy):
 
 
 class Goal(object):
-    """ User Goal Model Class. """
+    """User Goal Model Class."""
 
     def __init__(self, goal_generator: GoalGenerator):
         """
@@ -140,8 +147,10 @@ class Goal(object):
         """
         self.domain_goals = goal_generator.get_user_goal()
 
-        if 'reqt' in self.domain_goals.keys():
-            self.domain_goals['reqt'] = {slot: DEF_VAL_UNK for slot in self.domain_goals['reqt']}
+        if "reqt" in self.domain_goals.keys():
+            self.domain_goals["reqt"] = {
+                slot: DEF_VAL_UNK for slot in self.domain_goals["reqt"]
+            }
 
     def task_complete(self):
         """
@@ -149,8 +158,8 @@ class Goal(object):
         Returns:
             (boolean): True to accomplish.
         """
-        if 'reqt' in self.domain_goals:
-            reqt_vals = self.domain_goals['reqt'].values()
+        if "reqt" in self.domain_goals:
+            reqt_vals = self.domain_goals["reqt"].values()
             for val in reqt_vals:
                 if val in NOT_SURE_VALS:
                     return False
@@ -160,18 +169,22 @@ class Goal(object):
     def next_domain_incomplete(self):
         # request
         # reqt
-        if 'reqt' in self.domain_goals:
-            requests = self.domain_goals['reqt']
-            unknow_reqts = [key for (key, val) in requests.items() if val in NOT_SURE_VALS]
+        if "reqt" in self.domain_goals:
+            requests = self.domain_goals["reqt"]
+            unknow_reqts = [
+                key for (key, val) in requests.items() if val in NOT_SURE_VALS
+            ]
             if len(unknow_reqts) > 0:
-                return 'reqt', ['name'] if 'name' in unknow_reqts else unknow_reqts
+                return "reqt", ["name"] if "name" in unknow_reqts else unknow_reqts
 
         return None, None
 
     def __str__(self):
-        return '-----Goal-----\n' + \
-               json.dumps(self.domain_goals, indent=4) + \
-               '\n-----Goal-----'
+        return (
+            "-----Goal-----\n"
+            + json.dumps(self.domain_goals, indent=4)
+            + "\n-----Goal-----"
+        )
 
 
 class Agenda(object):
@@ -183,18 +196,20 @@ class Agenda(object):
         """
 
         def random_sample(data, minimum=0, maximum=1000):
-            return random.sample(data, random.randint(min(len(data), minimum), min(len(data), maximum)))
+            return random.sample(
+                data, random.randint(min(len(data), minimum), min(len(data), maximum))
+            )
 
         self.__cur_push_num = 0
 
         self.__stack = []
 
-
         # inform
-        if 'info' in goal.domain_goals:
-            for slot in random_sample(goal.domain_goals['info'].keys(),
-                                      len(goal.domain_goals['info'])):
-                self.__push('inform', slot, goal.domain_goals['info'][slot])
+        if "info" in goal.domain_goals:
+            for slot in random_sample(
+                goal.domain_goals["info"].keys(), len(goal.domain_goals["info"])
+            ):
+                self.__push("inform", slot, goal.domain_goals["info"][slot])
 
     def update(self, sys_action, goal: Goal):
         """
@@ -207,12 +222,12 @@ class Agenda(object):
 
         for diaact in sys_action.keys():
             slot_vals = sys_action[diaact]
-            if 'nooffer' in diaact:
+            if "nooffer" in diaact:
                 if self.update_domain(diaact, slot_vals, goal):
                     return
 
         for diaact in sys_action.keys():
-            if 'nooffer' in diaact:
+            if "nooffer" in diaact:
                 continue
 
             slot_vals = sys_action[diaact]
@@ -220,9 +235,13 @@ class Agenda(object):
                 return
 
         unk_type, data = goal.next_domain_incomplete()
-        if unk_type == 'reqt' and not self._check_reqt_info() and not self._check_reqt():
+        if (
+            unk_type == "reqt"
+            and not self._check_reqt_info()
+            and not self._check_reqt()
+        ):
             for slot in data:
-                self._push_item('request', slot, DEF_VAL_UNK)
+                self._push_item("request", slot, DEF_VAL_UNK)
 
     def update_domain(self, diaact, slot_vals, goal: Goal):
         """
@@ -234,31 +253,31 @@ class Agenda(object):
         """
         intent = diaact
 
-        g_reqt = goal.domain_goals.get('reqt', dict({}))
-        g_info = goal.domain_goals.get('info', dict({}))
+        g_reqt = goal.domain_goals.get("reqt", dict({}))
+        g_info = goal.domain_goals.get("info", dict({}))
 
-        if intent in ['inform']:
+        if intent in ["inform"]:
             for [slot, value] in slot_vals:
                 if slot in g_reqt:
                     if not self._check_reqt_info():
-                        self._remove_item('request', slot)
+                        self._remove_item("request", slot)
                         if value in NOT_SURE_VALS:
-                            g_reqt[slot] = '\"' + value + '\"'
+                            g_reqt[slot] = '"' + value + '"'
                         else:
                             g_reqt[slot] = value
                 else:
                     pass
 
-        elif intent in ['request']:
+        elif intent in ["request"]:
             for [slot, _] in slot_vals:
                 if slot in g_reqt:
                     pass
                 else:
 
                     if random.random() < 0.5:
-                        self._push_item('inform', slot, DEF_VAL_DNC)
+                        self._push_item("inform", slot, DEF_VAL_DNC)
 
-        elif intent in ['nooffer']:
+        elif intent in ["nooffer"]:
             if len(g_reqt.keys()) > 0:
                 self.close_session()
                 return True
@@ -266,7 +285,7 @@ class Agenda(object):
         return False
 
     def close_session(self):
-        """ Clear up all actions """
+        """Clear up all actions"""
         self.__stack = []
 
     def get_action(self, initiative=1):
@@ -296,7 +315,10 @@ class Agenda(object):
 
     def _remove_item(self, diaact, slot=DEF_VAL_UNK):
         for idx in range(len(self.__stack)):
-            if self.__stack[idx]['diaact'] == diaact and self.__stack[idx]['slot'] == slot:
+            if (
+                self.__stack[idx]["diaact"] == diaact
+                and self.__stack[idx]["slot"] == slot
+            ):
                 self.__stack.remove(self.__stack[idx])
                 break
 
@@ -308,37 +330,40 @@ class Agenda(object):
     def _check_item(self, diaact, slot=None):
         for idx in range(len(self.__stack)):
             if slot is None:
-                if self.__stack[idx]['diaact'] == diaact:
+                if self.__stack[idx]["diaact"] == diaact:
                     return True
             else:
-                if self.__stack[idx]['diaact'] == diaact and self.__stack[idx]['slot'] == slot:
+                if (
+                    self.__stack[idx]["diaact"] == diaact
+                    and self.__stack[idx]["slot"] == slot
+                ):
                     return True
         return False
 
     def _check_reqt(self):
         for idx in range(len(self.__stack)):
-            if self.__stack[idx]['diaact'] == 'request':
+            if self.__stack[idx]["diaact"] == "request":
                 return True
         return False
 
     def _check_reqt_info(self):
         for idx in range(len(self.__stack)):
-            if self.__stack[idx]['diaact'] == 'inform':
+            if self.__stack[idx]["diaact"] == "inform":
                 return True
         return False
 
     def __check_next_diaact_slot(self):
         if len(self.__stack) > 0:
-            return self.__stack[-1]['diaact'], self.__stack[-1]['slot']
+            return self.__stack[-1]["diaact"], self.__stack[-1]["slot"]
         return None, None
 
     def __check_next_diaact(self):
         if len(self.__stack) > 0:
-            return self.__stack[-1]['diaact']
+            return self.__stack[-1]["diaact"]
         return None
 
     def __push(self, diaact, slot=DEF_VAL_NUL, value=DEF_VAL_NUL):
-        self.__stack.append({'diaact': diaact, 'slot': slot, 'value': value})
+        self.__stack.append({"diaact": diaact, "slot": slot, "value": value})
 
     def __pop(self, initiative=1):
         diaacts = []
@@ -346,37 +371,43 @@ class Agenda(object):
         values = []
 
         p_diaact, p_slot = self.__check_next_diaact_slot()
-        if p_diaact == 'inform':
+        if p_diaact == "inform":
             for _ in range(10 if self.__cur_push_num == 0 else self.__cur_push_num):
                 try:
                     item = self.__stack.pop(-1)
-                    diaacts.append(item['diaact'])
-                    slots.append(item['slot'])
-                    values.append(item['value'])
+                    diaacts.append(item["diaact"])
+                    slots.append(item["slot"])
+                    values.append(item["value"])
 
-                    cur_diaact = item['diaact']
+                    cur_diaact = item["diaact"]
 
                     next_diaact, next_slot = self.__check_next_diaact_slot()
-                    if next_diaact is None or \
-                            next_diaact != cur_diaact or \
-                            next_diaact != 'inform':
+                    if (
+                        next_diaact is None
+                        or next_diaact != cur_diaact
+                        or next_diaact != "inform"
+                    ):
                         break
                 except:
                     break
         else:
-            for _ in range(initiative if self.__cur_push_num == 0 else self.__cur_push_num):
+            for _ in range(
+                initiative if self.__cur_push_num == 0 else self.__cur_push_num
+            ):
                 try:
                     item = self.__stack.pop(-1)
-                    diaacts.append(item['diaact'])
-                    slots.append(item['slot'])
-                    values.append(item['value'])
+                    diaacts.append(item["diaact"])
+                    slots.append(item["slot"])
+                    values.append(item["value"])
 
-                    cur_diaact = item['diaact']
+                    cur_diaact = item["diaact"]
 
                     next_diaact = self.__check_next_diaact()
-                    if next_diaact is None or \
-                            next_diaact != cur_diaact or \
-                            (cur_diaact == 'request' and item['slot'] == 'name'):
+                    if (
+                        next_diaact is None
+                        or next_diaact != cur_diaact
+                        or (cur_diaact == "request" and item["slot"] == "name")
+                    ):
                         break
                 except:
                     break
@@ -384,12 +415,12 @@ class Agenda(object):
         return diaacts, slots, values
 
     def __str__(self):
-        text = '\n-----agenda-----\n'
-        text += '<stack top>\n'
+        text = "\n-----agenda-----\n"
+        text += "<stack top>\n"
         for item in reversed(self.__stack):
-            text += str(item) + '\n'
-        text += '<stack btm>\n'
-        text += '-----agenda-----\n'
+            text += str(item) + "\n"
+        text += "<stack btm>\n"
+        text += "-----agenda-----\n"
         return text
 
 
@@ -397,28 +428,33 @@ def test():
     user_simulator = UserPolicyAgendaCamrest()
     user_simulator.init_session()
 
-    test_turn(user_simulator, {'inform': [['none', 'none']]})
-    test_turn(user_simulator, {'inform': [['pricerange', 'expensive']]})
-    test_turn(user_simulator, {'request': [['food', '?'], ['area', '?']]})
-    test_turn(user_simulator, {'request': [['area', '?']]})
+    test_turn(user_simulator, {"inform": [["none", "none"]]})
+    test_turn(user_simulator, {"inform": [["pricerange", "expensive"]]})
+    test_turn(user_simulator, {"request": [["food", "?"], ["area", "?"]]})
+    test_turn(user_simulator, {"request": [["area", "?"]]})
     test_turn(user_simulator, {})
-    test_turn(user_simulator, {"inform": [['phone', '123456789']]})
-    test_turn(user_simulator, {"inform": [['address', '987654321']]})
+    test_turn(user_simulator, {"inform": [["phone", "123456789"]]})
+    test_turn(user_simulator, {"inform": [["address", "987654321"]]})
+
 
 def test_turn(user_simulator, sys_action):
-    print('input:', sys_action)
+    print("input:", sys_action)
     action, session_over, reward = user_simulator.predict(None, sys_action)
-    print('----------------------------------')
-    print('sys_action :' + str(sys_action))
-    print('user_action:' + str(action))
-    print('over       :' + str(session_over))
-    print('reward     :' + str(reward))
+    print("----------------------------------")
+    print("sys_action :" + str(sys_action))
+    print("user_action:" + str(action))
+    print("over       :" + str(session_over))
+    print("reward     :" + str(reward))
     print(user_simulator.goal)
     print(user_simulator.agenda)
 
 
 def test_with_system():
-    from convlab2.policy.camrest.rule_based_camrest_bot import RuleBasedCamrestBot, fake_state
+    from convlab2.policy.camrest.rule_based_camrest_bot import (
+        RuleBasedCamrestBot,
+        fake_state,
+    )
+
     user_simulator = UserPolicyAgendaCamrest()
     user_simulator.init_session()
     state = fake_state()
@@ -429,4 +465,3 @@ def test_with_system():
     print(json.dumps(sys_action, indent=4))
     print("User:")
     print(json.dumps(action, indent=4))
-

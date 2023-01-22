@@ -9,7 +9,13 @@ import zipfile
 from typing import Dict, List, Any
 
 from allennlp.data.dataset_readers.dataset_reader import DatasetReader
-from allennlp.data.fields import TextField, SequenceLabelField, MultiLabelField, MetadataField, Field
+from allennlp.data.fields import (
+    TextField,
+    SequenceLabelField,
+    MultiLabelField,
+    MetadataField,
+    Field,
+)
 from allennlp.data.instance import Instance
 from allennlp.data.token_indexers import TokenIndexer, SingleIdTokenIndexer
 from allennlp.data.tokenizers import Token
@@ -42,18 +48,21 @@ class MILUDatasetReader(DatasetReader):
         Note that the `output` tags will always correspond to single token IDs based on how they
         are pre-tokenised in the data file.
     """
-    def __init__(self,
-                 context_size: int = 0,
-                 agent: str = None,
-                 random_context_size: bool = True,
-                 token_delimiter: str = None,
-                 token_indexers: Dict[str, TokenIndexer] = None,
-                 lazy: bool = False) -> None:
+
+    def __init__(
+        self,
+        context_size: int = 0,
+        agent: str = None,
+        random_context_size: bool = True,
+        token_delimiter: str = None,
+        token_indexers: Dict[str, TokenIndexer] = None,
+        lazy: bool = False,
+    ) -> None:
         super().__init__(lazy)
         self._context_size = context_size
-        self._agent = agent 
+        self._agent = agent
         self._random_context_size = random_context_size
-        self._token_indexers = token_indexers or {'tokens': SingleIdTokenIndexer()}
+        self._token_indexers = token_indexers or {"tokens": SingleIdTokenIndexer()}
         self._token_delimiter = token_delimiter
 
     @overrides
@@ -75,11 +84,15 @@ class MILUDatasetReader(DatasetReader):
             dialog = dialogs[dial_name]["log"]
             context_tokens_list = []
             for i, turn in enumerate(dialog):
-                if self._agent and self._agent == "user" and i % 2 == 1: 
-                    context_tokens_list.append(turn["text"].lower().split()+ ["SENT_END"])
+                if self._agent and self._agent == "user" and i % 2 == 1:
+                    context_tokens_list.append(
+                        turn["text"].lower().split() + ["SENT_END"]
+                    )
                     continue
-                if self._agent and self._agent == "system" and i % 2 == 0: 
-                    context_tokens_list.append(turn["text"].lower().split()+ ["SENT_END"])
+                if self._agent and self._agent == "system" and i % 2 == 0:
+                    context_tokens_list.append(
+                        turn["text"].lower().split() + ["SENT_END"]
+                    )
                     continue
 
                 tokens = turn["text"].split()
@@ -88,17 +101,19 @@ class MILUDatasetReader(DatasetReader):
                 for dacts in turn["span_info"]:
                     if dacts[0] not in dialog_act:
                         dialog_act[dacts[0]] = []
-                    dialog_act[dacts[0]].append([dacts[1], " ".join(tokens[dacts[3]: dacts[4]+1])])
+                    dialog_act[dacts[0]].append(
+                        [dacts[1], " ".join(tokens[dacts[3] : dacts[4] + 1])]
+                    )
 
                 spans = turn["span_info"]
                 tags = []
                 for j in range(len(tokens)):
                     for span in spans:
                         if j == span[3]:
-                            tags.append("B-"+span[0]+"+"+span[1])
+                            tags.append("B-" + span[0] + "+" + span[1])
                             break
                         if j > span[3] and j <= span[4]:
-                            tags.append("I-"+span[0]+"+"+span[1])
+                            tags.append("I-" + span[0] + "+" + span[1])
                             break
                     else:
                         tags.append("O")
@@ -106,9 +121,19 @@ class MILUDatasetReader(DatasetReader):
                 intents = []
                 for dacts in turn["dialog_act"]:
                     for dact in turn["dialog_act"][dacts]:
-                        if dacts not in dialog_act or dact[0] not in [sv[0] for sv in dialog_act[dacts]]:
-                            if dact[1] in ["none", "?", "yes", "no", "dontcare", "do nt care", "do n't care"]:
-                                intents.append(dacts+"+"+dact[0]+"*"+dact[1])
+                        if dacts not in dialog_act or dact[0] not in [
+                            sv[0] for sv in dialog_act[dacts]
+                        ]:
+                            if dact[1] in [
+                                "none",
+                                "?",
+                                "yes",
+                                "no",
+                                "dontcare",
+                                "do nt care",
+                                "do n't care",
+                            ]:
+                                intents.append(dacts + "+" + dact[0] + "*" + dact[1])
 
                 for dacts in turn["dialog_act"]:
                     for dact in turn["dialog_act"][dacts]:
@@ -118,19 +143,34 @@ class MILUDatasetReader(DatasetReader):
                         elif dact[0] not in [sv[0] for sv in dialog_act[dacts]]:
                             dialog_act[dacts].append(dact)
 
-                num_context = random.randint(0, self._context_size) if self._random_context_size else self._context_size
+                num_context = (
+                    random.randint(0, self._context_size)
+                    if self._random_context_size
+                    else self._context_size
+                )
                 if len(context_tokens_list) > 0 and num_context > 0:
-                    wrapped_context_tokens = [Token(token) for context_tokens in context_tokens_list[-num_context:] for token in context_tokens]
+                    wrapped_context_tokens = [
+                        Token(token)
+                        for context_tokens in context_tokens_list[-num_context:]
+                        for token in context_tokens
+                    ]
                 else:
                     wrapped_context_tokens = [Token("SENT_END")]
                 wrapped_tokens = [Token(token) for token in tokens]
                 context_tokens_list.append(tokens + ["SENT_END"])
 
-                yield self.text_to_instance(wrapped_context_tokens, wrapped_tokens, tags, intents, dialog_act)
+                yield self.text_to_instance(
+                    wrapped_context_tokens, wrapped_tokens, tags, intents, dialog_act
+                )
 
-
-    def text_to_instance(self, context_tokens: List[Token], tokens: List[Token], tags: List[str] = None,
-        intents: List[str] = None, dialog_act: Dict[str, Any] = None) -> Instance:  # type: ignore
+    def text_to_instance(
+        self,
+        context_tokens: List[Token],
+        tokens: List[Token],
+        tags: List[str] = None,
+        intents: List[str] = None,
+        dialog_act: Dict[str, Any] = None,
+    ) -> Instance:  # type: ignore
         """
         We take `pre-tokenized` input here, because we don't have a tokenizer in this class.
         """
@@ -143,10 +183,15 @@ class MILUDatasetReader(DatasetReader):
         if tags is not None:
             fields["tags"] = SequenceLabelField(tags, fields["tokens"])
         if intents is not None:
-            fields["intents"] = MultiLabelField(intents, label_namespace="intent_labels")
+            fields["intents"] = MultiLabelField(
+                intents, label_namespace="intent_labels"
+            )
         if dialog_act is not None:
-            fields["metadata"] = MetadataField({"words": [x.text for x in tokens],
-            'dialog_act': dialog_act})
+            fields["metadata"] = MetadataField(
+                {"words": [x.text for x in tokens], "dialog_act": dialog_act}
+            )
         else:
-            fields["metadata"] = MetadataField({"words": [x.text for x in tokens], 'dialog_act': {}})
+            fields["metadata"] = MetadataField(
+                {"words": [x.text for x in tokens], "dialog_act": {}}
+            )
         return Instance(fields)

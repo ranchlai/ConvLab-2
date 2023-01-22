@@ -64,42 +64,77 @@ def load_config_file(filepath: str = None) -> dict:
     :return: dict,
     """
     if not isinstance(filepath, str):
-        filepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'dep_config.json'))
+        filepath = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "dep_config.json")
+        )
 
     # load
-    with open(filepath, 'r', encoding='UTF-8') as f:
+    with open(filepath, "r", encoding="UTF-8") as f:
         conf = json.load(f)
-    assert isinstance(conf, dict), 'Incorrect format in config file \'%s\'' % filepath
+    assert isinstance(conf, dict), "Incorrect format in config file '%s'" % filepath
 
     # check sections
-    for sec in ['net', 'nlu', 'dst', 'policy', 'nlg']:
-        assert sec in conf.keys(), 'Missing \'%s\' section in config file \'%s\'' % (sec, filepath)
+    for sec in ["net", "nlu", "dst", "policy", "nlg"]:
+        assert sec in conf.keys(), "Missing '%s' section in config file '%s'" % (
+            sec,
+            filepath,
+        )
 
     # check net
-    conf['net'].setdefault('app_name', '')
-    conf['net'].setdefault('session_time_out', 600)
-    assert isinstance(conf['net'].get('port', None), int), 'Incorrect key \'net\'->\'port\' in config file \'%s\'' % filepath
-    assert isinstance(conf['net'].get('app_name', None), str), 'Incorrect key \'net\'->\'app_name\' in config file \'%s\'' % filepath
+    conf["net"].setdefault("app_name", "")
+    conf["net"].setdefault("session_time_out", 600)
+    assert isinstance(conf["net"].get("port", None), int), (
+        "Incorrect key 'net'->'port' in config file '%s'" % filepath
+    )
+    assert isinstance(conf["net"].get("app_name", None), str), (
+        "Incorrect key 'net'->'app_name' in config file '%s'" % filepath
+    )
 
     # check modules
-    for module in ['nlu', 'dst', 'policy', 'nlg']:
-        conf[module] = {key: info for (key, info) in conf[module].items() if info.get('enable', True)}
-        assert conf[module], '\'%s\' module can not be empty in config file \'%s\'' % (module, filepath)
+    for module in ["nlu", "dst", "policy", "nlg"]:
+        conf[module] = {
+            key: info
+            for (key, info) in conf[module].items()
+            if info.get("enable", True)
+        }
+        assert conf[module], "'%s' module can not be empty in config file '%s'" % (
+            module,
+            filepath,
+        )
 
         # check every model
         for model in conf[module].keys():
-            assert isinstance(conf[module][model], dict), 'Incorrect type for \'%s\'->\'%s\' in config file \'%s\'' % (
-            module, model, filepath)
+            assert isinstance(
+                conf[module][model], dict
+            ), "Incorrect type for '%s'->'%s' in config file '%s'" % (
+                module,
+                model,
+                filepath,
+            )
             # set default
-            conf[module][model].setdefault('ini_params', {})
-            conf[module][model].setdefault('model_name', model)
-            conf[module][model].setdefault('max_core', 1)
-            conf[module][model].setdefault('preload', True)
-            conf[module][model]['max_core'] = 1 if conf[module][model]['max_core'] < 1 else conf[module][model]['max_core']
-            assert isinstance(conf[module][model].get("class_path", None), str), \
-                'Incorrect type for \'%s\'->\'%s\'->\'class_path\' in config file \'%s\'' % (module, model, filepath)
-            assert isinstance(conf[module][model].get("data_set", None), str), \
-                'Incorrect type for \'%s\'->\'%s\'->\'data_set\' in config file \'%s\'' % (module, model, filepath)
+            conf[module][model].setdefault("ini_params", {})
+            conf[module][model].setdefault("model_name", model)
+            conf[module][model].setdefault("max_core", 1)
+            conf[module][model].setdefault("preload", True)
+            conf[module][model]["max_core"] = (
+                1
+                if conf[module][model]["max_core"] < 1
+                else conf[module][model]["max_core"]
+            )
+            assert isinstance(
+                conf[module][model].get("class_path", None), str
+            ), "Incorrect type for '%s'->'%s'->'class_path' in config file '%s'" % (
+                module,
+                model,
+                filepath,
+            )
+            assert isinstance(
+                conf[module][model].get("data_set", None), str
+            ), "Incorrect type for '%s'->'%s'->'data_set' in config file '%s'" % (
+                module,
+                model,
+                filepath,
+            )
 
     return conf
 
@@ -111,8 +146,8 @@ def map_class(cls_path: str):
                             E.g  `convlab2.nlu.svm.camrest.nlu.SVMNLU`
     :return: class
     """
-    pkgs = cls_path.split('.')
-    cls = __import__('.'.join(pkgs[:-1]))
+    pkgs = cls_path.split(".")
+    cls = __import__(".".join(pkgs[:-1]))
     for pkg in pkgs[1:]:
         cls = getattr(cls, pkg)
     return cls
@@ -129,53 +164,64 @@ def get_config(filepath: str = None) -> dict:
     conf = load_config_file(filepath)
 
     # add project root dir
-    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
+    sys.path.append(
+        os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
+    )
 
     # reflect class
     from convlab2.util.module import Module
+
     # NLU
     from convlab2.nlu import NLU
-    for (model, infos) in conf['nlu'].items():
-        cls_path = infos.get('class_path', '')
+
+    for (model, infos) in conf["nlu"].items():
+        cls_path = infos.get("class_path", "")
         cls = map_class(cls_path)
-        assert issubclass(cls, NLU), '\'%s\' is not a %s class' % (cls_path, 'nlu')
-        assert issubclass(cls, Module), '\'%s\' is not a %s class' % (cls_path, 'Module')
-        conf['nlu'][model]['class'] = cls
+        assert issubclass(cls, NLU), "'%s' is not a %s class" % (cls_path, "nlu")
+        assert issubclass(cls, Module), "'%s' is not a %s class" % (cls_path, "Module")
+        conf["nlu"][model]["class"] = cls
 
     # DST
     from convlab2.dst import DST
-    for (model, infos) in conf['dst'].items():
-        cls_path = infos.get('class_path', '')
+
+    for (model, infos) in conf["dst"].items():
+        cls_path = infos.get("class_path", "")
         cls = map_class(cls_path)
-        assert issubclass(cls, DST), '\'%s\' is not a %s class' % (cls_path, 'dst')
-        assert issubclass(cls, Module), '\'%s\' is not a %s class' % (cls_path, 'Module')
-        conf['dst'][model]['class'] = cls
+        assert issubclass(cls, DST), "'%s' is not a %s class" % (cls_path, "dst")
+        assert issubclass(cls, Module), "'%s' is not a %s class" % (cls_path, "Module")
+        conf["dst"][model]["class"] = cls
 
     # Policy
     from convlab2.policy import Policy
-    for (model, infos) in conf['policy'].items():
-        cls_path = infos.get('class_path', '')
+
+    for (model, infos) in conf["policy"].items():
+        cls_path = infos.get("class_path", "")
         cls = map_class(cls_path)
-        assert issubclass(cls, Policy), '\'%s\' is not a %s class' % (cls_path, 'policy')
-        assert issubclass(cls, Module), '\'%s\' is not a %s class' % (cls_path, 'Module')
-        conf['policy'][model]['class'] = cls
+        assert issubclass(cls, Policy), "'%s' is not a %s class" % (cls_path, "policy")
+        assert issubclass(cls, Module), "'%s' is not a %s class" % (cls_path, "Module")
+        conf["policy"][model]["class"] = cls
 
     # NLG
     from convlab2.nlg import NLG
-    for (model, infos) in conf['nlg'].items():
-        cls_path = infos.get('class_path', '')
+
+    for (model, infos) in conf["nlg"].items():
+        cls_path = infos.get("class_path", "")
         cls = map_class(cls_path)
-        assert issubclass(cls, NLG), '\'%s\' is not a %s class' % (cls_path, 'nlg')
-        assert issubclass(cls, Module), '\'%s\' is not a %s class' % (cls_path, 'Module')
-        conf['nlg'][model]['class'] = cls
+        assert issubclass(cls, NLG), "'%s' is not a %s class" % (cls_path, "nlg")
+        assert issubclass(cls, Module), "'%s' is not a %s class" % (cls_path, "Module")
+        conf["nlg"][model]["class"] = cls
 
     return conf
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # test
     cfg = get_config()
-    nlu_mod = cfg['nlu']['svm-cam']['class'](**cfg['nlu']['svm-cam']['ini_params'])
-    dst_mod = cfg['dst']['rule-cam']['class'](**cfg['dst']['rule-cam']['ini_params'])
-    plc_mod = cfg['policy']['mle-cam']['class'](**cfg['policy']['mle-cam']['ini_params'])
-    nlg_mod = cfg['nlg']['tmp-cam-usr-manual']['class'](**cfg['nlg']['tmp-cam-usr-manual']['ini_params'])
+    nlu_mod = cfg["nlu"]["svm-cam"]["class"](**cfg["nlu"]["svm-cam"]["ini_params"])
+    dst_mod = cfg["dst"]["rule-cam"]["class"](**cfg["dst"]["rule-cam"]["ini_params"])
+    plc_mod = cfg["policy"]["mle-cam"]["class"](
+        **cfg["policy"]["mle-cam"]["ini_params"]
+    )
+    nlg_mod = cfg["nlg"]["tmp-cam-usr-manual"]["class"](
+        **cfg["nlg"]["tmp-cam-usr-manual"]["ini_params"]
+    )

@@ -202,37 +202,37 @@ descriptions = {
         "record.player": "record of the player",
         "name.non_player": "name of non-palyer such as the manager, coach",
         "venue": "venue of the match take place",
-    }
+    },
 }
 
 
 def normalize_domain_name(domain):
-    if domain == 'auto':
-        return 'auto_repair'
-    elif domain == 'pizza':
-        return 'pizza_ordering'
-    elif domain == 'coffee':
-        return 'coffee_ordering'
-    elif domain == 'uber':
-        return 'uber_lyft'
-    elif domain == 'restaurant':
-        return 'restaurant_reservation'
-    elif domain == 'movie':
-        return 'movie_ticket'
-    elif domain == 'flights':
-        return 'flights'
-    elif domain == 'food-ordering':
-        return 'food_order'
-    elif domain == 'hotels':
-        return 'hotel'
-    elif domain == 'movies':
-        return 'movie'
-    elif domain == 'music':
-        return 'music'
-    elif domain == 'restaurant-search':
-        return 'restaurant'
-    elif domain == 'sports':
-        return 'sport'
+    if domain == "auto":
+        return "auto_repair"
+    elif domain == "pizza":
+        return "pizza_ordering"
+    elif domain == "coffee":
+        return "coffee_ordering"
+    elif domain == "uber":
+        return "uber_lyft"
+    elif domain == "restaurant":
+        return "restaurant_reservation"
+    elif domain == "movie":
+        return "movie_ticket"
+    elif domain == "flights":
+        return "flights"
+    elif domain == "food-ordering":
+        return "food_order"
+    elif domain == "hotels":
+        return "hotel"
+    elif domain == "movies":
+        return "movie"
+    elif domain == "music":
+        return "music"
+    elif domain == "restaurant-search":
+        return "restaurant"
+    elif domain == "sports":
+        return "sport"
     assert 0
 
 
@@ -241,11 +241,11 @@ def format_turns(ori_turns):
     previous_speaker = None
     utt_idx = 0
     for i, turn in enumerate(ori_turns):
-        speaker = 'system' if turn['speaker'] == 'ASSISTANT' else 'user'
-        turn['speaker'] = speaker
-        if utt_idx == 0 and speaker == 'system':
+        speaker = "system" if turn["speaker"] == "ASSISTANT" else "user"
+        turn["speaker"] = speaker
+        if utt_idx == 0 and speaker == "system":
             continue
-        if turn['text'] == '(deleted)':
+        if turn["text"] == "(deleted)":
             continue
         if not previous_speaker:
             assert speaker != previous_speaker
@@ -259,66 +259,76 @@ def format_turns(ori_turns):
             # if ori_turns[i-1]['text'] == turn['text']:
             #     # skip repeat turn
             #     continue
-            if turn['text'] in ori_turns[i-1]['text']:
+            if turn["text"] in ori_turns[i - 1]["text"]:
                 continue
-            index_shift = len(last_turn['text']) + 1
-            last_turn['text'] += ' '+turn['text']
-            if 'segments' in turn:
-                last_turn.setdefault('segments', [])
-                for segment in turn['segments']:
-                    segment['start_index'] += index_shift
-                    segment['end_index'] += index_shift
-                last_turn['segments'] += turn['segments']
-    if new_turns and new_turns[-1]['speaker'] == 'system':
+            index_shift = len(last_turn["text"]) + 1
+            last_turn["text"] += " " + turn["text"]
+            if "segments" in turn:
+                last_turn.setdefault("segments", [])
+                for segment in turn["segments"]:
+                    segment["start_index"] += index_shift
+                    segment["end_index"] += index_shift
+                last_turn["segments"] += turn["segments"]
+    if new_turns and new_turns[-1]["speaker"] == "system":
         new_turns = new_turns[:-1]
     return new_turns
 
 
 def log_ontology(acts, ontology, ori_ontology):
     for item in acts:
-        intent, domain, slot, value = item['intent'], item['domain'], item['slot'], item['value']
-        if domain not in ontology['domains']:
-            ontology['domains'][domain] = {'description': "", 'slots': {}}
-        if slot not in ontology['domains'][domain]['slots']:
-            ontology['domains'][domain]['slots'][slot] = {
-                'description': '',
-                'is_categorical': False,
-                'possible_values': [],
-                'count': 1
+        intent, domain, slot, value = (
+            item["intent"],
+            item["domain"],
+            item["slot"],
+            item["value"],
+        )
+        if domain not in ontology["domains"]:
+            ontology["domains"][domain] = {"description": "", "slots": {}}
+        if slot not in ontology["domains"][domain]["slots"]:
+            ontology["domains"][domain]["slots"][slot] = {
+                "description": "",
+                "is_categorical": False,
+                "possible_values": [],
+                "count": 1,
             }
         else:
-            ontology['domains'][domain]['slots'][slot]['count'] += 1
-        ontology['domains'][domain]['slots'][slot]['in original ontology'] = slot in ori_ontology[domain]
-        if intent is not None and intent not in ontology['intents']:
-            ontology['intents'][intent] = {
-                "description": ''
-            }
+            ontology["domains"][domain]["slots"][slot]["count"] += 1
+        ontology["domains"][domain]["slots"][slot]["in original ontology"] = (
+            slot in ori_ontology[domain]
+        )
+        if intent is not None and intent not in ontology["intents"]:
+            ontology["intents"][intent] = {"description": ""}
 
 
 def preprocess():
     self_dir = os.path.dirname(os.path.abspath(__file__))
     processed_dialogue = []
-    ontology = {'domains': {},
-                'intents': {},
-                'binary_dialogue_act': [],
-                'state': {}}
-    original_zipped_path = os.path.join(self_dir, 'original_data.zip')
-    new_dir = os.path.join(self_dir, 'original_data')
-    if not os.path.exists(os.path.join(self_dir, 'data.zip')) or not os.path.exists(os.path.join(self_dir, 'ontology.json')):
-        print('unzip to', new_dir)
-        print('This may take several minutes')
-        archive = zipfile.ZipFile(original_zipped_path, 'r')
+    ontology = {"domains": {}, "intents": {}, "binary_dialogue_act": [], "state": {}}
+    original_zipped_path = os.path.join(self_dir, "original_data.zip")
+    new_dir = os.path.join(self_dir, "original_data")
+    if not os.path.exists(os.path.join(self_dir, "data.zip")) or not os.path.exists(
+        os.path.join(self_dir, "ontology.json")
+    ):
+        print("unzip to", new_dir)
+        print("This may take several minutes")
+        archive = zipfile.ZipFile(original_zipped_path, "r")
         archive.extractall(self_dir)
         files = [
-            ('TM-1-2019/woz-dialogs.json', 'TM-1-2019/ontology.json'),
-            ('TM-1-2019/self-dialogs.json', 'TM-1-2019/ontology.json'),
-            ('TM-2-2020/data/flights.json', 'TM-2-2020/ontology/flights.json'),
-            ('TM-2-2020/data/food-ordering.json', 'TM-2-2020/ontology/food-ordering.json'),
-            ('TM-2-2020/data/hotels.json', 'TM-2-2020/ontology/hotels.json'),
-            ('TM-2-2020/data/movies.json', 'TM-2-2020/ontology/movies.json'),
-            ('TM-2-2020/data/music.json', 'TM-2-2020/ontology/music.json'),
-            ('TM-2-2020/data/restaurant-search.json', 'TM-2-2020/ontology/restaurant-search.json'),
-            ('TM-2-2020/data/sports.json', 'TM-2-2020/ontology/sports.json')
+            ("TM-1-2019/woz-dialogs.json", "TM-1-2019/ontology.json"),
+            ("TM-1-2019/self-dialogs.json", "TM-1-2019/ontology.json"),
+            ("TM-2-2020/data/flights.json", "TM-2-2020/ontology/flights.json"),
+            (
+                "TM-2-2020/data/food-ordering.json",
+                "TM-2-2020/ontology/food-ordering.json",
+            ),
+            ("TM-2-2020/data/hotels.json", "TM-2-2020/ontology/hotels.json"),
+            ("TM-2-2020/data/movies.json", "TM-2-2020/ontology/movies.json"),
+            ("TM-2-2020/data/music.json", "TM-2-2020/ontology/music.json"),
+            (
+                "TM-2-2020/data/restaurant-search.json",
+                "TM-2-2020/ontology/restaurant-search.json",
+            ),
+            ("TM-2-2020/data/sports.json", "TM-2-2020/ontology/sports.json"),
         ]
         idx_count = 1
         total = 0
@@ -326,72 +336,88 @@ def preprocess():
         for filename, ontology_filename in files:
             data = json.load(open(os.path.join(new_dir, filename)))
             ori_ontology = {}
-            if 'TM-1' in filename:
-                for domain, item in json.load(open(os.path.join(new_dir, ontology_filename))).items():
+            if "TM-1" in filename:
+                for domain, item in json.load(
+                    open(os.path.join(new_dir, ontology_filename))
+                ).items():
                     ori_ontology[item["id"]] = {}
                     for slot in item["required"] + item["optional"]:
                         ori_ontology[item["id"]][slot] = 0
             else:
-                domain = normalize_domain_name(filename.split('/')[-1].split('.')[0])
+                domain = normalize_domain_name(filename.split("/")[-1].split(".")[0])
                 ori_ontology[domain] = {}
-                for _, item in json.load(open(os.path.join(new_dir, ontology_filename))).items():
+                for _, item in json.load(
+                    open(os.path.join(new_dir, ontology_filename))
+                ).items():
                     for group in item:
                         for anno in group["annotations"]:
                             ori_ontology[domain][anno] = 0
             for d in ori_ontology:
-                if d not in ontology['domains']:
-                    ontology['domains'][d] = {'description': descriptions[d][d], 'slots': {}}
+                if d not in ontology["domains"]:
+                    ontology["domains"][d] = {
+                        "description": descriptions[d][d],
+                        "slots": {},
+                    }
                 for s in ori_ontology[d]:
-                    if s not in ontology['domains'][d]['slots']:
-                        ontology['domains'][d]['slots'][s] = {
-                            'description': descriptions[d][s],
-                            'is_categorical': False,
-                            'possible_values': [],
-                            'count': 0,
-                            'in original ontology': True
+                    if s not in ontology["domains"][d]["slots"]:
+                        ontology["domains"][d]["slots"][s] = {
+                            "description": descriptions[d][s],
+                            "is_categorical": False,
+                            "possible_values": [],
+                            "count": 0,
+                            "in original ontology": True,
                         }
             # pprint(ori_ontology)
-            for ori_sess in tqdm(data, desc='processing taskmaster-{}'.format(filename)):
+            for ori_sess in tqdm(
+                data, desc="processing taskmaster-{}".format(filename)
+            ):
                 total += 1
-                turns = format_turns(ori_sess['utterances'])
+                turns = format_turns(ori_sess["utterances"])
                 if not turns:
                     continue
-                if 'TM-2' in filename:
-                    dial_domain = normalize_domain_name(filename.split('/')[-1].split('.')[0])
+                if "TM-2" in filename:
+                    dial_domain = normalize_domain_name(
+                        filename.split("/")[-1].split(".")[0]
+                    )
                 else:
-                    dial_domain = normalize_domain_name(ori_sess['instruction_id'].split('-', 1)[0])
+                    dial_domain = normalize_domain_name(
+                        ori_sess["instruction_id"].split("-", 1)[0]
+                    )
                 dialogue = {
                     "dataset": "taskmaster",
                     "data_split": "train",
-                    "dialogue_id": 'taskmaster_' + str(idx_count),
-                    "original_id": ori_sess['conversation_id'],
-                    "instruction_id": ori_sess['instruction_id'],
-                    "domains": [
-                        dial_domain
-                    ],
-                    "turns": []
+                    "dialogue_id": "taskmaster_" + str(idx_count),
+                    "original_id": ori_sess["conversation_id"],
+                    "instruction_id": ori_sess["instruction_id"],
+                    "domains": [dial_domain],
+                    "turns": [],
                 }
                 idx_count += 1
-                assert turns[0]['speaker'] == 'user' and turns[-1]['speaker'] == 'user', print(turns)
+                assert (
+                    turns[0]["speaker"] == "user" and turns[-1]["speaker"] == "user"
+                ), print(turns)
                 for utt_idx, uttr in enumerate(turns):
-                    speaker = uttr['speaker']
+                    speaker = uttr["speaker"]
                     turn = {
-                        'speaker': speaker,
-                        'utterance': uttr['text'],
-                        'utt_idx': utt_idx,
-                        'dialogue_act': {
-                            'binary': [],
-                            'categorical': [],
-                            'non-categorical': [],
+                        "speaker": speaker,
+                        "utterance": uttr["text"],
+                        "utt_idx": utt_idx,
+                        "dialogue_act": {
+                            "binary": [],
+                            "categorical": [],
+                            "non-categorical": [],
                         },
                     }
-                    if speaker == 'user':
-                        turn['state'] = {}
-                        turn['state_update'] = {'categorical': [], 'non-categorical': []}
+                    if speaker == "user":
+                        turn["state"] = {}
+                        turn["state_update"] = {
+                            "categorical": [],
+                            "non-categorical": [],
+                        }
 
-                    if 'segments' in uttr:
-                        for segment in uttr['segments']:
-                            for item in segment['annotations']:
+                    if "segments" in uttr:
+                        for segment in uttr["segments"]:
+                            for item in segment["annotations"]:
                                 # domain = item['name'].split('.', 1)[0]
                                 domain = dial_domain
 
@@ -401,8 +427,8 @@ def preprocess():
 
                                 # if item['name'].split('.', 1)[0] != domain:
                                 #     print(domain, item['name'].split('.', 1), dialogue["original_id"])
-                                slot = item['name'].split('.', 1)[-1]
-                                if slot.endswith('.accept') or slot.endswith('.reject'):
+                                slot = item["name"].split(".", 1)[-1]
+                                if slot.endswith(".accept") or slot.endswith(".reject"):
                                     slot = slot[:-7]
                                 if slot not in ori_ontology[domain]:
                                     # print(domain, item['name'].split('.', 1), dialogue["original_id"])
@@ -413,33 +439,49 @@ def preprocess():
                                 #     print(domain, item['name'].split('.', 1), dialogue["original_id"])
                                 # assert domain in ori_ontology, print(domain, item['name'].split('.', 1), dialogue["original_id"])
 
-                                if not segment['text']:
+                                if not segment["text"]:
                                     print(slot)
                                     print(segment)
                                     print()
-                                assert turn['utterance'][segment['start_index']:segment['end_index']] == segment['text']
-                                turn['dialogue_act']['non-categorical'].append({
-                                    'intent': 'inform',
-                                    'domain': domain,
-                                    'slot': slot,
-                                    'value': segment['text'].lower(),
-                                    'start': segment['start_index'],
-                                    'end': segment['end_index']
-                                })
-                        log_ontology(turn['dialogue_act']['non-categorical'], ontology, ori_ontology)
-                    dialogue['turns'].append(turn)
+                                assert (
+                                    turn["utterance"][
+                                        segment["start_index"] : segment["end_index"]
+                                    ]
+                                    == segment["text"]
+                                )
+                                turn["dialogue_act"]["non-categorical"].append(
+                                    {
+                                        "intent": "inform",
+                                        "domain": domain,
+                                        "slot": slot,
+                                        "value": segment["text"].lower(),
+                                        "start": segment["start_index"],
+                                        "end": segment["end_index"],
+                                    }
+                                )
+                        log_ontology(
+                            turn["dialogue_act"]["non-categorical"],
+                            ontology,
+                            ori_ontology,
+                        )
+                    dialogue["turns"].append(turn)
                 processed_dialogue.append(dialogue)
             # pprint(ori_ontology)
         # save ontology json
-        json.dump(ontology, open(os.path.join(self_dir, 'ontology.json'), 'w'), indent=2)
-        json.dump(processed_dialogue, open('data.json', 'w'), indent=2)
-        write_zipped_json(os.path.join(self_dir, 'data.zip'), 'data.json')
-        os.remove('data.json')
+        json.dump(
+            ontology, open(os.path.join(self_dir, "ontology.json"), "w"), indent=2
+        )
+        json.dump(processed_dialogue, open("data.json", "w"), indent=2)
+        write_zipped_json(os.path.join(self_dir, "data.zip"), "data.json")
+        os.remove("data.json")
     else:
         # read from file
-        processed_dialogue = read_zipped_json(os.path.join(self_dir, 'data.zip'), 'data.json')
-        ontology = json.load(open(os.path.join(self_dir, 'ontology.json')))
+        processed_dialogue = read_zipped_json(
+            os.path.join(self_dir, "data.zip"), "data.json"
+        )
+        ontology = json.load(open(os.path.join(self_dir, "ontology.json")))
     return processed_dialogue, ontology
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     preprocess()

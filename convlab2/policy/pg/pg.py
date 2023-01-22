@@ -13,35 +13,42 @@ from convlab2.util.file_util import cached_path
 import zipfile
 import sys
 
-root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+root_dir = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 sys.path.append(root_dir)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class PG(Policy):
-
-    def __init__(self, is_train=False, dataset='Multiwoz'):
-        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json'), 'r') as f:
+    def __init__(self, is_train=False, dataset="Multiwoz"):
+        with open(
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json"), "r"
+        ) as f:
             cfg = json.load(f)
-        self.save_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), cfg['save_dir'])
-        self.save_per_epoch = cfg['save_per_epoch']
-        self.update_round = cfg['update_round']
-        self.optim_batchsz = cfg['batchsz']
-        self.gamma = cfg['gamma']
+        self.save_dir = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), cfg["save_dir"]
+        )
+        self.save_per_epoch = cfg["save_per_epoch"]
+        self.update_round = cfg["update_round"]
+        self.optim_batchsz = cfg["batchsz"]
+        self.gamma = cfg["gamma"]
         self.is_train = is_train
         if is_train:
-            init_logging_handler(cfg['log_dir'])
+            init_logging_handler(cfg["log_dir"])
 
-        if dataset == 'Multiwoz':
-            voc_file = os.path.join(root_dir, 'data/multiwoz/sys_da_voc.txt')
-            voc_opp_file = os.path.join(root_dir, 'data/multiwoz/usr_da_voc.txt')
+        if dataset == "Multiwoz":
+            voc_file = os.path.join(root_dir, "data/multiwoz/sys_da_voc.txt")
+            voc_opp_file = os.path.join(root_dir, "data/multiwoz/usr_da_voc.txt")
             self.vector = MultiWozVector(voc_file, voc_opp_file)
-            self.policy = MultiDiscretePolicy(self.vector.state_dim, cfg['h_dim'], self.vector.da_dim).to(device=DEVICE)
+            self.policy = MultiDiscretePolicy(
+                self.vector.state_dim, cfg["h_dim"], self.vector.da_dim
+            ).to(device=DEVICE)
 
         # self.policy = MultiDiscretePolicy(self.vector.state_dim, cfg['h_dim'], self.vector.da_dim).to(device=DEVICE)
         if is_train:
-            self.policy_optim = optim.RMSprop(self.policy.parameters(), lr=cfg['lr'])
+            self.policy_optim = optim.RMSprop(self.policy.parameters(), lr=cfg["lr"])
 
     def predict(self, state):
         """
@@ -54,7 +61,7 @@ class PG(Policy):
         s_vec = torch.Tensor(self.vector.state_vectorize(state))
         a = self.policy.select_action(s_vec.to(device=DEVICE), self.is_train).cpu()
         action = self.vector.action_devectorize(a.numpy())
-        state['system_action'] = action
+        state["system_action"] = action
 
         return action
 
@@ -103,12 +110,14 @@ class PG(Policy):
             # 2. get mini-batch for optimizing
             optim_chunk_num = int(np.ceil(batchsz / self.optim_batchsz))
             # chunk the optim_batch for total batch
-            v_target_shuf, s_shuf, a_shuf = torch.chunk(v_target_shuf, optim_chunk_num), \
-                                            torch.chunk(s_shuf, optim_chunk_num), \
-                                            torch.chunk(a_shuf, optim_chunk_num)
+            v_target_shuf, s_shuf, a_shuf = (
+                torch.chunk(v_target_shuf, optim_chunk_num),
+                torch.chunk(s_shuf, optim_chunk_num),
+                torch.chunk(a_shuf, optim_chunk_num),
+            )
 
             # 3. iterate all mini-batch to optimize
-            policy_loss = 0.
+            policy_loss = 0.0
             for v_target_b, s_b, a_b in zip(v_target_shuf, s_shuf, a_shuf):
                 # print('optim:', batchsz, v_target_b.size(), A_sa_b.size(), s_b.size(), a_b.size(), log_pi_old_sa_b.size())
 
@@ -121,7 +130,7 @@ class PG(Policy):
                 # [b, 1] => [b]
                 # this is element-wise comparing.
                 # we add negative symbol to convert gradient ascent to gradient descent
-                surrogate = - (log_pi_sa * v_target_b).mean()
+                surrogate = -(log_pi_sa * v_target_b).mean()
                 policy_loss += surrogate.item()
 
                 # backprop
@@ -135,7 +144,11 @@ class PG(Policy):
                 # self.lock.release() # release lock
 
             policy_loss /= optim_chunk_num
-            logging.debug('<<dialog policy pg>> epoch {}, iteration {}, policy, loss {}'.format(epoch, i, policy_loss))
+            logging.debug(
+                "<<dialog policy pg>> epoch {}, iteration {}, policy, loss {}".format(
+                    epoch, i, policy_loss
+                )
+            )
 
         if (epoch + 1) % self.save_per_epoch == 0:
             self.save(self.save_dir, epoch)
@@ -144,23 +157,33 @@ class PG(Policy):
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-        torch.save(self.policy.state_dict(), directory + '/' + str(epoch) + '_pg.pol.mdl')
+        torch.save(
+            self.policy.state_dict(), directory + "/" + str(epoch) + "_pg.pol.mdl"
+        )
 
-        logging.info('<<dialog policy>> epoch {}: saved network to mdl'.format(epoch))
+        logging.info("<<dialog policy>> epoch {}: saved network to mdl".format(epoch))
 
     def load(self, filename):
         policy_mdl_candidates = [
             filename,
-            filename + '.pol.mdl',
-            filename + '_pg.pol.mdl',
+            filename + ".pol.mdl",
+            filename + "_pg.pol.mdl",
             os.path.join(os.path.dirname(os.path.abspath(__file__)), filename),
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), filename + '.pol.mdl'),
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), filename + '_pg.pol.mdl')
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), filename + ".pol.mdl"
+            ),
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), filename + "_pg.pol.mdl"
+            ),
         ]
         for policy_mdl in policy_mdl_candidates:
             if os.path.exists(policy_mdl):
                 self.policy.load_state_dict(torch.load(policy_mdl, map_location=DEVICE))
-                logging.info('<<dialog policy>> loaded checkpoint from file: {}'.format(policy_mdl))
+                logging.info(
+                    "<<dialog policy>> loaded checkpoint from file: {}".format(
+                        policy_mdl
+                    )
+                )
                 break
 
     def load_from_pretrained(self, archive_file, model_file, filename):
@@ -168,24 +191,32 @@ class PG(Policy):
             if not model_file:
                 raise Exception("No model for PG Policy is specified!")
             archive_file = cached_path(model_file)
-        model_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'save')
+        model_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "save")
         if not os.path.exists(model_dir):
             os.mkdir(model_dir)
-        if not os.path.exists(os.path.join(model_dir, 'best_pg.pol.mdl')):
-            archive = zipfile.ZipFile(archive_file, 'r')
+        if not os.path.exists(os.path.join(model_dir, "best_pg.pol.mdl")):
+            archive = zipfile.ZipFile(archive_file, "r")
             archive.extractall(model_dir)
 
-        policy_mdl = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename + '_pg.pol.mdl')
+        policy_mdl = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), filename + "_pg.pol.mdl"
+        )
         if os.path.exists(policy_mdl):
             self.policy.load_state_dict(torch.load(policy_mdl, map_location=DEVICE))
-            logging.info('<<dialog policy>> loaded checkpoint from file: {}'.format(policy_mdl))
+            logging.info(
+                "<<dialog policy>> loaded checkpoint from file: {}".format(policy_mdl)
+            )
 
     @classmethod
-    def from_pretrained(cls,
-                        archive_file="",
-                        model_file="https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/pg_policy_multiwoz.zip"):
-        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json'), 'r') as f:
+    def from_pretrained(
+        cls,
+        archive_file="",
+        model_file="https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/pg_policy_multiwoz.zip",
+    ):
+        with open(
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json"), "r"
+        ) as f:
             cfg = json.load(f)
         model = cls()
-        model.load_from_pretrained(archive_file, model_file, cfg['load'])
+        model.load_from_pretrained(archive_file, model_file, cfg["load"])
         return model

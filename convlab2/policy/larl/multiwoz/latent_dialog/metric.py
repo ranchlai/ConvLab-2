@@ -4,6 +4,7 @@ from collections import OrderedDict
 
 class NumericMetric(object):
     """Base class for a numeric metric."""
+
     def __init__(self):
         self.k = 0
         self.n = 0
@@ -22,18 +23,21 @@ class NumericMetric(object):
 
 class AverageMetric(NumericMetric):
     """Average."""
+
     def show(self):
-        return '%.2f' % (1. * self.value())
+        return "%.2f" % (1.0 * self.value())
 
 
 class PercentageMetric(NumericMetric):
     """Percentage."""
+
     def show(self):
-        return '%2.2f%%' % (100. * self.value())
+        return "%2.2f%%" % (100.0 * self.value())
 
 
 class TimeMetric(object):
     """Time based metric."""
+
     def __init__(self):
         self.t = 0
         self.n = 0
@@ -50,11 +54,12 @@ class TimeMetric(object):
         return 1.0 * self.t / self.n
 
     def show(self):
-        return '%.3fs' % (1. * self.value())
+        return "%.3fs" % (1.0 * self.value())
 
 
 class UniquenessMetric(object):
     """Metric that evaluates the number of unique sentences."""
+
     def __init__(self):
         self.seen = set()
 
@@ -62,7 +67,7 @@ class UniquenessMetric(object):
         pass
 
     def record(self, sen):
-        self.seen.add(' '.join(sen))
+        self.seen.add(" ".join(sen))
 
     def value(self):
         return len(self.seen)
@@ -73,6 +78,7 @@ class UniquenessMetric(object):
 
 class TextMetric(object):
     """Text based metric."""
+
     def __init__(self, text):
         self.text = text
         self.k = 0
@@ -83,14 +89,15 @@ class TextMetric(object):
 
     def value(self):
         self.n = max(1, self.n)
-        return 1. * self.k / self.n
+        return 1.0 * self.k / self.n
 
     def show(self):
-        return '%.2f' % (1. * self.value())
+        return "%.2f" % (1.0 * self.value())
 
 
 class NGramMetric(TextMetric):
     """Metric that evaluates n grams."""
+
     def __init__(self, text, ngram=-1):
         super(NGramMetric, self).__init__(text)
         self.ngram = ngram
@@ -99,13 +106,14 @@ class NGramMetric(TextMetric):
         n = len(sen) if self.ngram == -1 else self.ngram
         for i in range(len(sen) - n + 1):
             self.n += 1
-            target = ' '.join(sen[i:i + n])
+            target = " ".join(sen[i : i + n])
             if self.text.find(target) != -1:
                 self.k += 1
 
 
 class MetricsContainer(object):
     """A container that stores and updates several metrics."""
+
     def __init__(self):
         self.metrics = OrderedDict()
 
@@ -142,7 +150,7 @@ class MetricsContainer(object):
         return self.metrics[name].value()
 
     def show(self):
-        return ' '.join(['%s=%s' % (k, v.show()) for k, v in self.metrics.iteritems()])
+        return " ".join(["%s=%s" % (k, v.show()) for k, v in self.metrics.iteritems()])
 
     def dict(self):
         d = OrderedDict()

@@ -7,7 +7,7 @@ class NLU(Module):
 
     def predict(self, utterance, context=list()):
         """Predict the dialog act of a natural language utterance.
-        
+
         Args:
             utterance (str):
                 A natural language utterance.

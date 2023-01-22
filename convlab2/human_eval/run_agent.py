@@ -28,15 +28,17 @@ app = Flask(__name__)
 # sys_nlu = BERTNLU()
 sys_nlu = MILU()
 sys_dst = RuleDST()
-sys_policy = RulePolicy(character='sys')
+sys_policy = RulePolicy(character="sys")
 sys_nlg = TemplateNLG(is_user=False)
 
-agent = PipelineAgent(sys_nlu,sys_dst,sys_policy, sys_nlg,'sys')
+agent = PipelineAgent(sys_nlu, sys_dst, sys_policy, sys_nlg, "sys")
 
-print(agent.response('I am looking for a hotel'))
+print(agent.response("I am looking for a hotel"))
 
 global_counter = 0
-@app.route('/', methods=['GET', 'POST'])
+
+
+@app.route("/", methods=["GET", "POST"])
 def process():
     global global_counter
     try:
@@ -48,7 +50,7 @@ def process():
     rgi_queue.put((global_counter, in_request))
     # rgi_queue.join()
     output = rgo_queue.get()
-    print(output['response'])
+    print(output["response"])
     rgo_queue.task_done()
     # return jsonify({'response': response})
     return jsonify(output)
@@ -59,41 +61,47 @@ def generate_response(in_queue, out_queue):
         # pop input
         # last_action = 'null'
         _, in_request = in_queue.get()
-        obs = in_request['input']
-        if in_request['agent_state'] == {}:
+        obs = in_request["input"]
+        if in_request["agent_state"] == {}:
             agent.init_session()
         else:
             # encoded_state, dst_state, last_action = in_request['agent_state']
             # agent.dst.state = copy.deepcopy(dst_state)
-            agent.state_replace(in_request['agent_state'])
+            agent.state_replace(in_request["agent_state"])
         try:
             action = agent.response(obs)
-            print(f'obs:{obs}; action:{action}')
+            print(f"obs:{obs}; action:{action}")
             # dst_state = copy.deepcopy(agent.dst.state)
             # encoded_state = None
-            in_request['agent_state'] = agent.state_return()
+            in_request["agent_state"] = agent.state_return()
         except Exception as e:
-            print('agent error', e)
+            print("agent error", e)
 
         try:
-            if action == '':
-                response = 'Sorry I do not understand, can you paraphrase?'
+            if action == "":
+                response = "Sorry I do not understand, can you paraphrase?"
             else:
                 response = action
         except Exception as e:
-            print('Response generation error', e)
-            response = 'What did you say?'
+            print("Response generation error", e)
+            response = "What did you say?"
 
         # last_action = action
         # out_queue.put({'response': response, 'agent_state': (encoded_state, dst_state, last_action)})
-        out_queue.put({'response': response, 'agent_state': in_request['agent_state']})
+        out_queue.put({"response": response, "agent_state": in_request["agent_state"]})
         in_queue.task_done()
         out_queue.join()
 
 
-if __name__ == '__main__':
-    worker = Thread(target=generate_response, args=(rgi_queue, rgo_queue,))
+if __name__ == "__main__":
+    worker = Thread(
+        target=generate_response,
+        args=(
+            rgi_queue,
+            rgo_queue,
+        ),
+    )
     worker.setDaemon(True)
     worker.start()
 
-    app.run(host='0.0.0.0', port=10004)
+    app.run(host="0.0.0.0", port=10004)

@@ -1,4 +1,3 @@
-
 import random
 import string
 import re
@@ -10,40 +9,148 @@ from random import shuffle
 random.seed(1)
 
 # stop words list
-stop_words = ['i', 'me', 'my', 'myself', 'we', 'our',
-              'ours', 'ourselves', 'you', 'your', 'yours',
-              'yourself', 'yourselves', 'he', 'him', 'his',
-              'himself', 'she', 'her', 'hers', 'herself',
-              'it', 'its', 'itself', 'they', 'them', 'their',
-              'theirs', 'themselves', 'what', 'which', 'who',
-              'whom', 'this', 'that', 'these', 'those', 'am',
-              'is', 'are', 'was', 'were', 'be', 'been', 'being',
-              'have', 'has', 'had', 'having', 'do', 'does', 'did',
-              'doing', 'a', 'an', 'the', 'and', 'but', 'if', 'or',
-              'because', 'as', 'until', 'while', 'of', 'at',
-              'by', 'for', 'with', 'about', 'against', 'between',
-              'into', 'through', 'during', 'before', 'after',
-              'above', 'below', 'to', 'from', 'up', 'down', 'in',
-              'out', 'on', 'off', 'over', 'under', 'again',
-              'further', 'then', 'once', 'here', 'there', 'when',
-              'where', 'why', 'how', 'all', 'any', 'both', 'each',
-              'few', 'more', 'most', 'other', 'some', 'such', 'no',
-              'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too',
-              'very', 's', 't', 'can', 'will', 'just', 'don',
-              'should', 'now', '']
+stop_words = [
+    "i",
+    "me",
+    "my",
+    "myself",
+    "we",
+    "our",
+    "ours",
+    "ourselves",
+    "you",
+    "your",
+    "yours",
+    "yourself",
+    "yourselves",
+    "he",
+    "him",
+    "his",
+    "himself",
+    "she",
+    "her",
+    "hers",
+    "herself",
+    "it",
+    "its",
+    "itself",
+    "they",
+    "them",
+    "their",
+    "theirs",
+    "themselves",
+    "what",
+    "which",
+    "who",
+    "whom",
+    "this",
+    "that",
+    "these",
+    "those",
+    "am",
+    "is",
+    "are",
+    "was",
+    "were",
+    "be",
+    "been",
+    "being",
+    "have",
+    "has",
+    "had",
+    "having",
+    "do",
+    "does",
+    "did",
+    "doing",
+    "a",
+    "an",
+    "the",
+    "and",
+    "but",
+    "if",
+    "or",
+    "because",
+    "as",
+    "until",
+    "while",
+    "of",
+    "at",
+    "by",
+    "for",
+    "with",
+    "about",
+    "against",
+    "between",
+    "into",
+    "through",
+    "during",
+    "before",
+    "after",
+    "above",
+    "below",
+    "to",
+    "from",
+    "up",
+    "down",
+    "in",
+    "out",
+    "on",
+    "off",
+    "over",
+    "under",
+    "again",
+    "further",
+    "then",
+    "once",
+    "here",
+    "there",
+    "when",
+    "where",
+    "why",
+    "how",
+    "all",
+    "any",
+    "both",
+    "each",
+    "few",
+    "more",
+    "most",
+    "other",
+    "some",
+    "such",
+    "no",
+    "nor",
+    "not",
+    "only",
+    "own",
+    "same",
+    "so",
+    "than",
+    "too",
+    "very",
+    "s",
+    "t",
+    "can",
+    "will",
+    "just",
+    "don",
+    "should",
+    "now",
+    "",
+]
 stop_words = set(stop_words)
 
-ascii_lowercase_and_space = string.ascii_lowercase + ' '
-
+ascii_lowercase_and_space = string.ascii_lowercase + " "
 
 
 def get_only_chars(line):
     line = line.lower()
-    line = re.sub(r"[’']", '', line)
-    line = re.sub(r'[\t\n\-]', " ", line)  # replace hyphens with spaces
-    line = re.sub(r'[^a-z ]', ' ', line)
-    line = re.sub(' +', ' ', line)
-    return line.lstrip(' ')
+    line = re.sub(r"[’']", "", line)
+    line = re.sub(r"[\t\n\-]", " ", line)  # replace hyphens with spaces
+    line = re.sub(r"[^a-z ]", " ", line)
+    line = re.sub(" +", " ", line)
+    return line.lstrip(" ")
 
 
 ########################################################################
@@ -53,7 +160,7 @@ def get_only_chars(line):
 from nltk.corpus import wordnet
 
 
-def random_replacement(words, n, excluding_indexes: Optional[Sequence[int]]=None):
+def random_replacement(words, n, excluding_indexes: Optional[Sequence[int]] = None):
     """
     randomly replace n words with synonyms
 
@@ -105,8 +212,8 @@ def random_replacement(words, n, excluding_indexes: Optional[Sequence[int]]=None
         offset = 0
         for i, synonym_tokens in changes:
             i += offset
-            new_words[i:i+1] = synonym_tokens
-            indexes[i:i+1] = [None for _ in range(len(synonym_tokens))]
+            new_words[i : i + 1] = synonym_tokens
+            indexes[i : i + 1] = [None for _ in range(len(synonym_tokens))]
             offset += len(synonym_tokens) - 1
     return new_words, {v: i for i, v in enumerate(indexes) if v is not None}
 
@@ -124,7 +231,7 @@ def replacement(words, index: int):
             new_words[index] = synonym_tokens[0]
             return new_words, index, index, synonym_tokens
         else:
-            new_words[index: index+1] = synonym_tokens
+            new_words[index : index + 1] = synonym_tokens
             return new_words, index, index + len(synonym_tokens) - 1, synonym_tokens
     else:
         return None
@@ -136,7 +243,9 @@ def get_synonyms(word):
     for syn in wordnet.synsets(word):
         for l in syn.lemmas():
             synonym = l.name().replace("_", " ").replace("-", " ").lower()
-            synonym = "".join(char for char in synonym if char in ascii_lowercase_and_space).strip()
+            synonym = "".join(
+                char for char in synonym if char in ascii_lowercase_and_space
+            ).strip()
             if synonym:
                 synonyms.add(synonym)
     if word in synonyms:
@@ -149,7 +258,8 @@ def get_synonyms(word):
 # Randomly delete words from the sentence with probability p
 ########################################################################
 
-def random_deletion(words, p, excluding_indexes: Optional[Sequence[int]]=None):
+
+def random_deletion(words, p, excluding_indexes: Optional[Sequence[int]] = None):
     """
     remove each word with probability p.
 
@@ -194,7 +304,8 @@ def random_deletion(words, p, excluding_indexes: Optional[Sequence[int]]=None):
 # Randomly swap two words in the sentence n times
 ########################################################################
 
-def random_swap(words, n, excluding_indexes: Optional[Sequence[int]]=None):
+
+def random_swap(words, n, excluding_indexes: Optional[Sequence[int]] = None):
     """
     randomly swap n pairs of words
 
@@ -237,7 +348,8 @@ def swap_word(new_words, indexes, allow_indexes):
 # Randomly insert n words into the sentence
 ########################################################################
 
-def random_insertion(words, n, excluding_indexes: Optional[Sequence[int]]=None):
+
+def random_insertion(words, n, excluding_indexes: Optional[Sequence[int]] = None):
     """
     randomly insert n words.
     """
@@ -276,7 +388,9 @@ def add_word(new_words, indexes, forbidden):
         idx = random.randint(0, len(new_words) - 1)
         old_idx = indexes[idx]
         if old_idx is None or not forbidden[old_idx]:
-            random_synonym_tokens = [token for token in random_synonym.split() if token.strip()]
+            random_synonym_tokens = [
+                token for token in random_synonym.split() if token.strip()
+            ]
             # new_words.insert(idx, random_synonym)
             # indexes.insert(idx, None)
             new_words[idx:idx] = random_synonym_tokens
@@ -288,10 +402,19 @@ def add_word(new_words, indexes, forbidden):
 # main data augmentation function
 ########################################################################
 
-def eda(words, alpha_sr=0.1, alpha_ri=0.1, alpha_rs=0.1, p_rd=0.1, num_aug=9, excluding_indexes: Optional[Sequence[int]]=None) -> List[Tuple[list, dict]]:
+
+def eda(
+    words,
+    alpha_sr=0.1,
+    alpha_ri=0.1,
+    alpha_rs=0.1,
+    p_rd=0.1,
+    num_aug=9,
+    excluding_indexes: Optional[Sequence[int]] = None,
+) -> List[Tuple[list, dict]]:
     # sentence = get_only_chars(sentence)
     # words = sentence.split(' ')
-    words = [word for word in words if word is not '']
+    words = [word for word in words if word is not ""]
     num_words = len(words)
 
     augmented_sentences: List[Tuple[list, dict]] = []
@@ -339,6 +462,8 @@ def eda(words, alpha_sr=0.1, alpha_ri=0.1, alpha_rs=0.1, p_rd=0.1, num_aug=9, ex
         augmented_sentences = augmented_sentences[:num_aug]
     else:
         keep_prob = num_aug
-        augmented_sentences = [s for s in augmented_sentences if random.uniform(0, 1) < keep_prob]
+        augmented_sentences = [
+            s for s in augmented_sentences if random.uniform(0, 1) < keep_prob
+        ]
 
     return augmented_sentences

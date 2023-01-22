@@ -17,11 +17,11 @@ class IdentityConnector(nn.Module):
 class Bi2UniConnector(nn.Module):
     def __init__(self, rnn_cell, num_layer, hidden_size, output_size):
         super(Bi2UniConnector, self).__init__()
-        if rnn_cell == 'lstm':
-            self.fch = nn.Linear(hidden_size*2*num_layer, output_size)
-            self.fcc = nn.Linear(hidden_size*2*num_layer, output_size)
+        if rnn_cell == "lstm":
+            self.fch = nn.Linear(hidden_size * 2 * num_layer, output_size)
+            self.fcc = nn.Linear(hidden_size * 2 * num_layer, output_size)
         else:
-            self.fc = nn.Linear(hidden_size*2*num_layer, output_size)
+            self.fc = nn.Linear(hidden_size * 2 * num_layer, output_size)
 
         self.rnn_cell = rnn_cell
         self.hidden_size = hidden_size
@@ -31,21 +31,23 @@ class Bi2UniConnector(nn.Module):
         """
         :param hidden_state: [num_layer, batch_size, feat_size]
         :param inputs: [batch_size, feat_size]
-        :return: 
+        :return:
         """
-        if self.rnn_cell == 'lstm':
+        if self.rnn_cell == "lstm":
             h, c = hidden_state
             num_layer = h.size()[0]
             flat_h = h.transpose(0, 1).contiguous()
             flat_c = c.transpose(0, 1).contiguous()
-            new_h = self.fch(flat_h.view(-1, self.hidden_size*num_layer))
-            new_c = self.fch(flat_c.view(-1, self.hidden_size*num_layer))
-            return (new_h.view(1, -1, self.output_size),
-                    new_c.view(1, -1, self.output_size))
+            new_h = self.fch(flat_h.view(-1, self.hidden_size * num_layer))
+            new_c = self.fch(flat_c.view(-1, self.hidden_size * num_layer))
+            return (
+                new_h.view(1, -1, self.output_size),
+                new_c.view(1, -1, self.output_size),
+            )
         else:
             # FIXME fatal error here!
             num_layer = hidden_state.size()[0]
-            new_s = self.fc(hidden_state.view(-1, self.hidden_size*num_layer))
+            new_s = self.fc(hidden_state.view(-1, self.hidden_size * num_layer))
             new_s = new_s.view(1, -1, self.output_size)
             return new_s
 
@@ -78,7 +80,7 @@ class Hidden2Gaussian(nn.Module):
 
             mu_h, mu_c = self.mu_h(h), self.mu_c(c)
             logvar_h, logvar_c = self.logvar_h(h), self.logvar_c(c)
-            return mu_h+mu_c, logvar_h+logvar_c
+            return mu_h + mu_c, logvar_h + logvar_c
         else:
             # if inputs.dim() == 3:
             #    inputs = inputs.squeeze(0)
@@ -92,7 +94,7 @@ class Hidden2Discrete(nn.Module):
         super(Hidden2Discrete, self).__init__()
         self.y_size = y_size
         self.k_size = k_size
-        latent_size = self.k_size*self.y_size
+        latent_size = self.k_size * self.y_size
         if is_lstm:
             self.p_h = nn.Linear(input_size, latent_size, bias=has_bias)
 
@@ -153,13 +155,12 @@ class GumbelConnector(nn.Module):
         return sample
 
     def gumbel_softmax_sample(self, logits, temperature, use_gpu):
-        """ Draw a sample from the Gumbel-Softmax distribution"""
+        """Draw a sample from the Gumbel-Softmax distribution"""
         eps = self.sample_gumbel(logits, use_gpu)
         y = logits + eps
-        return F.softmax(y / temperature, dim=y.dim()-1)
+        return F.softmax(y / temperature, dim=y.dim() - 1)
 
-    def forward(self, logits, temperature=1.0, hard=False,
-                return_max_id=False):
+    def forward(self, logits, temperature=1.0, hard=False, return_max_id=False):
         """
         :param logits: [batch_size, n_class] unnormalized log-prob
         :param temperature: non-negative scalar
@@ -170,8 +171,7 @@ class GumbelConnector(nn.Module):
         y = self.gumbel_softmax_sample(logits, temperature, self.use_gpu)
         _, y_hard = th.max(y, dim=1, keepdim=True)
         if hard:
-            y_onehot = cast_type(
-                Variable(th.zeros(y.size())), FLOAT, self.use_gpu)
+            y_onehot = cast_type(Variable(th.zeros(y.size())), FLOAT, self.use_gpu)
             y_onehot.scatter_(1, y_hard, 1.0)
             y = y_onehot
         if return_max_id:

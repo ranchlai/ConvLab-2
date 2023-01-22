@@ -11,13 +11,15 @@ from allennlp.training.metrics.metric import Metric
 
 @Metric.register("multilabel_f1")
 class MultiLabelF1Measure(Metric):
-    """
-    """
-    def __init__(self,
-                 vocabulary: Vocabulary,
-                 namespace: str = "intent_labels",
-                 ignore_classes: List[str] = None,
-                 coarse: bool = True) -> None:
+    """ """
+
+    def __init__(
+        self,
+        vocabulary: Vocabulary,
+        namespace: str = "intent_labels",
+        ignore_classes: List[str] = None,
+        coarse: bool = True,
+    ) -> None:
         """
         Parameters
         ----------
@@ -37,10 +39,12 @@ class MultiLabelF1Measure(Metric):
         self._false_positives: Dict[str, int] = defaultdict(int)
         self._false_negatives: Dict[str, int] = defaultdict(int)
 
-    def __call__(self,
-                 predictions: torch.Tensor,
-                 gold_labels: torch.Tensor,
-                 mask: Optional[torch.Tensor] = None):
+    def __call__(
+        self,
+        predictions: torch.Tensor,
+        gold_labels: torch.Tensor,
+        mask: Optional[torch.Tensor] = None,
+    ):
         """
         Parameters
         ----------
@@ -55,16 +59,18 @@ class MultiLabelF1Measure(Metric):
         if mask is None:
             mask = torch.ones_like(gold_labels)
 
-        predictions, gold_labels, mask = self.unwrap_to_tensors(predictions, gold_labels, mask)
+        predictions, gold_labels, mask = self.unwrap_to_tensors(
+            predictions, gold_labels, mask
+        )
 
         if self._coarse:
             num_positives = predictions.sum()
             num_false_positives = ((predictions - gold_labels) > 0).long().sum()
-            self._false_positives["coarse_overall"] += num_false_positives 
+            self._false_positives["coarse_overall"] += num_false_positives
             num_true_positives = num_positives - num_false_positives
-            self._true_positives["coarse_overall"] += num_true_positives 
+            self._true_positives["coarse_overall"] += num_true_positives
             num_false_negatives = ((gold_labels - predictions) > 0).long().sum()
-            self._false_negatives["coarse_overall"] += num_false_negatives 
+            self._false_negatives["coarse_overall"] += num_false_negatives
         else:
             # Iterate over timesteps in batch.
             batch_size = gold_labels.size(0)
@@ -79,7 +85,6 @@ class MultiLabelF1Measure(Metric):
                         self._false_positives[label] += 1
                     elif prediction[label_id] == 0 and gold_label[label_id] == 1:
                         self._false_negatives[label] += 1
-
 
     def get_metric(self, reset: bool = False):
         """
@@ -99,20 +104,24 @@ class MultiLabelF1Measure(Metric):
         all_labels.update(self._false_negatives.keys())
         all_metrics = {}
         for label in all_labels:
-            precision, recall, f1_measure = self._compute_metrics(self._true_positives[label],
-                                                                  self._false_positives[label],
-                                                                  self._false_negatives[label])
-            precision_key = "precision" + "-" + label 
-            recall_key = "recall" + "-" + label 
-            f1_key = "f1-measure" + "-" + label 
+            precision, recall, f1_measure = self._compute_metrics(
+                self._true_positives[label],
+                self._false_positives[label],
+                self._false_negatives[label],
+            )
+            precision_key = "precision" + "-" + label
+            recall_key = "recall" + "-" + label
+            f1_key = "f1-measure" + "-" + label
             all_metrics[precision_key] = precision
             all_metrics[recall_key] = recall
             all_metrics[f1_key] = f1_measure
 
         # Compute the precision, recall and f1 for all spans jointly.
-        precision, recall, f1_measure = self._compute_metrics(sum(self._true_positives.values()),
-                                                              sum(self._false_positives.values()),
-                                                              sum(self._false_negatives.values()))
+        precision, recall, f1_measure = self._compute_metrics(
+            sum(self._true_positives.values()),
+            sum(self._false_positives.values()),
+            sum(self._false_negatives.values()),
+        )
         all_metrics["precision-overall"] = precision
         all_metrics["recall-overall"] = recall
         all_metrics["f1-measure-overall"] = f1_measure
@@ -121,10 +130,24 @@ class MultiLabelF1Measure(Metric):
         return all_metrics
 
     @staticmethod
-    def _compute_metrics(true_positives: int, false_positives: int, false_negatives: int):
-        precision = float(true_positives) / float(true_positives + false_positives) if true_positives + false_positives > 0 else 0
-        recall = float(true_positives) / float(true_positives + false_negatives)if true_positives + false_negatives > 0 else 0
-        f1_measure = 2. * ((precision * recall) / (precision + recall)) if precision + recall > 0 else 0
+    def _compute_metrics(
+        true_positives: int, false_positives: int, false_negatives: int
+    ):
+        precision = (
+            float(true_positives) / float(true_positives + false_positives)
+            if true_positives + false_positives > 0
+            else 0
+        )
+        recall = (
+            float(true_positives) / float(true_positives + false_negatives)
+            if true_positives + false_negatives > 0
+            else 0
+        )
+        f1_measure = (
+            2.0 * ((precision * recall) / (precision + recall))
+            if precision + recall > 0
+            else 0
+        )
         return precision, recall, f1_measure
 
     def reset(self):

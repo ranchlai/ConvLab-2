@@ -29,7 +29,7 @@ class TimeMetric(object):
         return 1.0 * self.t / self.n
 
     def show(self):
-        return '%.3fs' % (1. * self.value())
+        return "%.3fs" % (1.0 * self.value())
 
 
 class NumericMetric(object):
@@ -51,12 +51,12 @@ class NumericMetric(object):
 
 class PercentageMetric(NumericMetric):
     def show(self):
-        return '%2.2f%%' % (100. * self.value())
+        return "%2.2f%%" % (100.0 * self.value())
 
 
 class AverageMetric(NumericMetric):
     def show(self):
-        return '%.2f' % (1. * self.value())
+        return "%.2f" % (1.0 * self.value())
 
 
 class MovingNumericMetric(object):
@@ -80,12 +80,12 @@ class MovingNumericMetric(object):
 
 class MovingAverageMetric(MovingNumericMetric):
     def show(self):
-        return '%.2f' % (1. * self.value())
+        return "%.2f" % (1.0 * self.value())
 
 
 class MovingPercentageMetric(MovingNumericMetric):
     def show(self):
-        return '%2.2f%%' % (100. * self.value())
+        return "%2.2f%%" % (100.0 * self.value())
 
 
 class TextMetric(object):
@@ -99,10 +99,10 @@ class TextMetric(object):
 
     def value(self):
         self.n = max(1, self.n)
-        return 1. * self.k / self.n
+        return 1.0 * self.k / self.n
 
     def show(self):
-        return '%.2f' % (1. * self.value())
+        return "%.2f" % (1.0 * self.value())
 
 
 class NGramMetric(TextMetric):
@@ -114,7 +114,7 @@ class NGramMetric(TextMetric):
         n = len(sen) if self.ngram == -1 else self.ngram
         for i in range(len(sen) - n + 1):
             self.n += 1
-            target = ' '.join(sen[i:i + n])
+            target = " ".join(sen[i : i + n])
             if self.text.find(target) != -1:
                 self.k += 1
 
@@ -127,7 +127,7 @@ class UniquenessMetric(object):
         pass
 
     def record(self, sen):
-        self.seen.add(' '.join(sen))
+        self.seen.add(" ".join(sen))
 
     def value(self):
         return len(self.seen)
@@ -147,7 +147,7 @@ class SimilarityMetric(object):
 
     def record(self, sen):
         self.n += 1
-        sen = ' '.join(sen)
+        sen = " ".join(sen)
         for h in self.history:
             if h == sen:
                 self.k += 1
@@ -156,10 +156,10 @@ class SimilarityMetric(object):
 
     def value(self):
         self.n = max(1, self.n)
-        return 1. * self.k / self.n
+        return 1.0 * self.k / self.n
 
     def show(self):
-        return '%.2f' % (1. * self.value())
+        return "%.2f" % (1.0 * self.value())
 
 
 class MetricsContainer(object):
@@ -208,7 +208,7 @@ class MetricsContainer(object):
         return self.metrics[name].value()
 
     def show(self):
-        return ' '.join(['%s=%s' % (k, v.show()) for k, v in self.metrics.iteritems()])
+        return " ".join(["%s=%s" % (k, v.show()) for k, v in self.metrics.iteritems()])
 
     def dict(self):
         d = OrderedDict()

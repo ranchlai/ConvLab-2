@@ -7,7 +7,6 @@ class DefaultPolicy(nn.Module):
         super(DefaultPolicy, self).__init__()
         self.hidden_size = hidden_size
 
-
         self.W_u = nn.Linear(hidden_size, hidden_size_pol, bias=False)
         self.W_bs = nn.Linear(bs_size, hidden_size_pol, bias=False)
         self.W_db = nn.Linear(db_size, hidden_size_pol, bias=False)

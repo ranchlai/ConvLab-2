@@ -7,15 +7,17 @@ from nltk.util import ngrams
 import numpy
 import torch
 
+
 def get_n_params(*params_list):
-    pp=0
+    pp = 0
     for params in params_list:
         for p in params:
-            nn=1
+            nn = 1
             for s in list(p.size()):
-                nn = nn*s
+                nn = nn * s
             pp += nn
     return pp
+
 
 def filter_sents(sents, END):
     hyps = []
@@ -39,6 +41,7 @@ def filter_sents(sents, END):
             hyps.append(sents[batch_id][0])
     return hyps
 
+
 def obtain_TP_TN_FN_FP(pred, act, TP, TN, FN, FP, elem_wise=False):
     if isinstance(pred, torch.Tensor):
         if elem_wise:
@@ -53,11 +56,12 @@ def obtain_TP_TN_FN_FP(pred, act, TP, TN, FN, FP, elem_wise=False):
             FP += ((pred.data == 1) & (act.data == 0)).cpu().sum().item()
         return TP, TN, FN, FP
     else:
-        TP += ((pred > 0).astype('long') & (act > 0).astype('long')).sum()
-        TN += ((pred == 0).astype('long') & (act == 0).astype('long')).sum()
-        FN += ((pred == 0).astype('long') & (act > 0).astype('long')).sum()
-        FP += ((pred > 0).astype('long') & (act == 0).astype('long')).sum()
+        TP += ((pred > 0).astype("long") & (act > 0).astype("long")).sum()
+        TN += ((pred == 0).astype("long") & (act == 0).astype("long")).sum()
+        FN += ((pred == 0).astype("long") & (act > 0).astype("long")).sum()
+        FP += ((pred > 0).astype("long") & (act == 0).astype("long")).sum()
         return TP, TN, FN, FP
+
 
 class F1Scorer(object):
     ## BLEU score calculator via GentScorer interface
@@ -68,8 +72,8 @@ class F1Scorer(object):
 
     def score(self, hypothesis, corpus, n=1):
         # containers
-        with open('data/placeholder.json') as f:
-            placeholder = json.load(f)['placeholder']
+        with open("data/placeholder.json") as f:
+            placeholder = json.load(f)["placeholder"]
 
         TP, TN, FN, FP = 0, 0, 0, 0
         # accumulate ngram statistics
@@ -81,11 +85,11 @@ class F1Scorer(object):
             hyps = [hyp.split() for hyp in hyps]
             refs = [ref.split() for ref in refs]
             # Shawn's evaluation
-            #refs[0] = [u'GO_'] + refs[0] + [u'EOS_']
-            #hyps[0] = [u'GO_'] + hyps[0] + [u'EOS_']
+            # refs[0] = [u'GO_'] + refs[0] + [u'EOS_']
+            # hyps[0] = [u'GO_'] + hyps[0] + [u'EOS_']
             for hyp, ref in zip(hyps, refs):
-                pred = numpy.zeros((len(placeholder), ), 'float32')
-                gt = numpy.zeros((len(placeholder), ), 'float32')
+                pred = numpy.zeros((len(placeholder),), "float32")
+                gt = numpy.zeros((len(placeholder),), "float32")
                 for h in hyp:
                     if h in placeholder:
                         pred[placeholder.index(h)] += 1
@@ -99,6 +103,7 @@ class F1Scorer(object):
         F1 = 2 * precision * recall / (precision + recall + 0.001)
         return F1
 
+
 def sentenceBLEU(hyps, refs, n=1):
     count = [0, 0, 0, 0]
     clip_count = [0, 0, 0, 0]
@@ -108,8 +113,8 @@ def sentenceBLEU(hyps, refs, n=1):
     hyps = [hyp.split() for hyp in hyps]
     refs = [ref.split() for ref in refs]
     # Shawn's evaluation
-    refs[0] = [u'GO_'] + refs[0] + [u'EOS_']
-    hyps[0] = [u'GO_'] + hyps[0] + [u'EOS_']
+    refs[0] = ["GO_"] + refs[0] + ["EOS_"]
+    hyps[0] = ["GO_"] + hyps[0] + ["EOS_"]
     for idx, hyp in enumerate(hyps):
         for i in range(4):
             # accumulate ngram counts
@@ -123,14 +128,16 @@ def sentenceBLEU(hyps, refs, n=1):
                 refcnts = Counter(ngrams(ref, i + 1))
                 for ng in hypcnts:
                     max_counts[ng] = max(max_counts.get(ng, 0), refcnts[ng])
-            clipcnt = dict((ng, min(count, max_counts[ng])) \
-                           for ng, count in hypcnts.items())
+            clipcnt = dict(
+                (ng, min(count, max_counts[ng])) for ng, count in hypcnts.items()
+            )
             clip_count[i] += sum(clipcnt.values())
 
         # accumulate r & c
         bestmatch = [1000, 1000]
         for ref in refs:
-            if bestmatch[0] == 0: break
+            if bestmatch[0] == 0:
+                break
             diff = abs(len(ref) - len(hyp))
             if diff < bestmatch[0]:
                 bestmatch[0] = diff
@@ -141,12 +148,11 @@ def sentenceBLEU(hyps, refs, n=1):
             break
     p0 = 1e-7
     bp = 1 if c > r else math.exp(1 - float(r) / float(c))
-    p_ns = [float(clip_count[i]) / float(count[i] + p0) + p0 \
-            for i in range(4)]
-    s = math.fsum(w * math.log(p_n) \
-                  for w, p_n in zip(weights, p_ns) if p_n)
+    p_ns = [float(clip_count[i]) / float(count[i] + p0) + p0 for i in range(4)]
+    s = math.fsum(w * math.log(p_n) for w, p_n in zip(weights, p_ns) if p_n)
     bleu = bp * math.exp(s)
     return bleu
+
 
 class BLEUScorer(object):
     ## BLEU score calculator via GentScorer interface
@@ -176,8 +182,8 @@ class BLEUScorer(object):
             hyps = [hyp.split() for hyp in hyps]
             refs = [ref.split() for ref in refs]
             # Shawn's evaluation
-            refs[0] = [u'GO_'] + refs[0] + [u'EOS_']
-            hyps[0] = [u'GO_'] + hyps[0] + [u'EOS_']
+            refs[0] = ["GO_"] + refs[0] + ["EOS_"]
+            hyps[0] = ["GO_"] + hyps[0] + ["EOS_"]
             for idx, hyp in enumerate(hyps):
                 for i in range(4):
                     # accumulate ngram counts
@@ -191,14 +197,17 @@ class BLEUScorer(object):
                         refcnts = Counter(ngrams(ref, i + 1))
                         for ng in hypcnts:
                             max_counts[ng] = max(max_counts.get(ng, 0), refcnts[ng])
-                    clipcnt = dict((ng, min(count, max_counts[ng])) \
-                                   for ng, count in hypcnts.items())
+                    clipcnt = dict(
+                        (ng, min(count, max_counts[ng]))
+                        for ng, count in hypcnts.items()
+                    )
                     clip_count[i] += sum(clipcnt.values())
 
                 # accumulate r & c
                 bestmatch = [1000, 1000]
                 for ref in refs:
-                    if bestmatch[0] == 0: break
+                    if bestmatch[0] == 0:
+                        break
                     diff = abs(len(ref) - len(hyp))
                     if diff < bestmatch[0]:
                         bestmatch[0] = diff
@@ -210,12 +219,11 @@ class BLEUScorer(object):
         # computing bleu score
         p0 = 1e-7
         bp = 1 if c > r else math.exp(1 - float(r) / float(c))
-        p_ns = [float(clip_count[i]) / float(count[i] + p0) + p0 \
-                for i in range(4)]
-        s = math.fsum(w * math.log(p_n) \
-                      for w, p_n in zip(weights, p_ns) if p_n)
+        p_ns = [float(clip_count[i]) / float(count[i] + p0) + p0 for i in range(4)]
+        s = math.fsum(w * math.log(p_n) for w, p_n in zip(weights, p_ns) if p_n)
         bleu = bp * math.exp(s)
         return bleu
+
 
 class Tokenizer(object):
     def __init__(self, vocab, ivocab, use_field, lower_case=True):
@@ -225,8 +233,8 @@ class Tokenizer(object):
         self.vocab = vocab
         self.use_field = use_field
         if use_field:
-            with open('data/placeholder.json') as f:
-                self.fields = json.load(f)['field']
+            with open("data/placeholder.json") as f:
+                self.fields = json.load(f)["field"]
 
         self.vocab_len = len(self.vocab)
 
@@ -246,7 +254,6 @@ class Tokenizer(object):
         else:
             return self.vocab[Constants.UNK_WORD]
 
-
     def get_word(self, k, template=None):
         if k > self.vocab_len and self.use_field and template:
             return template[k - self.vocab_len]
@@ -260,46 +267,73 @@ class Tokenizer(object):
     def convert_id_to_tokens(self, word_ids, template_ids=None, remain_eos=False):
         if isinstance(word_ids, list):
             if remain_eos:
-                return " ".join([self.get_word(wid, None) for wid in word_ids
-                                 if wid != Constants.PAD])
+                return " ".join(
+                    [
+                        self.get_word(wid, None)
+                        for wid in word_ids
+                        if wid != Constants.PAD
+                    ]
+                )
             else:
-                return " ".join([self.get_word(wid, None) for wid in word_ids
-                                 if wid not in [Constants.PAD, Constants.EOS] ])
+                return " ".join(
+                    [
+                        self.get_word(wid, None)
+                        for wid in word_ids
+                        if wid not in [Constants.PAD, Constants.EOS]
+                    ]
+                )
         else:
             if remain_eos:
-                return " ".join([self.get_word(wid.item(), None) for wid in word_ids
-                                 if wid != Constants.PAD])
+                return " ".join(
+                    [
+                        self.get_word(wid.item(), None)
+                        for wid in word_ids
+                        if wid != Constants.PAD
+                    ]
+                )
             else:
-                return " ".join([self.get_word(wid.item(), None) for wid in word_ids
-                                 if wid not in [Constants.PAD, Constants.EOS]])
+                return " ".join(
+                    [
+                        self.get_word(wid.item(), None)
+                        for wid in word_ids
+                        if wid not in [Constants.PAD, Constants.EOS]
+                    ]
+                )
 
     def convert_template(self, template_ids):
         return [self.get_word(wid) for wid in template_ids if wid != Constants.PAD]
+
 
 def nondetokenize(d_p, d_r):
     dialog_id = 0
     need_replace = 0
     success = 0
     for gt_dialog_info in d_r:
-        file_name = gt_dialog_info['file']
-        gt_dialog = gt_dialog_info['info']
+        file_name = gt_dialog_info["file"]
+        gt_dialog = gt_dialog_info["info"]
         for turn_id in range(len(d_p[file_name])):
-            kb = gt_dialog[turn_id]['source']
-            act = gt_dialog[turn_id]['act']
-            words = d_p[file_name][turn_id].split(' ')
+            kb = gt_dialog[turn_id]["source"]
+            act = gt_dialog[turn_id]["act"]
+            words = d_p[file_name][turn_id].split(" ")
             for i in range(len(words)):
                 if "[" in words[i] and "]" in words[i]:
-                    need_replace += 1.
+                    need_replace += 1.0
                     if words[i] in kb:
                         words[i] = kb[words[i]]
-                        success += 1.
+                        success += 1.0
                     elif "taxi" in words[i]:
-                        if words[i] == "[taxi_type]" and "domain-taxi-inform-car" in act:
+                        if (
+                            words[i] == "[taxi_type]"
+                            and "domain-taxi-inform-car" in act
+                        ):
                             words[i] = act["domain-taxi-inform-car"]
-                            success += 1.
-                        elif words[i] == "[taxi_phone]" and "domain-taxi-inform-phone" in act:
+                            success += 1.0
+                        elif (
+                            words[i] == "[taxi_phone]"
+                            and "domain-taxi-inform-phone" in act
+                        ):
                             words[i] = act["domain-taxi-inform-phone"]
-                            success += 1.
+                            success += 1.0
 
             d_p[file_name][turn_id] = " ".join(words)
     success_rate = success / need_replace

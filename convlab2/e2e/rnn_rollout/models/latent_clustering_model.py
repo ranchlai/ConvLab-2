@@ -23,9 +23,14 @@ from convlab2.e2e.rnn_rollout.models.ctx_encoder import MlpContextEncoder
 from convlab2.e2e.rnn_rollout.models.utils import *
 
 
-
-from convlab2.e2e.rnn_rollout.engines.latent_clustering_engine import LatentClusteringEngine, LatentClusteringPredictionEngine
-from convlab2.e2e.rnn_rollout.engines.latent_clustering_engine import LatentClusteringLanguageEngine, BaselineClusteringEngine
+from convlab2.e2e.rnn_rollout.engines.latent_clustering_engine import (
+    LatentClusteringEngine,
+    LatentClusteringPredictionEngine,
+)
+from convlab2.e2e.rnn_rollout.engines.latent_clustering_engine import (
+    LatentClusteringLanguageEngine,
+    BaselineClusteringEngine,
+)
 
 
 class SimpleSeparateSelectionModule(nn.Module):
@@ -35,9 +40,8 @@ class SimpleSeparateSelectionModule(nn.Module):
         self.hidden_size = hidden_size
 
         self.encoder = nn.Sequential(
-            nn.Linear(input_size, hidden_size),
-            nn.Tanh(),
-            nn.Dropout(args.dropout))
+            nn.Linear(input_size, hidden_size), nn.Tanh(), nn.Dropout(args.dropout)
+        )
 
         self.decoders = nn.ModuleList()
         for i in range(6):
@@ -61,14 +65,11 @@ class RecurrentUnit(nn.Module):
     def __init__(self, input_size, hidden_size, args):
         super(RecurrentUnit, self).__init__()
 
-        self.x2h = nn.Sequential(
-            nn.Linear(input_size, hidden_size),
-            nn.Tanh())
+        self.x2h = nn.Sequential(nn.Linear(input_size, hidden_size), nn.Tanh())
 
         self.cell = nn.GRUCell(
-            input_size=hidden_size,
-            hidden_size=hidden_size,
-            bias=True)
+            input_size=hidden_size, hidden_size=hidden_size, bias=True
+        )
 
         # init
         init_cont(self.x2h, args.init_range)
@@ -126,7 +127,7 @@ class ShardedLatentBottleneckModule(nn.Module):
         w = w.view(-1, self.input_size, self.num_clusters)
 
         # dot product
-        logit = torch.bmm(key.unsqueeze(1),  w).squeeze(1) + b
+        logit = torch.bmm(key.unsqueeze(1), w).squeeze(1) + b
         prob = F.softmax(logit, dim=1)
 
         # weighted sum
@@ -150,35 +151,42 @@ class LatentClusteringModel(nn.Module):
         self.count_dict = count_dict
         self.args = args
 
-        self.ctx_encoder = MlpContextEncoder(len(self.context_dict), domain.input_length(),
-            args.nembed_ctx, args.nhid_ctx, args.dropout, args.init_range, args.skip_values)
+        self.ctx_encoder = MlpContextEncoder(
+            len(self.context_dict),
+            domain.input_length(),
+            args.nembed_ctx,
+            args.nhid_ctx,
+            args.dropout,
+            args.init_range,
+            args.skip_values,
+        )
 
         self.word_embed = nn.Embedding(len(self.word_dict), args.nembed_word)
 
         self.hid2output = nn.Sequential(
-            nn.Linear(args.nhid_lang, args.nembed_word),
-            nn.Dropout(args.dropout))
+            nn.Linear(args.nhid_lang, args.nembed_word), nn.Dropout(args.dropout)
+        )
 
         self.mem2input = nn.Linear(args.nhid_lang, args.nembed_word)
 
         self.encoder = nn.GRU(
-            input_size=args.nembed_word,
-            hidden_size=args.nhid_lang,
-            bias=True)
+            input_size=args.nembed_word, hidden_size=args.nhid_lang, bias=True
+        )
 
         self.embed2hid = nn.Sequential(
-            nn.Linear(args.nhid_lang + args.nhid_lang + args.nhid_ctx, args.nhid_cluster),
-            nn.Tanh())
+            nn.Linear(
+                args.nhid_lang + args.nhid_lang + args.nhid_ctx, args.nhid_cluster
+            ),
+            nn.Tanh(),
+        )
 
         self.decoder_reader = nn.GRU(
-            input_size=args.nembed_word,
-            hidden_size=args.nhid_lang,
-            bias=True)
+            input_size=args.nembed_word, hidden_size=args.nhid_lang, bias=True
+        )
 
         self.decoder_writer = nn.GRUCell(
-            input_size=args.nembed_word,
-            hidden_size=args.nhid_lang,
-            bias=True)
+            input_size=args.nembed_word, hidden_size=args.nhid_lang, bias=True
+        )
 
         # tie the weights between reader and writer
         self.decoder_writer.weight_ih = self.decoder_reader.weight_ih_l0
@@ -191,12 +199,12 @@ class LatentClusteringModel(nn.Module):
             num_clusters=args.num_clusters,
             input_size=args.nhid_lang,
             output_size=args.nhid_cluster,
-            args=args)
+            args=args,
+        )
 
         self.memory = nn.GRUCell(
-            input_size=args.nhid_cluster,
-            hidden_size=args.nhid_lang,
-            bias=True)
+            input_size=args.nhid_cluster, hidden_size=args.nhid_lang, bias=True
+        )
 
         self.dropout = nn.Dropout(args.dropout)
 
@@ -204,7 +212,8 @@ class LatentClusteringModel(nn.Module):
             input_size=args.nhid_cluster,
             hidden_size=args.nhid_sel,
             output_size=len(item_dict),
-            args=args)
+            args=args,
+        )
 
         # init
         self.word_embed.weight.data.uniform_(-args.init_range, args.init_range)
@@ -236,7 +245,9 @@ class LatentClusteringModel(nn.Module):
             hs, h = self.encoder(e, h)
             if hid_idx is not None:
                 # extract correct hidden states to avoid padding
-                h = hs.gather(0, hid_idx.expand(hid_idx.size(0), hid_idx.size(1), hs.size(2)))
+                h = hs.gather(
+                    0, hid_idx.expand(hid_idx.size(0), hid_idx.size(1), hs.size(2))
+                )
             # remove temporal dimension
             h = h.squeeze(0)
             return h
@@ -298,19 +309,21 @@ class LatentClusteringModel(nn.Module):
         mem_h = mem_h.unsqueeze(1).expand_as(lat_h).contiguous()
 
         # duplicate inpt_emb
-        inpt = inpt.unsqueeze(2).expand(
-            inpt_len, batch_size, lat_h.size(1)).contiguous()
+        inpt = (
+            inpt.unsqueeze(2).expand(inpt_len, batch_size, lat_h.size(1)).contiguous()
+        )
         tgt = tgt.unsqueeze(1).expand(tgt.size(0), lat_h.size(1)).contiguous()
         sel_tgt_prob = sel_tgt_prob.view(batch_size, 1, -1, sel_tgt_prob.size(1))
         sel_tgt_prob = sel_tgt_prob.expand(
-            batch_size, num_clusters, sel_tgt_prob.size(2), sel_tgt_prob.size(3)).contiguous()
+            batch_size, num_clusters, sel_tgt_prob.size(2), sel_tgt_prob.size(3)
+        ).contiguous()
 
         # batch together all the clusters
         lat_h = lat_h.view(-1, lat_h.size(2))
         mem_h = mem_h.view(-1, mem_h.size(2))
         inpt = inpt.view(inpt_len, -1)
         tgt = tgt.view(-1, 1)
-        #sel_tgt_prob = sel_tgt_prob.view(-1, sel_tgt_prob.size(3))
+        # sel_tgt_prob = sel_tgt_prob.view(-1, sel_tgt_prob.size(3))
 
         # run through memory
         mem_h = self.memory(lat_h, mem_h)
@@ -362,8 +375,9 @@ class LatentClusteringModel(nn.Module):
             z_probs.append(z_prob)
 
             # E-step, estimate z for i+1 sentence
-            z, q_z = self.forward_e_step(z_prob, mem_h,
-                inpts[i + 1], tgts[i + 1], sel_tgt_probs[i + 1], cnt)
+            z, q_z = self.forward_e_step(
+                z_prob, mem_h, inpts[i + 1], tgts[i + 1], sel_tgt_probs[i + 1], cnt
+            )
             z_tgts.append(z)
 
             # select clusters for z
@@ -381,7 +395,9 @@ class LatentClusteringModel(nn.Module):
             outs.append(out)
 
             # book keeping
-            total_entropy += -(F.softmax(q_z, dim=1) * F.log_softmax(q_z, dim=1)).sum().item()
+            total_entropy += (
+                -(F.softmax(q_z, dim=1) * F.log_softmax(q_z, dim=1)).sum().item()
+            )
             q_z = F.softmax(q_z, dim=1)
             total_max_prob += q_z.max(1, keepdim=True)[0].sum().item()
             total_top3_prob += torch.topk(q_z, 3)[0].sum().item()
@@ -397,8 +413,14 @@ class LatentClusteringModel(nn.Module):
         total_enc_max_prob /= len(inpts) * bsz
         total_enc_top3_prob /= len(inpts) * bsz
 
-        stats = (total_entropy, total_max_prob, total_top3_prob,
-            total_enc_entropy, total_enc_max_prob, total_enc_top3_prob)
+        stats = (
+            total_entropy,
+            total_max_prob,
+            total_top3_prob,
+            total_enc_entropy,
+            total_enc_max_prob,
+            total_enc_top3_prob,
+        )
 
         return outs, sel_outs, z_probs, z_tgts, stats
 
@@ -421,39 +443,51 @@ class LatentClusteringPredictionModel(nn.Module):
         self.count_dict = count_dict
         self.args = args
 
-        self.ctx_encoder = MlpContextEncoder(len(self.context_dict), domain.input_length(),
-            args.nembed_ctx, args.nhid_ctx, args.dropout, args.init_range, False)
+        self.ctx_encoder = MlpContextEncoder(
+            len(self.context_dict),
+            domain.input_length(),
+            args.nembed_ctx,
+            args.nhid_ctx,
+            args.dropout,
+            args.init_range,
+            False,
+        )
 
         self.word_embed = nn.Embedding(len(self.word_dict), args.nembed_word)
 
         self.encoder = nn.GRU(
-            input_size=args.nembed_word,
-            hidden_size=args.nhid_lang,
-            bias=True)
+            input_size=args.nembed_word, hidden_size=args.nhid_lang, bias=True
+        )
 
         self.embed2hid = nn.Sequential(
-            nn.Linear(args.nhid_lang + args.nhid_lang + args.nhid_ctx, self.args.nhid_lang),
-            nn.Tanh())
+            nn.Linear(
+                args.nhid_lang + args.nhid_lang + args.nhid_ctx, self.args.nhid_lang
+            ),
+            nn.Tanh(),
+        )
 
         self.latent_bottleneck = ShardedLatentBottleneckModule(
             num_shards=len(count_dict),
             num_clusters=self.lang_model.cluster_model.args.num_clusters,
             input_size=args.nhid_lang,
             output_size=self.lang_model.cluster_model.args.nhid_cluster,
-            args=args)
+            args=args,
+        )
 
         # copy lat vars from the cluster model
         self.latent_bottleneck.latent_vars.weight.data.copy_(
-            self.lang_model.cluster_model.latent_bottleneck.latent_vars.weight.data)
+            self.lang_model.cluster_model.latent_bottleneck.latent_vars.weight.data
+        )
 
         self.memory = RecurrentUnit(
             input_size=args.nhid_lang,
             hidden_size=self.lang_model.cluster_model.args.nhid_cluster,
-            args=args)
+            args=args,
+        )
 
         self.dropout = nn.Dropout(args.dropout)
 
-        self.kldiv = nn.KLDivLoss(reduction='sum')
+        self.kldiv = nn.KLDivLoss(reduction="sum")
 
         # init
         self.word_embed.weight.data.uniform_(-args.init_range, args.init_range)
@@ -471,7 +505,7 @@ class LatentClusteringPredictionModel(nn.Module):
             self.encoder,
             self.embed2hid,
             self.latent_bottleneck,
-            self.memory
+            self.memory,
         ]
         # clear all the parameters
         for module in modules:
@@ -479,7 +513,8 @@ class LatentClusteringPredictionModel(nn.Module):
                 param.data.uniform_(-self.args.init_range, self.args.init_range)
         # copy lat vars from the cluster model
         self.latent_bottleneck.latent_vars.weight.data.copy_(
-            self.lang_model.cluster_model.latent_bottleneck.latent_vars.weight.data)
+            self.lang_model.cluster_model.latent_bottleneck.latent_vars.weight.data
+        )
 
     def _zero(self, *sizes):
         h = torch.Tensor(*sizes).fill_(0)
@@ -497,7 +532,9 @@ class LatentClusteringPredictionModel(nn.Module):
             hs, h = self.encoder(e, h)
             if hid_idx is not None:
                 # extract correct hidden states to avoid padding
-                h = hs.gather(0, hid_idx.expand(hid_idx.size(0), hid_idx.size(1), hs.size(2)))
+                h = hs.gather(
+                    0, hid_idx.expand(hid_idx.size(0), hid_idx.size(1), hs.size(2))
+                )
             # remove temporal dimension
             h = h.squeeze(0)
             return h
@@ -528,7 +565,9 @@ class LatentClusteringPredictionModel(nn.Module):
         enc_h = self.forward_encoder(ctx_h, inpt, hid_idx)
         # init mem_h if None
         if mem_h is None:
-            mem_h = self._zero(ctx_h.size(0), self.lang_model.cluster_model.args.nhid_cluster)
+            mem_h = self._zero(
+                ctx_h.size(0), self.lang_model.cluster_model.args.nhid_cluster
+            )
         # update memory
         mem_h = self.memory(enc_h, mem_h)
         return mem_h
@@ -575,8 +614,11 @@ class LatentClusteringPredictionModel(nn.Module):
         cond_h = torch.cat([lang_enc_h, cluster_lat_h], 2)
 
         # duplicate inpt_emb
-        inpt = inpt.unsqueeze(2).expand(
-            inpt_len, batch_size, cluster_lat_h.size(1)).contiguous()
+        inpt = (
+            inpt.unsqueeze(2)
+            .expand(inpt_len, batch_size, cluster_lat_h.size(1))
+            .contiguous()
+        )
         tgt = tgt.unsqueeze(1).expand(tgt.size(0), cluster_lat_h.size(1)).contiguous()
 
         # batch together all the clusters
@@ -605,7 +647,8 @@ class LatentClusteringPredictionModel(nn.Module):
 
         # init encoders
         enc_h = self.embed2hid(
-            torch.cat([self._zero(ctx_h.size(0), 2 * self.args.nhid_lang), ctx_h], 1))
+            torch.cat([self._zero(ctx_h.size(0), 2 * self.args.nhid_lang), ctx_h], 1)
+        )
 
         lang_enc_h = self._zero(ctx_h.size(0), self.lang_model.args.nhid_lang)
 
@@ -644,7 +687,8 @@ class LatentClusteringPredictionModel(nn.Module):
 
         # init encoders
         enc_h = self.embed2hid(
-            torch.cat([self._zero(ctx_h.size(0), 2 * self.args.nhid_lang), ctx_h], 1))
+            torch.cat([self._zero(ctx_h.size(0), 2 * self.args.nhid_lang), ctx_h], 1)
+        )
 
         lang_enc_h = self._zero(ctx_h.size(0), self.lang_model.args.nhid_lang)
 
@@ -655,7 +699,9 @@ class LatentClusteringPredictionModel(nn.Module):
 
             _, z_prob = self.lang_model.latent_bottleneck(cnt, next_lang_enc_h)
             z = self.lang_model.forward_e_step(z_prob, lang_enc_h, inpt, tgt, cnt)
-            one_hot = Variable(torch.Tensor(z_prob.size()).zero_().scatter_(1, z.unsqueeze(1).data, 1))
+            one_hot = Variable(
+                torch.Tensor(z_prob.size()).zero_().scatter_(1, z.unsqueeze(1).data, 1)
+            )
 
             loss = self.forward_marginal_loss(one_hot, lang_enc_h, inpt, tgt, cnt)
             losses.append(loss)
@@ -715,15 +761,20 @@ class LatentClusteringPredictionModel(nn.Module):
         bsz = ctx_h.size(0)
 
         cluster_ctx_h = self.lang_model.cluster_model.ctx_encoder(ctx)
-        cluster_mem_h = self._zero(cluster_ctx_h.size(0), self.lang_model.cluster_model.args.nhid_lang)
+        cluster_mem_h = self._zero(
+            cluster_ctx_h.size(0), self.lang_model.cluster_model.args.nhid_lang
+        )
 
         # init encoders
         enc_h = self.embed2hid(
-            torch.cat([self._zero(ctx_h.size(0), 2 * self.args.nhid_lang), ctx_h], 1))
+            torch.cat([self._zero(ctx_h.size(0), 2 * self.args.nhid_lang), ctx_h], 1)
+        )
         lang_enc_h = self._zero(ctx_h.size(0), self.lang_model.args.nhid_lang)
 
         # init memory
-        mem_h = self._zero(ctx_h.size(0), self.lang_model.cluster_model.args.nhid_cluster)
+        mem_h = self._zero(
+            ctx_h.size(0), self.lang_model.cluster_model.args.nhid_cluster
+        )
 
         losses, kldivs = [], []
         total_entropy, total_max_prob, total_top3_prob = 0, 0, 0
@@ -739,20 +790,35 @@ class LatentClusteringPredictionModel(nn.Module):
 
             # estimate p(z|x)
             cluster_enc_h = self.lang_model.cluster_model.forward_encoder(
-                cluster_ctx_h, inpts[i], hid_idxs[i])
-            _, z_prob = self.lang_model.cluster_model.latent_bottleneck(cnt, cluster_enc_h)
+                cluster_ctx_h, inpts[i], hid_idxs[i]
+            )
+            _, z_prob = self.lang_model.cluster_model.latent_bottleneck(
+                cnt, cluster_enc_h
+            )
             # run e-step to estimate z, q_z
-            z, q_t_tgt = self.lang_model.cluster_model.forward_e_step(z_prob, cluster_mem_h,
-                inpts[i + 1], tgts[i + 1], sel_tgt_probs[i + 1], cnt)
-            cluster_lat_h = self.lang_model.cluster_model.latent_bottleneck.select(cnt, z)
+            z, q_t_tgt = self.lang_model.cluster_model.forward_e_step(
+                z_prob,
+                cluster_mem_h,
+                inpts[i + 1],
+                tgts[i + 1],
+                sel_tgt_probs[i + 1],
+                cnt,
+            )
+            cluster_lat_h = self.lang_model.cluster_model.latent_bottleneck.select(
+                cnt, z
+            )
             q_t_tgt = q_t_tgt.detach()
             kldivs.append(self.kldiv(q_z.log(), F.softmax(q_t_tgt)))
             # update memory
-            cluster_mem_h = self.lang_model.cluster_model.memory(cluster_lat_h, cluster_mem_h)
+            cluster_mem_h = self.lang_model.cluster_model.memory(
+                cluster_lat_h, cluster_mem_h
+            )
 
             # update encoders
             enc_h = self.forward_encoder(ctx_h, inpts[i], hid_idxs[i])
-            lang_enc_h = self.lang_model.forward_encoder(inpts[i], hid_idxs[i], lang_enc_h)
+            lang_enc_h = self.lang_model.forward_encoder(
+                inpts[i], hid_idxs[i], lang_enc_h
+            )
 
             # bookkeeping
             total_entropy += -(q_z * q_z.log()).sum().data[0]
@@ -775,13 +841,21 @@ class LatentClusteringPredictionModel(nn.Module):
         lang_enc_h = self.lang_model.forward_encoder(inpt, hid_idx, lang_enc_h)
         return lang_enc_h, mem_h
 
-    def write(self, lang_enc_h, lat_h, max_words, temperature,
-        start_token='YOU:', stop_tokens=data.STOP_TOKENS):
+    def write(
+        self,
+        lang_enc_h,
+        lat_h,
+        max_words,
+        temperature,
+        start_token="YOU:",
+        stop_tokens=data.STOP_TOKENS,
+    ):
         # construct condition
         cond_h = torch.cat([lang_enc_h, lat_h], 1)
         # send to language model
-        out, logprobs = self.lang_model.write(cond_h, max_words, temperature,
-            start_token, stop_tokens)
+        out, logprobs = self.lang_model.write(
+            cond_h, max_words, temperature, start_token, stop_tokens
+        )
         return out, logprobs
 
 
@@ -806,27 +880,24 @@ class LatentClusteringLanguageModel(nn.Module):
         self.word_embed = nn.Embedding(len(self.word_dict), args.nembed_word)
 
         self.encoder = nn.GRU(
-            input_size=args.nembed_word,
-            hidden_size=args.nhid_lang,
-            bias=True)
+            input_size=args.nembed_word, hidden_size=args.nhid_lang, bias=True
+        )
 
         self.hid2output = nn.Sequential(
-            nn.Linear(args.nhid_lang, args.nembed_word),
-            nn.Dropout(args.dropout))
+            nn.Linear(args.nhid_lang, args.nembed_word), nn.Dropout(args.dropout)
+        )
 
         self.cond2input = nn.Linear(
-            args.nhid_lang + self.cluster_model.args.nhid_cluster,
-            args.nembed_word)
+            args.nhid_lang + self.cluster_model.args.nhid_cluster, args.nembed_word
+        )
 
         self.decoder_reader = nn.GRU(
-            input_size=args.nembed_word,
-            hidden_size=args.nhid_lang,
-            bias=True)
+            input_size=args.nembed_word, hidden_size=args.nhid_lang, bias=True
+        )
 
         self.decoder_writer = nn.GRUCell(
-            input_size=args.nembed_word,
-            hidden_size=args.nhid_lang,
-            bias=True)
+            input_size=args.nembed_word, hidden_size=args.nhid_lang, bias=True
+        )
 
         # tie the weights between reader and writer
         self.decoder_writer.weight_ih = self.decoder_reader.weight_ih_l0
@@ -836,8 +907,10 @@ class LatentClusteringLanguageModel(nn.Module):
 
         self.dropout = nn.Dropout(args.dropout)
 
-        self.special_token_mask = make_mask(len(word_dict),
-            [word_dict.get_idx(w) for w in ['<unk>', 'YOU:', 'THEM:', '<pad>']])
+        self.special_token_mask = make_mask(
+            len(word_dict),
+            [word_dict.get_idx(w) for w in ["<unk>", "YOU:", "THEM:", "<pad>"]],
+        )
 
         # init
         self.word_embed.weight.data.uniform_(-args.init_range, args.init_range)
@@ -870,7 +943,9 @@ class LatentClusteringLanguageModel(nn.Module):
         # encode
         hs, _ = self.encoder(inpt_emb, enc_h)
         # extract correct hidden states to avoid padding
-        enc_h = hs.gather(0, hid_idx.expand(hid_idx.size(0), hid_idx.size(1), hs.size(2)))
+        enc_h = hs.gather(
+            0, hid_idx.expand(hid_idx.size(0), hid_idx.size(1), hs.size(2))
+        )
         # remove temporal dimension
         enc_h = enc_h.squeeze(0)
         return enc_h
@@ -884,7 +959,7 @@ class LatentClusteringLanguageModel(nn.Module):
         lang_h = self.decoder_writer(cond_emb, lang_h)
 
         # add temporal dimension
-        lang_h = lang_h.unsqueeze(0) # run decoder
+        lang_h = lang_h.unsqueeze(0)  # run decoder
         dec_hs, _ = self.decoder_reader(inpt_emb, lang_h)
         return dec_hs
 
@@ -913,7 +988,9 @@ class LatentClusteringLanguageModel(nn.Module):
 
     def forward(self, inpts, tgts, sel_tgt_probs, hid_idxs, ctx, cnt):
         cluster_ctx_h = self.cluster_model.ctx_encoder(ctx)
-        cluster_mem_h = self._zero(cluster_ctx_h.size(0), self.cluster_model.args.nhid_lang)
+        cluster_mem_h = self._zero(
+            cluster_ctx_h.size(0), self.cluster_model.args.nhid_lang
+        )
 
         enc_h = self._zero(ctx.size(1), self.args.nhid_lang)
 
@@ -921,11 +998,18 @@ class LatentClusteringLanguageModel(nn.Module):
         for i in range(len(inpts) - 1):
             # estimate p(z|x)
             cluster_enc_h = self.cluster_model.forward_encoder(
-                cluster_ctx_h, inpts[i], hid_idxs[i])
+                cluster_ctx_h, inpts[i], hid_idxs[i]
+            )
             _, z_prob = self.cluster_model.latent_bottleneck(cnt, cluster_enc_h)
             # run e-step to estimate z, q_z
-            z, _ = self.cluster_model.forward_e_step(z_prob, cluster_mem_h,
-                inpts[i + 1], tgts[i + 1], sel_tgt_probs[i + 1], cnt)
+            z, _ = self.cluster_model.forward_e_step(
+                z_prob,
+                cluster_mem_h,
+                inpts[i + 1],
+                tgts[i + 1],
+                sel_tgt_probs[i + 1],
+                cnt,
+            )
             # select centroids
             cluster_lat_h = self.cluster_model.latent_bottleneck.select(cnt, z)
             # update cluster model memory
@@ -949,8 +1033,14 @@ class LatentClusteringLanguageModel(nn.Module):
         x = torch.Tensor(1).fill_(self.word_dict.get_idx(word)).long()
         return Variable(x)
 
-    def write(self, cond_h, max_words, temperature,
-        start_token='YOU:', stop_tokens=data.STOP_TOKENS):
+    def write(
+        self,
+        cond_h,
+        max_words,
+        temperature,
+        start_token="YOU:",
+        stop_tokens=data.STOP_TOKENS,
+    ):
 
         # init lang_h
         cond_emb = self.cond2input(cond_h)
@@ -1007,47 +1097,49 @@ class BaselineClusteringModel(nn.Module):
         self.count_dict = count_dict
         self.args = args
 
-        self.ctx_encoder = MlpContextEncoder(len(self.context_dict), domain.input_length(),
-            args.nembed_ctx, args.nhid_lang, args.dropout, args.init_range, False)
+        self.ctx_encoder = MlpContextEncoder(
+            len(self.context_dict),
+            domain.input_length(),
+            args.nembed_ctx,
+            args.nhid_lang,
+            args.dropout,
+            args.init_range,
+            False,
+        )
 
         self.word_embed = nn.Embedding(len(self.word_dict), args.nembed_word)
 
         self.encoder = nn.GRU(
-            input_size=args.nembed_word,
-            hidden_size=args.nhid_lang,
-            bias=True)
+            input_size=args.nembed_word, hidden_size=args.nhid_lang, bias=True
+        )
 
         self.latent_bottleneck = ShardedLatentBottleneckModule(
             num_shards=len(count_dict),
             num_clusters=self.args.num_clusters,
             input_size=args.nhid_lang,
             output_size=self.args.nhid_cluster,
-            args=args)
+            args=args,
+        )
 
         self.dropout = nn.Dropout(args.dropout)
 
         self.decoder_reader = nn.GRU(
-            input_size=args.nembed_word,
-            hidden_size=args.nhid_lang,
-            bias=True)
+            input_size=args.nembed_word, hidden_size=args.nhid_lang, bias=True
+        )
 
         self.decoder_writer = nn.GRUCell(
-            input_size=args.nembed_word,
-            hidden_size=args.nhid_lang,
-            bias=True)
+            input_size=args.nembed_word, hidden_size=args.nhid_lang, bias=True
+        )
 
-        self.cond2input = nn.Linear(
-            args.nhid_cluster,
-            args.nembed_word)
+        self.cond2input = nn.Linear(args.nhid_cluster, args.nembed_word)
 
         self.hid2output = nn.Sequential(
-            nn.Linear(args.nhid_lang, args.nembed_word),
-            nn.Dropout(args.dropout))
+            nn.Linear(args.nhid_lang, args.nembed_word), nn.Dropout(args.dropout)
+        )
 
         self.memory = RecurrentUnit(
-            input_size=args.nhid_lang,
-            hidden_size=args.nhid_lang,
-            args=args)
+            input_size=args.nhid_lang, hidden_size=args.nhid_lang, args=args
+        )
 
         # tie the weights between reader and writer
         self.decoder_writer.weight_ih = self.decoder_reader.weight_ih_l0
@@ -1055,8 +1147,10 @@ class BaselineClusteringModel(nn.Module):
         self.decoder_writer.bias_ih = self.decoder_reader.bias_ih_l0
         self.decoder_writer.bias_hh = self.decoder_reader.bias_hh_l0
 
-        self.special_token_mask = make_mask(len(word_dict),
-            [word_dict.get_idx(w) for w in ['<unk>', 'YOU:', 'THEM:', '<pad>']])
+        self.special_token_mask = make_mask(
+            len(word_dict),
+            [word_dict.get_idx(w) for w in ["<unk>", "YOU:", "THEM:", "<pad>"]],
+        )
 
         # init
         self.word_embed.weight.data.uniform_(-args.init_range, args.init_range)
@@ -1087,7 +1181,7 @@ class BaselineClusteringModel(nn.Module):
         lang_h = self.decoder_writer(cond_emb, lang_h)
 
         # add temporal dimension
-        lang_h = lang_h.unsqueeze(0) # run decoder
+        lang_h = lang_h.unsqueeze(0)  # run decoder
         dec_hs, _ = self.decoder_reader(inpt_emb, lang_h)
         return dec_hs
 
@@ -1105,7 +1199,9 @@ class BaselineClusteringModel(nn.Module):
         enc_h = self._zero(1, inpt_emb.size(1), self.args.nhid_lang)
         out, _ = self.encoder(inpt_emb, enc_h)
         # extract correct hidden states to avoid padding
-        enc_h = out.gather(0, hid_idx.expand(hid_idx.size(0), hid_idx.size(1), out.size(2)))
+        enc_h = out.gather(
+            0, hid_idx.expand(hid_idx.size(0), hid_idx.size(1), out.size(2))
+        )
         return enc_h.squeeze(0)
 
     def init_memory(self, ctx_h):
@@ -1138,8 +1234,9 @@ class BaselineClusteringModel(nn.Module):
         num_clusters = lat_h.size(1)
 
         # duplicate inpt_emb
-        inpt = inpt.unsqueeze(2).expand(
-            inpt_len, batch_size, lat_h.size(1)).contiguous()
+        inpt = (
+            inpt.unsqueeze(2).expand(inpt_len, batch_size, lat_h.size(1)).contiguous()
+        )
         tgt = tgt.unsqueeze(1).expand(tgt.size(0), lat_h.size(1)).contiguous()
 
         # batch together all the clusters
@@ -1201,8 +1298,14 @@ class BaselineClusteringModel(nn.Module):
         x = torch.Tensor(1).fill_(self.word_dict.get_idx(word)).long()
         return Variable(x)
 
-    def write(self, cond_h, max_words, temperature,
-        start_token='YOU:', stop_tokens=data.STOP_TOKENS):
+    def write(
+        self,
+        cond_h,
+        max_words,
+        temperature,
+        start_token="YOU:",
+        stop_tokens=data.STOP_TOKENS,
+    ):
 
         # init lang_h
         cond_emb = self.cond2input(cond_h)

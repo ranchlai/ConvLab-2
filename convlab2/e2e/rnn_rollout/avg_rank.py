@@ -29,7 +29,7 @@ import convlab2.e2e.rnn_rollout.utils as utils
 from convlab2.e2e.rnn_rollout.domain import get_domain
 
 
-TAGS = ['YOU:', 'THEM:']
+TAGS = ["YOU:", "THEM:"]
 
 
 def read_dataset(file_name):
@@ -39,32 +39,32 @@ def read_dataset(file_name):
     all_sents = set()
 
     for line in lines:
-        tokens = line.split(' ')
-        ctx = data.get_tag(tokens, 'input')
+        tokens = line.split(" ")
+        ctx = data.get_tag(tokens, "input")
         sents, sent = [], []
         you = None
-        for t in data.get_tag(tokens, 'dialogue'):
+        for t in data.get_tag(tokens, "dialogue"):
             if t in TAGS:
                 if you is not None:
                     sents.append((sent, you))
                     if you:
-                        all_sents.add(' '.join(sent))
+                        all_sents.add(" ".join(sent))
                     sent = []
-                you = t == 'YOU:'
+                you = t == "YOU:"
             else:
                 assert you is not None
                 sent.append(t)
-                if t == '<selection>':
+                if t == "<selection>":
                     break
 
         if len(sent) > 0:
             sents.append((sent, you))
             if you:
-                all_sents.add(' '.join(sent))
+                all_sents.add(" ".join(sent))
 
         dataset.append((ctx, sents))
 
-    sents = [sent.split(' ') for sent in all_sents]
+    sents = [sent.split(" ") for sent in all_sents]
     random.shuffle(dataset)
     return dataset, sents
 
@@ -73,18 +73,23 @@ def rollout(sent, ai, domain, temperature):
     enc = ai._encode(sent, ai.model.word_dict)
     _, lang_h, lang_hs = ai.model.score_sent(enc, ai.lang_h, ai.ctx_h, temperature)
 
-    is_selection = len(sent) == 1 and sent[0] == '<selection>'
+    is_selection = len(sent) == 1 and sent[0] == "<selection>"
 
     score = 0
     for _ in range(5):
         combined_lang_hs = ai.lang_hs + [lang_hs]
-        combined_words = ai.words + [ai.model.word2var('YOU:'), Variable(enc)]
+        combined_words = ai.words + [ai.model.word2var("YOU:"), Variable(enc)]
 
         if not is_selection:
             # complete the conversation with rollout_length samples
             _, rollout, _, rollout_lang_hs = ai.model.write(
-                lang_h, ai.ctx_h, 100, temperature,
-                stop_tokens=['<selection>'], resume=True)
+                lang_h,
+                ai.ctx_h,
+                100,
+                temperature,
+                stop_tokens=["<selection>"],
+                resume=True,
+            )
             combined_lang_hs += [rollout_lang_hs]
             combined_words += [rollout]
 
@@ -94,7 +99,9 @@ def rollout(sent, ai, domain, temperature):
         combined_lang_hs = torch.cat(combined_lang_hs)
         combined_words = torch.cat(combined_words)
 
-        rollout_choice, _, p_agree = ai._choose(combined_lang_hs, combined_words, sample=False)
+        rollout_choice, _, p_agree = ai._choose(
+            combined_lang_hs, combined_words, sample=False
+        )
         rollout_score = domain.score(ai.context, rollout_choice)
         score += p_agree * rollout_score
 
@@ -104,7 +111,7 @@ def rollout(sent, ai, domain, temperature):
 def likelihood(sent, ai, domain, temperature):
     """Computes likelihood of a given sentence according the giving model."""
     enc = ai._encode(sent, ai.model.word_dict)
-    score, _, _= ai.model.score_sent(enc, ai.lang_h, ai.ctx_h, temperature)
+    score, _, _ = ai.model.score_sent(enc, ai.lang_h, ai.ctx_h, temperature)
     return score
 
 
@@ -131,21 +138,23 @@ def compute_rank(target, sents, ai, domain, temperature, score_func):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Negotiator')
-    parser.add_argument('--dataset', type=str, default='./data/negotiate/val.txt',
-        help='location of the dataset')
-    parser.add_argument('--model_file', type=str,
-        help='model file')
-    parser.add_argument('--smart_ai', action='store_true', default=False,
-        help='to use rollouts')
-    parser.add_argument('--seed', type=int, default=1,
-        help='random seed')
-    parser.add_argument('--temperature', type=float, default=1.0,
-        help='temperature')
-    parser.add_argument('--domain', type=str, default='object_division',
-        help='domain for the dialogue')
-    parser.add_argument('--log_file', type=str, default='',
-        help='log file')
+    parser = argparse.ArgumentParser(description="Negotiator")
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        default="./data/negotiate/val.txt",
+        help="location of the dataset",
+    )
+    parser.add_argument("--model_file", type=str, help="model file")
+    parser.add_argument(
+        "--smart_ai", action="store_true", default=False, help="to use rollouts"
+    )
+    parser.add_argument("--seed", type=int, default=1, help="random seed")
+    parser.add_argument("--temperature", type=float, default=1.0, help="temperature")
+    parser.add_argument(
+        "--domain", type=str, default="object_division", help="domain for the dialogue"
+    )
+    parser.add_argument("--log_file", type=str, default="", help="log file")
     args = parser.parse_args()
 
     utils.set_seed(args.seed)
@@ -166,13 +175,17 @@ def main():
         for sent, you in dialog:
             if you:
                 # if it is your turn to say, take the target word and compute its rank
-                rank = compute_rank(sent, sents, ai, domain, args.temperature, score_func)
+                rank = compute_rank(
+                    sent, sents, ai, domain, args.temperature, score_func
+                )
                 # compute lang_h for the groundtruth sentence
                 enc = ai._encode(sent, ai.model.word_dict)
-                _, ai.lang_h, lang_hs = ai.model.score_sent(enc, ai.lang_h, ai.ctx_h, args.temperature)
+                _, ai.lang_h, lang_hs = ai.model.score_sent(
+                    enc, ai.lang_h, ai.ctx_h, args.temperature
+                )
                 # save hidden states and the utterance
                 ai.lang_hs.append(lang_hs)
-                ai.words.append(ai.model.word2var('YOU:'))
+                ai.words.append(ai.model.word2var("YOU:"))
                 ai.words.append(Variable(enc))
                 ranks += rank
                 n += 1
@@ -180,10 +193,13 @@ def main():
                 ai.read(sent)
         k += 1
         time_elapsed = time.time() - start_time
-        logger.dump('dialogue %d | avg rank %.3f | raw %d/%d | time %.3f' % (k, 1. * ranks / n, ranks, n, time_elapsed))
+        logger.dump(
+            "dialogue %d | avg rank %.3f | raw %d/%d | time %.3f"
+            % (k, 1.0 * ranks / n, ranks, n, time_elapsed)
+        )
 
-    logger.dump('final avg rank %.3f' % (1. * ranks / n))
+    logger.dump("final avg rank %.3f" % (1.0 * ranks / n))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

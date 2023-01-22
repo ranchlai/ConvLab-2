@@ -15,8 +15,9 @@ class SelectionEngine(EngineBase):
         super(SelectionEngine, self).__init__(model, args, verbose)
         self.sel_crit = Criterion(
             self.model.item_dict,
-            bad_toks=['<disconnect>', '<disagree>'],
-            reduction='mean' if args.sep_sel else 'none')
+            bad_toks=["<disconnect>", "<disagree>"],
+            reduction="mean" if args.sep_sel else "none",
+        )
 
     def _forward(model, batch, sep_sel=False):
         ctx, _, inpts, lens, _, sel_tgt, rev_idxs, hid_idxs, _ = batch
@@ -35,8 +36,9 @@ class SelectionEngine(EngineBase):
         return sel_out, sel_tgt
 
     def train_batch(self, batch):
-        sel_out, sel_tgt = SelectionEngine._forward(self.model, batch,
-            sep_sel=self.args.sep_sel)
+        sel_out, sel_tgt = SelectionEngine._forward(
+            self.model, batch, sep_sel=self.args.sep_sel
+        )
         loss = 0
         if self.args.sep_sel:
             loss = self.sel_crit(sel_out, sel_tgt)
@@ -53,8 +55,9 @@ class SelectionEngine(EngineBase):
 
     def valid_batch(self, batch):
         with torch.no_grad():
-            sel_out, sel_tgt = SelectionEngine._forward(self.model, batch,
-                sep_sel=self.args.sep_sel)
+            sel_out, sel_tgt = SelectionEngine._forward(
+                self.model, batch, sep_sel=self.args.sep_sel
+            )
         loss = 0
         if self.args.sep_sel:
             loss = self.sel_crit(sel_out, sel_tgt)
@@ -64,5 +67,3 @@ class SelectionEngine(EngineBase):
             loss /= sel_out[0].size(0)
 
         return 0, loss.item(), 0
-
-

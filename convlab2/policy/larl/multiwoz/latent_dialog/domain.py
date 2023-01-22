@@ -4,14 +4,14 @@ import json
 
 
 def get_domain(name):
-    if name == 'object_division':
+    if name == "object_division":
         return ObjectDivisionDomain()
-    raise()
+    raise ()
 
 
 class ObjectDivisionDomain(object):
     def __init__(self):
-        self.item_pattern = re.compile('^item([0-9])=([0-9\-])+$')
+        self.item_pattern = re.compile("^item([0-9])=([0-9\-])+$")
 
     def input_length(self):
         return 3
@@ -24,8 +24,11 @@ class ObjectDivisionDomain(object):
 
         def gen(cnts, idx=0, choice=[]):
             if idx >= len(cnts):
-                left_choice = ['item%d=%d' % (i, c) for i, c in enumerate(choice)]
-                right_choice = ['item%d=%d' % (i, n - c) for i, (n, c) in enumerate(zip(cnts, choice))]
+                left_choice = ["item%d=%d" % (i, c) for i, c in enumerate(choice)]
+                right_choice = [
+                    "item%d=%d" % (i, n - c)
+                    for i, (n, c) in enumerate(zip(cnts, choice))
+                ]
                 return [left_choice + right_choice]
             choices = []
             for c in range(cnts[idx] + 1):
@@ -33,9 +36,10 @@ class ObjectDivisionDomain(object):
                 choices += gen(cnts, idx + 1, choice)
                 choice.pop()
             return choices
+
         choices = gen(cnts)
-        choices.append(['<no_agreement>'] * self.selection_length())
-        choices.append(['<disconnect>'] * self.selection_length())
+        choices.append(["<no_agreement>"] * self.selection_length())
+        choices.append(["<disconnect>"] * self.selection_length())
         return choices
 
     def parse_context(self, ctx):
@@ -67,9 +71,10 @@ class ObjectDivisionDomain(object):
 
 class ContextGenerator(object):
     """Dialogue context generator. Generates contexes from the file."""
+
     def __init__(self, context_file):
         self.ctxs = []
-        with open(context_file, 'r') as f:
+        with open(context_file, "r") as f:
             ctx_pair = []
             for line in f:
                 ctx = line.strip().split()
@@ -88,14 +93,15 @@ class ContextGenerator(object):
                 yield ctx
 
     def total_size(self, nepoch):
-        return nepoch*len(self.ctxs)
+        return nepoch * len(self.ctxs)
 
 
 class ContextGeneratorEval(object):
     """Dialogue context generator. Generates contexes from the file."""
+
     def __init__(self, context_file):
         self.ctxs = []
-        with open(context_file, 'r') as f:
+        with open(context_file, "r") as f:
             ctx_pair = []
             for line in f:
                 ctx = line.strip().split()
@@ -110,7 +116,7 @@ class TaskGoalGenerator(object):
         self.goals = []
         data = json.load(open(goal_file))
         for key, raw_dlg in data.items():
-            self.goals.append((key, raw_dlg['goal']))
+            self.goals.append((key, raw_dlg["goal"]))
 
     def sample(self):
         return random.choice(self.goals)
@@ -120,5 +126,3 @@ class TaskGoalGenerator(object):
             random.shuffle(self.goals)
             for goal in self.goals:
                 yield goal
-
-

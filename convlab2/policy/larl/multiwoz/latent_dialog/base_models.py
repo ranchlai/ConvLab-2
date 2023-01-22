@@ -4,7 +4,12 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
 import numpy as np
-from convlab2.policy.larl.multiwoz.latent_dialog.utils import INT, FLOAT, LONG, cast_type
+from convlab2.policy.larl.multiwoz.latent_dialog.utils import (
+    INT,
+    FLOAT,
+    LONG,
+    cast_type,
+)
 
 
 class BaseModel(nn.Module):
@@ -17,9 +22,7 @@ class BaseModel(nn.Module):
     def np2var(self, inputs, dtype):
         if inputs is None:
             return None
-        return cast_type(Variable(th.from_numpy(inputs)),
-                         dtype,
-                         self.use_gpu)
+        return cast_type(Variable(th.from_numpy(inputs)), dtype, self.use_gpu)
 
     def forward(self, *inputs):
         raise NotImplementedError
@@ -36,17 +39,24 @@ class BaseModel(nn.Module):
         return total_loss
 
     def get_optimizer(self, config, verbose=True):
-        if config.op == 'adam':
+        if config.op == "adam":
             if verbose:
-                print('Use Adam')
-            return optim.Adam(filter(lambda p: p.requires_grad, self.parameters()), lr=config.init_lr,
-                              weight_decay=config.l2_norm)
-        elif config.op == 'sgd':
-            print('Use SGD')
-            return optim.SGD(self.parameters(), lr=config.init_lr, momentum=config.momentum)
-        elif config.op == 'rmsprop':
-            print('Use RMSProp')
-            return optim.RMSprop(self.parameters(), lr=config.init_lr, momentum=config.momentum)
+                print("Use Adam")
+            return optim.Adam(
+                filter(lambda p: p.requires_grad, self.parameters()),
+                lr=config.init_lr,
+                weight_decay=config.l2_norm,
+            )
+        elif config.op == "sgd":
+            print("Use SGD")
+            return optim.SGD(
+                self.parameters(), lr=config.init_lr, momentum=config.momentum
+            )
+        elif config.op == "rmsprop":
+            print("Use RMSProp")
+            return optim.RMSprop(
+                self.parameters(), lr=config.init_lr, momentum=config.momentum
+            )
 
     def get_clf_optimizer(self, config):
         params = []
@@ -54,15 +64,19 @@ class BaseModel(nn.Module):
         params.extend(self.feat_projecter.parameters())
         params.extend(self.sel_classifier.parameters())
 
-        if config.fine_tune_op == 'adam':
-            print('Use Adam')
+        if config.fine_tune_op == "adam":
+            print("Use Adam")
             return optim.Adam(params, lr=config.fine_tune_lr)
-        elif config.fine_tune_op == 'sgd':
-            print('Use SGD')
-            return optim.SGD(params, lr=config.fine_tune_lr, momentum=config.fine_tune_momentum)
-        elif config.fine_tune_op == 'rmsprop':
-            print('Use RMSProp')
-            return optim.RMSprop(params, lr=config.fine_tune_lr, momentum=config.fine_tune_momentum)
+        elif config.fine_tune_op == "sgd":
+            print("Use SGD")
+            return optim.SGD(
+                params, lr=config.fine_tune_lr, momentum=config.fine_tune_momentum
+            )
+        elif config.fine_tune_op == "rmsprop":
+            print("Use RMSProp")
+            return optim.RMSprop(
+                params, lr=config.fine_tune_lr, momentum=config.fine_tune_momentum
+            )
 
     def model_sel_loss(self, loss, batch_cnt):
         return self.valid_loss(loss, batch_cnt)
@@ -70,7 +84,7 @@ class BaseModel(nn.Module):
     def extract_short_ctx(self, context, context_lens, backward_size=1):
         utts = []
         for b_id in range(context.shape[0]):
-            utts.append(context[b_id, context_lens[b_id]-1])
+            utts.append(context[b_id, context_lens[b_id] - 1])
         return np.array(utts)
 
     def flatten_context(self, context, context_lens, align_right=False):
@@ -88,8 +102,8 @@ class BaseModel(nn.Module):
         results = np.zeros((context.shape[0], max_temp_len))
         for b_id in range(context.shape[0]):
             if align_right:
-                results[b_id, -temp_lens[b_id]:] = utts[b_id]
+                results[b_id, -temp_lens[b_id] :] = utts[b_id]
             else:
-                results[b_id, 0:temp_lens[b_id]] = utts[b_id]
+                results[b_id, 0 : temp_lens[b_id]] = utts[b_id]
 
         return results

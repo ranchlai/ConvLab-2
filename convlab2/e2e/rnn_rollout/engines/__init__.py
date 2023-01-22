@@ -23,7 +23,8 @@ import convlab2.e2e.rnn_rollout.vis as vis
 
 class Criterion(object):
     """Weighted CrossEntropyLoss."""
-    def __init__(self, dictionary, device_id=None, bad_toks=[], reduction='mean'):
+
+    def __init__(self, dictionary, device_id=None, bad_toks=[], reduction="mean"):
         w = torch.Tensor(len(dictionary)).fill_(1)
         for tok in bad_toks:
             w[dictionary.get_idx(tok)] = 0.0
@@ -38,6 +39,7 @@ class Criterion(object):
 
 class EngineBase(object):
     """Base class for training engine."""
+
     def __init__(self, model, args, verbose=False):
         self.model = model
         self.args = args
@@ -45,19 +47,33 @@ class EngineBase(object):
         self.opt = self.make_opt(self.args.lr)
         self.crit = Criterion(self.model.word_dict)
         self.sel_crit = Criterion(
-            self.model.item_dict, bad_toks=['<disconnect>', '<disagree>'])
+            self.model.item_dict, bad_toks=["<disconnect>", "<disagree>"]
+        )
         if self.args.visual:
-            self.model_plot = vis.ModulePlot(self.model, plot_weight=True, plot_grad=False)
-            self.loss_plot = vis.Plot(['train', 'valid', 'valid_select'],
-                'loss', 'loss', 'epoch', running_n=1, write_to_file=False)
-            self.ppl_plot = vis.Plot(['train', 'valid', 'valid_select'],
-                'perplexity', 'ppl', 'epoch', running_n=1, write_to_file=False)
+            self.model_plot = vis.ModulePlot(
+                self.model, plot_weight=True, plot_grad=False
+            )
+            self.loss_plot = vis.Plot(
+                ["train", "valid", "valid_select"],
+                "loss",
+                "loss",
+                "epoch",
+                running_n=1,
+                write_to_file=False,
+            )
+            self.ppl_plot = vis.Plot(
+                ["train", "valid", "valid_select"],
+                "perplexity",
+                "ppl",
+                "epoch",
+                running_n=1,
+                write_to_file=False,
+            )
 
     def make_opt(self, lr):
         return optim.RMSprop(
-            self.model.parameters(),
-            lr=lr,
-            momentum=self.args.momentum)
+            self.model.parameters(), lr=lr, momentum=self.args.momentum
+        )
 
     def get_model(self):
         return self.model
@@ -99,10 +115,10 @@ class EngineBase(object):
 
         # Dividing by the number of words in the input, not the tokens modeled,
         # because the latter includes padding
-        total_valid_loss /= validset_stats['nonpadn']
+        total_valid_loss /= validset_stats["nonpadn"]
         total_select_loss /= len(validset)
         total_partner_ctx_loss /= len(validset)
-        #total_future_loss /= len(validset)
+        # total_future_loss /= len(validset)
         return total_valid_loss, total_select_loss, total_partner_ctx_loss, {}
 
     def iter(self, epoch, lr, traindata, validdata):
@@ -110,27 +126,36 @@ class EngineBase(object):
         validset, validset_stats = validdata
 
         train_loss, train_time = self.train_pass(trainset)
-        valid_loss, valid_select_loss, valid_partner_ctx_loss, extra = \
-            self.valid_pass(validset, validset_stats)
+        valid_loss, valid_select_loss, valid_partner_ctx_loss, extra = self.valid_pass(
+            validset, validset_stats
+        )
 
         if self.verbose:
-            print('| epoch %03d | trainloss %.3f | trainppl %.3f | s/epoch %.2f | lr %0.8f' % (
-                epoch, train_loss, np.exp(train_loss), train_time, lr))
-            print('| epoch %03d | validloss %.3f | validppl %.3f' % (
-                epoch, valid_loss, np.exp(valid_loss)))
-            print('| epoch %03d | validselectloss %.3f | validselectppl %.3f' % (
-                epoch, valid_select_loss, np.exp(valid_select_loss)))
+            print(
+                "| epoch %03d | trainloss %.3f | trainppl %.3f | s/epoch %.2f | lr %0.8f"
+                % (epoch, train_loss, np.exp(train_loss), train_time, lr)
+            )
+            print(
+                "| epoch %03d | validloss %.3f | validppl %.3f"
+                % (epoch, valid_loss, np.exp(valid_loss))
+            )
+            print(
+                "| epoch %03d | validselectloss %.3f | validselectppl %.3f"
+                % (epoch, valid_select_loss, np.exp(valid_select_loss))
+            )
             if self.model.args.partner_ctx_weight != 0:
-                print('| epoch %03d | validpartnerctxloss %.3f | validpartnerctxppl %.3f' % (
-                    epoch, valid_partner_ctx_loss, np.exp(valid_partner_ctx_loss)))
+                print(
+                    "| epoch %03d | validpartnerctxloss %.3f | validpartnerctxppl %.3f"
+                    % (epoch, valid_partner_ctx_loss, np.exp(valid_partner_ctx_loss))
+                )
 
         if self.args.visual:
-            self.loss_plot.update('train', epoch, train_loss)
-            self.loss_plot.update('valid', epoch, valid_loss)
-            self.loss_plot.update('valid_select', epoch, valid_select_loss)
-            self.ppl_plot.update('train', epoch, np.exp(train_loss))
-            self.ppl_plot.update('valid', epoch, np.exp(valid_loss))
-            self.ppl_plot.update('valid_select', epoch, np.exp(valid_select_loss))
+            self.loss_plot.update("train", epoch, train_loss)
+            self.loss_plot.update("valid", epoch, valid_loss)
+            self.loss_plot.update("valid_select", epoch, valid_select_loss)
+            self.ppl_plot.update("train", epoch, np.exp(train_loss))
+            self.ppl_plot.update("valid", epoch, np.exp(valid_loss))
+            self.ppl_plot.update("valid_select", epoch, np.exp(valid_select_loss))
 
         return train_loss, valid_loss, valid_select_loss, extra
 
@@ -146,7 +171,9 @@ class EngineBase(object):
         validdata = corpus.valid_dataset(self.args.bsz)
         for epoch in range(1, self.args.max_epoch + 1):
             traindata = corpus.train_dataset(self.args.bsz)
-            _, valid_loss, valid_select_loss, extra = self.iter(epoch, lr, traindata, validdata)
+            _, valid_loss, valid_select_loss, extra = self.iter(
+                epoch, lr, traindata, validdata
+            )
 
             combined_valid_loss = self.combine_loss(valid_loss, valid_select_loss)
             if combined_valid_loss < best_combined_valid_loss:
@@ -155,8 +182,10 @@ class EngineBase(object):
                 best_model.flatten_parameters()
 
         if self.verbose:
-            print('| start annealing | best combined loss %.3f | best combined ppl %.3f' % (
-                best_combined_valid_loss, np.exp(best_combined_valid_loss)))
+            print(
+                "| start annealing | best combined loss %.3f | best combined ppl %.3f"
+                % (best_combined_valid_loss, np.exp(best_combined_valid_loss))
+            )
 
         self.model = best_model
         for epoch in range(self.args.max_epoch + 1, 100):
@@ -169,6 +198,7 @@ class EngineBase(object):
 
             traindata = corpus.train_dataset(self.args.bsz)
             train_loss, valid_loss, valid_select_loss, extra = self.iter(
-                epoch, lr, traindata, validdata)
+                epoch, lr, traindata, validdata
+            )
 
         return train_loss, valid_loss, valid_select_loss, extra

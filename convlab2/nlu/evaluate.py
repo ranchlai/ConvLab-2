@@ -17,9 +17,9 @@ from tqdm import tqdm
 def calculateF1(predict_golden):
     TP, FP, FN = 0, 0, 0
     for item in predict_golden:
-        predicts = item['predict']
+        predicts = item["predict"]
         predicts = [[x[0], x[1], x[2], x[3].lower()] for x in predicts]
-        labels = item['golden']
+        labels = item["golden"]
         labels = [[x[0], x[1], x[2], x[3].lower()] for x in labels]
         for ele in predicts:
             if ele in labels:
@@ -32,11 +32,11 @@ def calculateF1(predict_golden):
     # print(TP, FP, FN)
     precision = 1.0 * TP / (TP + FP)
     recall = 1.0 * TP / (TP + FN)
-    F1 = 2.0 * precision * recall / (precision + recall) if precision + recall else 0.
+    F1 = 2.0 * precision * recall / (precision + recall) if precision + recall else 0.0
     return precision, recall, F1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     seed = 2020
     random.seed(seed)
     numpy.random.seed(seed)
@@ -51,38 +51,44 @@ if __name__ == '__main__':
         sys.exit()
     dataset_name = sys.argv[1]
     model_name = sys.argv[2]
-    if dataset_name == 'MultiWOZ':
-        if model_name == 'MILU':
+    if dataset_name == "MultiWOZ":
+        if model_name == "MILU":
             from convlab2.nlu.milu.multiwoz import MILU
+
             model = MILU()
-        elif model_name == 'SVMNLU':
+        elif model_name == "SVMNLU":
             from convlab2.nlu.svm.multiwoz import SVMNLU
+
             model = SVMNLU()
-        elif model_name == 'BERTNLU':
+        elif model_name == "BERTNLU":
             from convlab2.nlu.jointBERT.multiwoz import BERTNLU
+
             model = BERTNLU()
         else:
             raise Exception("Available models: MILU, SVMNLU, BERTNLU")
 
         from convlab2.util.dataloader.module_dataloader import MultiTurnNLUDataloader
         from convlab2.util.dataloader.dataset_dataloader import MultiWOZDataloader
+
         dataloader = MultiTurnNLUDataloader(dataset_dataloader=MultiWOZDataloader())
-        data = dataloader.load_data(data_key='test', role=sys.argv[3])['test']
+        data = dataloader.load_data(data_key="test", role=sys.argv[3])["test"]
         predict_golden = []
-        for i in tqdm(range(len(data['utterance']))):
-            predict = model.predict(utterance=data['utterance'][i],
-                                    context=data['context'][i])
-            label = data['dialog_act'][i]
-            predict_golden.append({
-                'predict': predict,
-                'golden': label
-            })
+        for i in tqdm(range(len(data["utterance"]))):
+            predict = model.predict(
+                utterance=data["utterance"][i], context=data["context"][i]
+            )
+            label = data["dialog_act"][i]
+            predict_golden.append({"predict": predict, "golden": label})
 
         precision, recall, F1 = calculateF1(predict_golden)
-        print('Model {} on {} {} sentences:'.format(model_name, dataset_name, len(predict_golden)))
-        print('\t Precision: %.2f' % (100 * precision))
-        print('\t Recall: %.2f' % (100 * recall))
-        print('\t F1: %.2f' % (100 * F1))
+        print(
+            "Model {} on {} {} sentences:".format(
+                model_name, dataset_name, len(predict_golden)
+            )
+        )
+        print("\t Precision: %.2f" % (100 * precision))
+        print("\t Recall: %.2f" % (100 * recall))
+        print("\t F1: %.2f" % (100 * F1))
 
     else:
         raise Exception("currently supported dataset: MultiWOZ")

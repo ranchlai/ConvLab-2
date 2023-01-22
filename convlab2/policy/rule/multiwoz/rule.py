@@ -2,23 +2,24 @@
 import torch
 from convlab2.policy.policy import Policy
 from convlab2.policy.rule.multiwoz.rule_based_multiwoz_bot import RuleBasedMultiwozBot
-from convlab2.policy.rule.multiwoz.policy_agenda_multiwoz import UserPolicyAgendaMultiWoz
+from convlab2.policy.rule.multiwoz.policy_agenda_multiwoz import (
+    UserPolicyAgendaMultiWoz,
+)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class RulePolicy(Policy):
-
-    def __init__(self, is_train=False, character='sys'):
+    def __init__(self, is_train=False, character="sys"):
         self.is_train = is_train
         self.character = character
 
-        if character == 'sys':
+        if character == "sys":
             self.policy = RuleBasedMultiwozBot()
-        elif character == 'usr':
+        elif character == "usr":
             self.policy = UserPolicyAgendaMultiWoz()
         else:
-            raise NotImplementedError('unknown character {}'.format(character))
+            raise NotImplementedError("unknown character {}".format(character))
 
     def predict(self, state):
         """
@@ -37,16 +38,16 @@ class RulePolicy(Policy):
         self.policy.init_session(**kwargs)
 
     def is_terminated(self):
-        if self.character == 'sys':
+        if self.character == "sys":
             return None
         return self.policy.is_terminated()
 
     def get_reward(self):
-        if self.character == 'sys':
+        if self.character == "sys":
             return None
         return self.policy.get_reward()
 
     def get_goal(self):
-        if hasattr(self.policy, 'get_goal'):
+        if hasattr(self.policy, "get_goal"):
             return self.policy.get_goal()
         return None

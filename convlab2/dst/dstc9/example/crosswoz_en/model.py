@@ -12,7 +12,7 @@ class ExampleModel(DST):
                 "rating": "",
                 "nearby attract.": "",
                 "nearby rest.": "",
-                "nearby hotels": ""
+                "nearby hotels": "",
             },
             "Restaurant": {
                 "name": "",
@@ -21,7 +21,7 @@ class ExampleModel(DST):
                 "rating": "",
                 "nearby attract.": "",
                 "nearby rest.": "",
-                "nearby hotels": ""
+                "nearby hotels": "",
             },
             "Hotel": {
                 "name": "",
@@ -31,16 +31,10 @@ class ExampleModel(DST):
                 "rating": "",
                 "nearby attract.": "",
                 "nearby rest.": "",
-                "nearby hotels": ""
+                "nearby hotels": "",
             },
-            "Metro": {
-                "from": "",
-                "to": ""
-            },
-            "Taxi": {
-                "from": "",
-                "to": ""
-            }
+            "Metro": {"from": "", "to": ""},
+            "Taxi": {"from": "", "to": ""},
         }
 
     def update_turn(self, sys_utt, user_utt):

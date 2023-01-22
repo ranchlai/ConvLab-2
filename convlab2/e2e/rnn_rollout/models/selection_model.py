@@ -25,18 +25,27 @@ from convlab2.e2e.rnn_rollout.models.attn import Attention, HierarchicalAttentio
 
 
 class SelectionModule(nn.Module):
-    def __init__(self, query_size, value_size, hidden_size, selection_size, num_heads, output_size, args):
+    def __init__(
+        self,
+        query_size,
+        value_size,
+        hidden_size,
+        selection_size,
+        num_heads,
+        output_size,
+        args,
+    ):
         super(SelectionModule, self).__init__()
 
         self.hidden_size = hidden_size
         self.output_size = output_size
 
-        self.attn = HierarchicalAttention(query_size, value_size, hidden_size,
-            args.dropout, args.init_range)
+        self.attn = HierarchicalAttention(
+            query_size, value_size, hidden_size, args.dropout, args.init_range
+        )
 
         self.sel_encoder = nn.Sequential(
-            nn.Linear(2 * hidden_size + query_size, selection_size),
-            nn.Tanh()
+            nn.Linear(2 * hidden_size + query_size, selection_size), nn.Tanh()
         )
 
         self.dropout = nn.Dropout(args.dropout)
@@ -69,6 +78,7 @@ class SelectionModule(nn.Module):
 class SelectionModel(nn.Module):
     corpus_ty = data.SentenceCorpus
     engine_ty = SelectionEngine
+
     def __init__(self, word_dict, item_dict, context_dict, count_dict, args):
         super(SelectionModel, self).__init__()
 
@@ -87,8 +97,15 @@ class SelectionModel(nn.Module):
         self.word_encoder = nn.Embedding(len(self.word_dict), args.nembed_word)
         self.pos_encoder = nn.Embedding(self.len_cutoff, self.nhid_pos)
         self.speaker_encoder = nn.Embedding(len(self.word_dict), self.nhid_speaker)
-        self.ctx_encoder = MlpContextEncoder(len(self.context_dict), domain.input_length(),
-            args.nembed_ctx, args.nhid_ctx, args.dropout, args.init_range, args.skip_values)
+        self.ctx_encoder = MlpContextEncoder(
+            len(self.context_dict),
+            domain.input_length(),
+            args.nembed_ctx,
+            args.nhid_ctx,
+            args.dropout,
+            args.init_range,
+            args.skip_values,
+        )
 
         self.sel_head = SelectionModule(
             query_size=args.nhid_ctx,
@@ -97,14 +114,21 @@ class SelectionModel(nn.Module):
             selection_size=args.nhid_sel,
             num_heads=6,
             output_size=len(item_dict),
-            args=args)
+            args=args,
+        )
 
         self.dropout = nn.Dropout(args.dropout)
 
         # init embeddings
-        self.word_encoder.weight.data.uniform_(-self.args.init_range, self.args.init_range)
-        self.pos_encoder.weight.data.uniform_(-self.args.init_range, self.args.init_range)
-        self.speaker_encoder.weight.data.uniform_(-self.args.init_range, self.args.init_range)
+        self.word_encoder.weight.data.uniform_(
+            -self.args.init_range, self.args.init_range
+        )
+        self.pos_encoder.weight.data.uniform_(
+            -self.args.init_range, self.args.init_range
+        )
+        self.speaker_encoder.weight.data.uniform_(
+            -self.args.init_range, self.args.init_range
+        )
 
     def flatten_parameters(self):
         self.sel_head.flatten_parameters()
@@ -115,15 +139,22 @@ class SelectionModel(nn.Module):
             speaker_emb = self.speaker_encoder(inpt[0]).unsqueeze(0)
             inpt_emb = self.word_encoder(inpt)
             inpt_emb = self.dropout(inpt_emb)
-            pos = Variable(torch.Tensor([min(self.len_cutoff, len(inpts) - i) - 1]).long())
+            pos = Variable(
+                torch.Tensor([min(self.len_cutoff, len(inpts) - i) - 1]).long()
+            )
             pos_emb = self.pos_encoder(pos).unsqueeze(0)
 
             # duplicate ctx_h along the temporal dimension and cat it with the input
-            h = torch.cat([
-                inpt_emb,
-                speaker_emb.expand(inpt_emb.size(0), speaker_emb.size(1), speaker_emb.size(2)),
-                pos_emb.expand(inpt_emb.size(0), inpt_emb.size(1), pos_emb.size(2))],
-                2)
+            h = torch.cat(
+                [
+                    inpt_emb,
+                    speaker_emb.expand(
+                        inpt_emb.size(0), speaker_emb.size(1), speaker_emb.size(2)
+                    ),
+                    pos_emb.expand(inpt_emb.size(0), inpt_emb.size(1), pos_emb.size(2)),
+                ],
+                2,
+            )
             hs.append(h)
 
         return hs
@@ -141,12 +172,8 @@ class SelectionModel(nn.Module):
         hs = self.forward_inpts(inpts, ctx_h)
         sels = []
         for i in range(len(hs)):
-            sel, _, _ = self.sel_head(ctx_h, hs[:i + 1], lens[: i + 1],
-                rev_idxs[:i + 1], hid_idxs[:i + 1])
+            sel, _, _ = self.sel_head(
+                ctx_h, hs[: i + 1], lens[: i + 1], rev_idxs[: i + 1], hid_idxs[: i + 1]
+            )
             sels.append(sel)
         return sels
-
-
-
-
-

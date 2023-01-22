@@ -9,6 +9,7 @@ from copy import deepcopy
 
 class Agent(ABC):
     """Interface for dialog agent classes."""
+
     @abstractmethod
     def __init__(self, name: str):
         self.name = name
@@ -82,8 +83,8 @@ class PipelineAgent(Agent):
                 The natural langauge generator module of agent.
         """
         super(PipelineAgent, self).__init__(name=name)
-        assert self.name in ['user', 'sys']
-        self.opponent_name = 'user' if self.name is 'sys' else 'sys'
+        assert self.name in ["user", "sys"]
+        self.opponent_name = "user" if self.name == "sys" else "sys"
         self.nlu = nlu
         self.dst = dst
         self.policy = policy
@@ -96,8 +97,8 @@ class PipelineAgent(Agent):
         this interface is reserved to replace all interal states of agent
         the code snippet example below is for the scenario when the agent state only depends on self.history and self.dst.state
         """
-        self.history = deepcopy(agent_state['history'])
-        self.dst.state = deepcopy(agent_state['dst_state'])
+        self.history = deepcopy(agent_state["history"])
+        self.dst.state = deepcopy(agent_state["dst_state"])
 
     def state_return(self):
         """
@@ -105,36 +106,41 @@ class PipelineAgent(Agent):
         the code snippet example below is for the scenario when the agent state only depends on self.history and self.dst.state
         """
         agent_state = {}
-        agent_state['history'] = deepcopy(self.history)
-        agent_state['dst_state'] = deepcopy(self.dst.state)
+        agent_state["history"] = deepcopy(self.history)
+        agent_state["dst_state"] = deepcopy(self.dst.state)
 
         return agent_state
-
 
     def response(self, observation):
         """Generate agent response using the agent modules."""
         # Note: If you modify the logic of this function, please ensure that it is consistent with deploy.server.ServerCtrl._turn()
         if self.dst is not None:
-            self.dst.state['history'].append([self.opponent_name, observation]) # [['sys', sys_utt], ['user', user_utt],...]
+            self.dst.state["history"].append(
+                [self.opponent_name, observation]
+            )  # [['sys', sys_utt], ['user', user_utt],...]
         self.history.append([self.opponent_name, observation])
         # get dialog act
         if self.nlu is not None:
-            self.input_action = self.nlu.predict(observation, context=[x[1] for x in self.history[:-1]])
+            self.input_action = self.nlu.predict(
+                observation, context=[x[1] for x in self.history[:-1]]
+            )
         else:
             self.input_action = observation
-        self.input_action = deepcopy(self.input_action) # get rid of reference problem
+        self.input_action = deepcopy(self.input_action)  # get rid of reference problem
         # get state
         if self.dst is not None:
-            if self.name is 'sys':
-                self.dst.state['user_action'] = self.input_action
+            if self.name == "sys":
+                self.dst.state["user_action"] = self.input_action
             else:
-                self.dst.state['system_action'] = self.input_action
+                self.dst.state["system_action"] = self.input_action
             state = self.dst.update(self.input_action)
         else:
             state = self.input_action
-        state = deepcopy(state) # get rid of reference problem
+        state = deepcopy(state)  # get rid of reference problem
         # get action
-        self.output_action = deepcopy(self.policy.predict(state)) # get rid of reference problem
+        self.output_action = deepcopy(
+            self.policy.predict(state)
+        )  # get rid of reference problem
         # get model response
         if self.nlg is not None:
             model_response = self.nlg.generate(self.output_action)
@@ -142,21 +148,21 @@ class PipelineAgent(Agent):
             model_response = self.output_action
         # print(model_response)
         if self.dst is not None:
-            self.dst.state['history'].append([self.name, model_response])
-            if self.name is 'sys':
-                self.dst.state['system_action'] = self.output_action
+            self.dst.state["history"].append([self.name, model_response])
+            if self.name == "sys":
+                self.dst.state["system_action"] = self.output_action
             else:
-                self.dst.state['user_action'] = self.output_action
+                self.dst.state["user_action"] = self.output_action
         self.history.append([self.name, model_response])
         return model_response
 
     def is_terminated(self):
-        if hasattr(self.policy, 'is_terminated'):
+        if hasattr(self.policy, "is_terminated"):
             return self.policy.is_terminated()
         return None
 
     def get_reward(self):
-        if hasattr(self.policy, 'get_reward'):
+        if hasattr(self.policy, "get_reward"):
             return self.policy.get_reward()
         return None
 
@@ -166,8 +172,8 @@ class PipelineAgent(Agent):
             self.nlu.init_session()
         if self.dst is not None:
             self.dst.init_session()
-            if self.name == 'sys':
-                self.dst.state['history'].append([self.name, 'null'])
+            if self.name == "sys":
+                self.dst.state["history"].append([self.name, "null"])
         if self.policy is not None:
             self.policy.init_session(**kwargs)
         if self.nlg is not None:

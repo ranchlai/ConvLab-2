@@ -1,7 +1,8 @@
 import os
 import convlab2
 
-class DotMap():
+
+class DotMap:
     def __init__(self):
         self.max_label_length = 32
         self.max_turn_length = 22
@@ -12,7 +13,7 @@ class DotMap():
         self.do_train = False
         self.train_batch_size = 3
         self.dev_batch_size = 1
-        self.eval_batch_size  = 1
+        self.eval_batch_size = 1
         self.learning_rate = 5e-5
         self.num_train_epochs = 3
         self.patience = 10
@@ -27,16 +28,20 @@ class DotMap():
         self.do_eval = True
         self.num_train_epochs = 300
 
-        self.bert_model = os.path.join(convlab2.get_root_path(), "pre-trained-models/chinese-bert-wwm-ext")
-        self.bert_model_cache_dir = os.path.join(convlab2.get_root_path(), "pre-trained-models/")
+        self.bert_model = os.path.join(
+            convlab2.get_root_path(), "pre-trained-models/chinese-bert-wwm-ext"
+        )
+        self.bert_model_cache_dir = os.path.join(
+            convlab2.get_root_path(), "pre-trained-models/"
+        )
         self.bert_model_name = "hfl/chinese-bert-wwm-ext"
         self.do_lower_case = True
-        self.task_name = 'bert-gru-sumbt'
-        self.nbt = 'rnn'
+        self.task_name = "bert-gru-sumbt"
+        self.nbt = "rnn"
         # self.output_dir = os.path.join(path, 'ckpt/')
-        self.target_slot = 'all'
+        self.target_slot = "all"
         self.learning_rate = 5e-5
-        self.distance_metric = 'euclidean'
+        self.distance_metric = "euclidean"
         self.patience = 15
 
         self.hidden_dim = 300
@@ -45,9 +50,10 @@ class DotMap():
         self.max_turn_length = 22
 
         self.fp16_loss_scale = 0.0
-        self.data_dir = 'data/multiwoz_zh/'
-        self.tf_dir = 'tensorboard'
-        self.tmp_data_dir = 'processed_data/'
-        self.output_dir = 'model_output/'
+        self.data_dir = "data/multiwoz_zh/"
+        self.tf_dir = "tensorboard"
+        self.tmp_data_dir = "processed_data/"
+        self.output_dir = "model_output/"
+
 
 args = DotMap()

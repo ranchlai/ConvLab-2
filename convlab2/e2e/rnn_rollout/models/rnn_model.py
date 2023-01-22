@@ -26,6 +26,7 @@ from convlab2.e2e.rnn_rollout.models.ctx_encoder import MlpContextEncoder
 class RnnModel(nn.Module):
     corpus_ty = data.WordCorpus
     engine_ty = RnnEngine
+
     def __init__(self, word_dict, item_dict, context_dict, count_dict, args):
         super(RnnModel, self).__init__()
 
@@ -42,21 +43,31 @@ class RnnModel(nn.Module):
 
         ctx_encoder_ty = MlpContextEncoder
         self.ctx_encoder = nn.Sequential(
-            ctx_encoder_ty(len(self.context_dict), domain.input_length(), args.nembed_ctx,
-                args.nhid_ctx, args.dropout, args.init_range),
-            nn.Dropout(args.dropout))
+            ctx_encoder_ty(
+                len(self.context_dict),
+                domain.input_length(),
+                args.nembed_ctx,
+                args.nhid_ctx,
+                args.dropout,
+                args.init_range,
+            ),
+            nn.Dropout(args.dropout),
+        )
 
-        self.reader = nn.GRU(args.nhid_ctx + args.nembed_word, args.nhid_lang, bias=True)
+        self.reader = nn.GRU(
+            args.nhid_ctx + args.nembed_word, args.nhid_lang, bias=True
+        )
         self.reader_dropout = nn.Dropout(args.dropout)
 
         self.decoder = nn.Sequential(
-            nn.Linear(args.nhid_lang, args.nembed_word),
-            nn.Dropout(args.dropout))
+            nn.Linear(args.nhid_lang, args.nembed_word), nn.Dropout(args.dropout)
+        )
 
         self.writer = nn.GRUCell(
             input_size=args.nhid_ctx + args.nembed_word,
             hidden_size=args.nhid_lang,
-            bias=True)
+            bias=True,
+        )
 
         # Tie the weights of reader and writer
         self.writer.weight_ih = self.reader.weight_ih_l0
@@ -68,7 +79,8 @@ class RnnModel(nn.Module):
             input_size=args.nhid_lang + args.nembed_word,
             hidden_size=args.nhid_attn,
             bias=True,
-            bidirectional=True)
+            bidirectional=True,
+        )
         self.sel_dropout = nn.Dropout(args.dropout)
 
         # Mask for disabling special tokens when generating sentences
@@ -77,11 +89,12 @@ class RnnModel(nn.Module):
         self.sel_encoder = nn.Sequential(
             torch.nn.Linear(2 * args.nhid_attn + args.nhid_ctx, args.nhid_sel),
             nn.Tanh(),
-            nn.Dropout(args.dropout))
+            nn.Dropout(args.dropout),
+        )
         self.attn = nn.Sequential(
             torch.nn.Linear(2 * args.nhid_attn, args.nhid_attn),
             nn.Tanh(),
-            torch.nn.Linear(args.nhid_attn, 1)
+            torch.nn.Linear(args.nhid_attn, 1),
         )
         self.sel_decoders = nn.ModuleList()
         for i in range(domain.selection_length()):
@@ -89,8 +102,10 @@ class RnnModel(nn.Module):
 
         self.init_weights()
 
-        self.special_token_mask = make_mask(len(word_dict),
-            [word_dict.get_idx(w) for w in ['<unk>', 'YOU:', 'THEM:', '<pad>']])
+        self.special_token_mask = make_mask(
+            len(word_dict),
+            [word_dict.get_idx(w) for w in ["<unk>", "YOU:", "THEM:", "<pad>"]],
+        )
 
     def flatten_parameters(self):
         self.reader.flatten_parameters()
@@ -107,15 +122,17 @@ class RnnModel(nn.Module):
         return Variable(x)
 
     def init_weights(self):
-        #init_rnn(self.reader, self.args.init_range)
+        # init_rnn(self.reader, self.args.init_range)
         init_cont(self.decoder, self.args.init_range)
-        self.word_encoder.weight.data.uniform_(-self.args.init_range, self.args.init_range)
+        self.word_encoder.weight.data.uniform_(
+            -self.args.init_range, self.args.init_range
+        )
 
         init_cont(self.attn, self.args.init_range)
         init_cont(self.sel_encoder, self.args.init_range)
         init_cont(self.sel_decoders, self.args.init_range)
 
-    def read(self, inpt, lang_h, ctx_h, prefix_token='THEM:'):
+    def read(self, inpt, lang_h, ctx_h, prefix_token="THEM:"):
         # Add a 'THEM:' token to the start of the message
         prefix = self.word2var(prefix_token).unsqueeze(0)
         inpt = torch.cat([prefix, inpt])
@@ -153,12 +170,12 @@ class RnnModel(nn.Module):
         return logits
 
     def write_batch(self, bsz, lang_h, ctx_h, temperature, max_words=100):
-        eod = self.word_dict.get_idx('<selection>')
+        eod = self.word_dict.get_idx("<selection>")
 
         lang_h = lang_h.squeeze(0).expand(bsz, lang_h.size(2))
         ctx_h = ctx_h.squeeze(0).expand(bsz, ctx_h.size(2))
 
-        inpt = self.word2var('YOU:')
+        inpt = self.word2var("YOU:")
 
         outs, lang_hs = [], [lang_h.unsqueeze(0)]
         done = set()
@@ -186,8 +203,15 @@ class RnnModel(nn.Module):
 
         return torch.cat(outs, 0), torch.cat(lang_hs, 0)
 
-    def write(self, lang_h, ctx_h, max_words, temperature,
-            stop_tokens=data.STOP_TOKENS, resume=False):
+    def write(
+        self,
+        lang_h,
+        ctx_h,
+        max_words,
+        temperature,
+        stop_tokens=data.STOP_TOKENS,
+        resume=False,
+    ):
         """
         Generate a sentence word by word and feed the output of the
         previous timestep as input to the next.
@@ -196,7 +220,7 @@ class RnnModel(nn.Module):
         # Remove batch dimension
         lang_h = lang_h.squeeze(1)
         ctx_h = ctx_h.squeeze(1)
-        inpt = None if resume else self.word2var('YOU:')
+        inpt = None if resume else self.word2var("YOU:")
 
         for _ in range(max_words):
             if inpt is not None:
@@ -246,7 +270,7 @@ class RnnModel(nn.Module):
         score = 0
         lang_h = lang_h.squeeze(1)
         ctx_h = ctx_h.squeeze(1)
-        inpt = self.word2var('YOU:')
+        inpt = self.word2var("YOU:")
         lang_hs = []
 
         for word in sent:
@@ -280,7 +304,8 @@ class RnnModel(nn.Module):
     def forward_lm(self, inpt_emb, lang_h, ctx_h):
         # append the context embedding to every input word embedding
         ctx_h_rep = ctx_h.narrow(0, ctx_h.size(0) - 1, 1).expand(
-            inpt_emb.size(0), ctx_h.size(1), ctx_h.size(2))
+            inpt_emb.size(0), ctx_h.size(1), ctx_h.size(2)
+        )
         inpt_emb = torch.cat([inpt_emb, ctx_h_rep], 2)
 
         lang_hs, _ = self.reader(inpt_emb, lang_h)
@@ -300,9 +325,13 @@ class RnnModel(nn.Module):
         h = self.sel_dropout(h)
 
         h = h.transpose(0, 1).contiguous()
-        logit = self.attn(h.view(-1, 2 * self.args.nhid_attn)).view(h.size(0), h.size(1))
+        logit = self.attn(h.view(-1, 2 * self.args.nhid_attn)).view(
+            h.size(0), h.size(1)
+        )
         prob = F.softmax(logit, dim=1).unsqueeze(2).expand_as(h)
-        attn = torch.sum(torch.mul(h, prob), 1, keepdim=True).transpose(0, 1).contiguous()
+        attn = (
+            torch.sum(torch.mul(h, prob), 1, keepdim=True).transpose(0, 1).contiguous()
+        )
 
         h = torch.cat([attn, ctx_h], 2).squeeze(0)
         h = self.sel_encoder.forward(h)

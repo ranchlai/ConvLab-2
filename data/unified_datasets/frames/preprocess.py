@@ -7,6 +7,7 @@ from collections import Counter
 from tqdm import tqdm
 from convlab2.util.file_util import read_zipped_json, write_zipped_json
 import re
+
 self_dir = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -30,7 +31,7 @@ intent2des = {
     "hearmore": "Ask the user if she'd like to hear more about a given package",
     "you_are_welcome": "Tell the user she is welcome",
     "canthelp": "Tell the user you cannot answer her request",
-    "reject": "Tell the user you did not understand what she meant"
+    "reject": "Tell the user you did not understand what she meant",
 }
 
 slot2des = {
@@ -80,47 +81,96 @@ slot2des = {
     "mall": "Boolean value indicating whether or not the hotel is in the vicinity of a mall",
     "palace": "Boolean value indicating whether or not the hotel is in the vicinity of a palace",
     "cathedral": "Boolean value indicating whether or not the hotel is in the vicinity of a cathedral",
-    "no_result": "Boolean value indicating whether there is no result match user's constraints"
+    "no_result": "Boolean value indicating whether there is no result match user's constraints",
 }
 
 
 def get_slot_type(slot):
-    if slot in {'book', 'booked', 'vicinity', 'amenities'}:
-        return 'binary'
-    elif slot in {'dst_city', 'or_city', 'str_date', 'end_date', 'duration', 'min_duration', 'max_duration',
-                  'dep_time_or', 'arr_time_or', 'arr_time_dst', 'dep_time_dst', 'n_adults', 'n_children', 'budget',
-                  'price', 'ref_anaphora', 'name', 'category', 'gst_rating',
-                  'count', 'count_name', 'count_dst_city', 'seat'}:
-        return 'non-categorical'
-    elif slot in {'budget_ok', 'flex', 'wifi', 'parking', 'breakfast', 'gym', 'spa', 'downtown', 'airport', 'beach',
-                  'museum', 'theatre', 'park', 'market', 'shopping', 'university', 'mall', 'palace', 'cathedral'}:
-        return 'categorical'
+    if slot in {"book", "booked", "vicinity", "amenities"}:
+        return "binary"
+    elif slot in {
+        "dst_city",
+        "or_city",
+        "str_date",
+        "end_date",
+        "duration",
+        "min_duration",
+        "max_duration",
+        "dep_time_or",
+        "arr_time_or",
+        "arr_time_dst",
+        "dep_time_dst",
+        "n_adults",
+        "n_children",
+        "budget",
+        "price",
+        "ref_anaphora",
+        "name",
+        "category",
+        "gst_rating",
+        "count",
+        "count_name",
+        "count_dst_city",
+        "seat",
+    }:
+        return "non-categorical"
+    elif slot in {
+        "budget_ok",
+        "flex",
+        "wifi",
+        "parking",
+        "breakfast",
+        "gym",
+        "spa",
+        "downtown",
+        "airport",
+        "beach",
+        "museum",
+        "theatre",
+        "park",
+        "market",
+        "shopping",
+        "university",
+        "mall",
+        "palace",
+        "cathedral",
+    }:
+        return "categorical"
     else:
         return None
 
 
 digit2word = {
-    '0': 'zero', '1': 'one', '2': 'two', '3': 'three', '4': 'four', '5': 'five',
-    '6': 'six', '7': 'seven', '8': 'eight', '9': 'nine', '10': 'ten'
+    "0": "zero",
+    "1": "one",
+    "2": "two",
+    "3": "three",
+    "4": "four",
+    "5": "five",
+    "6": "six",
+    "7": "seven",
+    "8": "eight",
+    "9": "nine",
+    "10": "ten",
 }
 
 match = {
-    '0': 0,
-    '1': 0,
-    '>1': 0,
+    "0": 0,
+    "1": 0,
+    ">1": 0,
 }
 
 
 def pharse_in_sen(phrase, sen):
-    '''
+    """
     match value in the sentence
     :param phrase: str
     :param sen: str
     :return: start, end if matched, else None, None
-    '''
+    """
     assert isinstance(phrase, str)
-    pw = '(^|[\s,\.:\?!-])(?P<v>{})([\s,\.:\?!-]|$)'
-    pn = '(^|[\s\?!-]|\D[,\.:])(?P<v>{})($|[\s\?!-]|[,\.:]\D|[,\.:]$)'
+    pw = "(^|[\s,\.:\?!-])(?P<v>{})([\s,\.:\?!-]|$)"
+    pn = "(^|[\s\?!-]|\D[,\.:])(?P<v>{})($|[\s\?!-]|[,\.:]\D|[,\.:]$)"
     if phrase.isdigit():
         pattern = pn
     else:
@@ -130,10 +180,10 @@ def pharse_in_sen(phrase, sen):
     if m:
         num = len(re.findall(p, sen))
         if num > 1:
-            match['>1'] += 1
+            match[">1"] += 1
         else:
-            match['1'] += 1
-        return m.span('v'), num
+            match["1"] += 1
+        return m.span("v"), num
     if phrase.isdigit() and phrase in digit2word:
         phrase = digit2word[phrase]
         p = re.compile(pw.format(re.escape(phrase)), re.I)
@@ -141,79 +191,91 @@ def pharse_in_sen(phrase, sen):
         if m:
             num = len(re.findall(p, sen))
             if num > 1:
-                match['>1'] += 1
+                match[">1"] += 1
             else:
-                match['1'] += 1
-            return m.span('v'), num
-    match['0'] += 1
+                match["1"] += 1
+            return m.span("v"), num
+    match["0"] += 1
     return (None, None), 0
 
 
 def iter_over_acts(acts):
     for act in acts:
-        intent = act['name']
-        for arg in act['args']:
-            k = arg['key']
-            if k == 'id':
+        intent = act["name"]
+        for arg in act["args"]:
+            k = arg["key"]
+            if k == "id":
                 continue
-            elif k in ['ref', 'read', 'write']:
-                assert isinstance(arg['val'], list)
-                for frame in arg['val']:
-                    for kv in frame['annotations']:
-                        if kv['key'] in ('ref', 'read', 'write'):
+            elif k in ["ref", "read", "write"]:
+                assert isinstance(arg["val"], list)
+                for frame in arg["val"]:
+                    for kv in frame["annotations"]:
+                        if kv["key"] in ("ref", "read", "write"):
                             print(kv, frame)
                             assert False
-                        yield intent, kv['key'], kv.get('val')
+                        yield intent, kv["key"], kv.get("val")
             else:
-                yield intent, k, arg.get('val', None)
+                yield intent, k, arg.get("val", None)
 
 
 def normalize_da(intent, slot, value, utterance):
-    if slot == 'intent':
-        slot = 'book'
-    elif slot == 'action':
-        slot = 'booked'
+    if slot == "intent":
+        slot = "book"
+    elif slot == "action":
+        slot = "booked"
     elif slot not in slot2des:
         # ignore some rare slot
         return None, None
 
-    if slot in ['book', 'booked']:
-        slot_type = 'binary'
+    if slot in ["book", "booked"]:
+        slot_type = "binary"
         return slot_type, {
             "intent": intent,
-            "domain": 'travel',
+            "domain": "travel",
             "slot": slot,
-            "value": 'True',
+            "value": "True",
         }
-    elif value is None or value == '':
-        slot_type = 'binary'
+    elif value is None or value == "":
+        slot_type = "binary"
         return slot_type, {
             "intent": intent,
-            "domain": 'travel',
+            "domain": "travel",
             "slot": slot,
-            "value": '',
+            "value": "",
         }
-    elif value == '-1':
-        slot_type = 'binary'
+    elif value == "-1":
+        slot_type = "binary"
         return slot_type, {
             "intent": intent,
-            "domain": 'travel',
+            "domain": "travel",
             "slot": slot,
-            "value": 'dontcare',
+            "value": "dontcare",
         }
     elif isinstance(value, str):
         slot_type = get_slot_type(slot)
-        assert slot_type == 'non-categorical'
+        assert slot_type == "non-categorical"
         (start, end), num = pharse_in_sen(value, utterance)
         if not num:
-            if slot == 'gst_rating' and pharse_in_sen(' / '.join(value.split('/')), utterance)[1]:
-                value = ' / '.join(value.split('/'))
-            elif 'a. m' in value and pharse_in_sen(value.replace('a. m', 'a.m'), utterance)[1]:
-                value = value.replace('a. m', 'a.m')
-            elif 'p. m' in value and pharse_in_sen(value.replace('p. m', 'p.m'), utterance)[1]:
-                value = value.replace('p. m', 'p.m')
-            elif slot == 'price' and pharse_in_sen(value.replace('USD', ' USD'), utterance)[1]:
-                value = value.replace('USD', ' USD')
+            if (
+                slot == "gst_rating"
+                and pharse_in_sen(" / ".join(value.split("/")), utterance)[1]
+            ):
+                value = " / ".join(value.split("/"))
+            elif (
+                "a. m" in value
+                and pharse_in_sen(value.replace("a. m", "a.m"), utterance)[1]
+            ):
+                value = value.replace("a. m", "a.m")
+            elif (
+                "p. m" in value
+                and pharse_in_sen(value.replace("p. m", "p.m"), utterance)[1]
+            ):
+                value = value.replace("p. m", "p.m")
+            elif (
+                slot == "price"
+                and pharse_in_sen(value.replace("USD", " USD"), utterance)[1]
+            ):
+                value = value.replace("USD", " USD")
             else:
                 # few wrong annotation
                 return None, None
@@ -224,19 +286,19 @@ def normalize_da(intent, slot, value, utterance):
             # return None, None
         return slot_type, {
             "intent": intent,
-            "domain": 'travel',
+            "domain": "travel",
             "slot": slot,
             "value": utterance[start:end],
             "start": start,
-            "end": end
+            "end": end,
         }
     elif isinstance(value, bool):
         slot_type = get_slot_type(slot)
         value = str(value)
-        assert slot_type == 'categorical' or slot_type == 'binary', print(slot, value)
+        assert slot_type == "categorical" or slot_type == "binary", print(slot, value)
         return slot_type, {
             "intent": intent,
-            "domain": 'travel',
+            "domain": "travel",
             "slot": slot,
             "value": value,
         }
@@ -246,96 +308,119 @@ def normalize_da(intent, slot, value, utterance):
 
 def preprocess():
     processed_dialogue = []
-    ontology = {'domains': {'travel':
-                                {"description": "Book a vacation package containing round-trip flights and a hotel.",
-                                 "slots": {}}},
-                'intents': {},
-                'binary_dialogue_act': [],
-                'state': {}}
-    original_zipped_path = os.path.join(self_dir, 'original_data.zip')
-    new_dir = os.path.join(self_dir, 'original_data')
+    ontology = {
+        "domains": {
+            "travel": {
+                "description": "Book a vacation package containing round-trip flights and a hotel.",
+                "slots": {},
+            }
+        },
+        "intents": {},
+        "binary_dialogue_act": [],
+        "state": {},
+    }
+    original_zipped_path = os.path.join(self_dir, "original_data.zip")
+    new_dir = os.path.join(self_dir, "original_data")
     if not os.path.exists(original_zipped_path):
         raise FileNotFoundError(original_zipped_path)
-    if not os.path.exists(os.path.join(self_dir, 'data.zip')) or not os.path.exists(os.path.join(self_dir, 'ontology.json')):
-        print('unzip to', new_dir)
-        print('This may take several minutes')
-        archive = zipfile.ZipFile(original_zipped_path, 'r')
+    if not os.path.exists(os.path.join(self_dir, "data.zip")) or not os.path.exists(
+        os.path.join(self_dir, "ontology.json")
+    ):
+        print("unzip to", new_dir)
+        print("This may take several minutes")
+        archive = zipfile.ZipFile(original_zipped_path, "r")
         archive.extractall(new_dir)
-        data = json.load(open(os.path.join(new_dir, 'frames.json')))
+        data = json.load(open(os.path.join(new_dir, "frames.json")))
         # json.dump(data, open(os.path.join(new_dir, 'original_data.json'), 'w'), indent=2)
         cnt = 1
-        for d in tqdm(data, desc='dialogue'):
+        for d in tqdm(data, desc="dialogue"):
             dialogue = {
-                "dataset": 'frames',
-                "data_split": 'train',
-                "dialogue_id": 'frames_' + str(cnt),
-                "original_id": d['id'],
-                "user_id": d['user_id'],
-                "system_id": d['wizard_id'],
-                "userSurveyRating": d['labels']['userSurveyRating'],
-                "wizardSurveyTaskSuccessful": d['labels']['wizardSurveyTaskSuccessful'],
-                "domains": ['travel'],
-                "turns": []
+                "dataset": "frames",
+                "data_split": "train",
+                "dialogue_id": "frames_" + str(cnt),
+                "original_id": d["id"],
+                "user_id": d["user_id"],
+                "system_id": d["wizard_id"],
+                "userSurveyRating": d["labels"]["userSurveyRating"],
+                "wizardSurveyTaskSuccessful": d["labels"]["wizardSurveyTaskSuccessful"],
+                "domains": ["travel"],
+                "turns": [],
             }
             # state = deepcopy(ontology['state']['travel'])
-            for utt_idx, t in enumerate(d['turns']):
-                speaker = 'system' if t['author']=='wizard' else t['author']
+            for utt_idx, t in enumerate(d["turns"]):
+                speaker = "system" if t["author"] == "wizard" else t["author"]
                 turn = {
-                    'speaker': speaker,
-                    'utterance': t['text'],
-                    'utt_idx': utt_idx,
-                    'dialogue_act': {
-                        'binary': [],
-                        'categorical': [],
-                        'non-categorical': [],
+                    "speaker": speaker,
+                    "utterance": t["text"],
+                    "utt_idx": utt_idx,
+                    "dialogue_act": {
+                        "binary": [],
+                        "categorical": [],
+                        "non-categorical": [],
                     },
                 }
-                for intent, slot, value in iter_over_acts(t['labels']['acts']):
-                    da_type, da = normalize_da(intent, slot, value, t['text'])
+                for intent, slot, value in iter_over_acts(t["labels"]["acts"]):
+                    da_type, da = normalize_da(intent, slot, value, t["text"])
                     if da is not None:
-                        da['value'] = da['value'].lower()
-                        turn['dialogue_act'][da_type].append(da)
-                        slot = da['slot']
-                        value = da['value']
-                        if da_type == 'binary':
-                            if da not in ontology['binary_dialogue_act']:
-                                ontology['binary_dialogue_act'].append(da)
+                        da["value"] = da["value"].lower()
+                        turn["dialogue_act"][da_type].append(da)
+                        slot = da["slot"]
+                        value = da["value"]
+                        if da_type == "binary":
+                            if da not in ontology["binary_dialogue_act"]:
+                                ontology["binary_dialogue_act"].append(da)
                         else:
-                            ontology['domains']['travel']['slots'].setdefault(slot, {
-                                "description": slot2des[slot],
-                                "is_categorical": da_type=='categorical',
-                                "possible_values": []
-                            })
-                            if da_type == 'categorical' \
-                                    and value not in ontology['domains']['travel']['slots'][slot]['possible_values']:
-                                ontology['domains']['travel']['slots'][slot]['possible_values'].append(value)
-                        ontology['intents'].setdefault(intent, {
-                            "description": intent2des[intent]
-                        })
+                            ontology["domains"]["travel"]["slots"].setdefault(
+                                slot,
+                                {
+                                    "description": slot2des[slot],
+                                    "is_categorical": da_type == "categorical",
+                                    "possible_values": [],
+                                },
+                            )
+                            if (
+                                da_type == "categorical"
+                                and value
+                                not in ontology["domains"]["travel"]["slots"][slot][
+                                    "possible_values"
+                                ]
+                            ):
+                                ontology["domains"]["travel"]["slots"][slot][
+                                    "possible_values"
+                                ].append(value)
+                        ontology["intents"].setdefault(
+                            intent, {"description": intent2des[intent]}
+                        )
                 # state
-                if speaker == 'user':
-                    turn['state'] = {}
-                    turn['state_update'] = {
-                        'categorical': [],
-                        'non-categorical': [],
+                if speaker == "user":
+                    turn["state"] = {}
+                    turn["state_update"] = {
+                        "categorical": [],
+                        "non-categorical": [],
                     }
-                dialogue['turns'].append(deepcopy(turn))
+                dialogue["turns"].append(deepcopy(turn))
             cnt += 1
-            if len(dialogue['turns']) % 2 == 0:
-                dialogue['turns'] = dialogue['turns'][:-1]
+            if len(dialogue["turns"]) % 2 == 0:
+                dialogue["turns"] = dialogue["turns"][:-1]
             processed_dialogue.append(deepcopy(dialogue))
-        ontology['binary_dialogue_act'] = sorted(ontology['binary_dialogue_act'], key=lambda x: x['intent'])
-        json.dump(ontology, open(os.path.join(self_dir, 'ontology.json'), 'w'), indent=2)
-        json.dump(processed_dialogue, open('data.json', 'w'), indent=2)
-        write_zipped_json(os.path.join(self_dir, 'data.zip'), 'data.json')
-        os.remove('data.json')
+        ontology["binary_dialogue_act"] = sorted(
+            ontology["binary_dialogue_act"], key=lambda x: x["intent"]
+        )
+        json.dump(
+            ontology, open(os.path.join(self_dir, "ontology.json"), "w"), indent=2
+        )
+        json.dump(processed_dialogue, open("data.json", "w"), indent=2)
+        write_zipped_json(os.path.join(self_dir, "data.zip"), "data.json")
+        os.remove("data.json")
     else:
         # read from file
-        processed_dialogue = read_zipped_json(os.path.join(self_dir, 'data.zip'), 'data.json')
-        ontology = json.load(open(os.path.join(self_dir, 'ontology.json')))
+        processed_dialogue = read_zipped_json(
+            os.path.join(self_dir, "data.zip"), "data.json"
+        )
+        ontology = json.load(open(os.path.join(self_dir, "ontology.json")))
     return processed_dialogue, ontology
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     preprocess()
-    print(match) # {'0': 271, '1': 29333, '>1': 806}
+    print(match)  # {'0': 271, '1': 29333, '>1': 806}

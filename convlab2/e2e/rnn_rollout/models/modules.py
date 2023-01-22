@@ -18,8 +18,8 @@ import torch.nn.functional as F
 
 def init_rnn(rnn, init_range, weights=None, biases=None):
     """Initializes RNN uniformly."""
-    weights = weights or ['weight_ih_l0', 'weight_hh_l0']
-    biases = biases or ['bias_ih_l0', 'bias_hh_l0']
+    weights = weights or ["weight_ih_l0", "weight_hh_l0"]
+    biases = biases or ["bias_ih_l0", "bias_hh_l0"]
     # Init weights
     for w in weights:
         rnn._parameters[w].data.uniform_(-init_range, init_range)
@@ -30,20 +30,21 @@ def init_rnn(rnn, init_range, weights=None, biases=None):
 
 def init_rnn_cell(rnn, init_range):
     """Initializes RNNCell uniformly."""
-    init_rnn(rnn, init_range, ['weight_ih', 'weight_hh'], ['bias_ih', 'bias_hh'])
+    init_rnn(rnn, init_range, ["weight_ih", "weight_hh"], ["bias_ih", "bias_hh"])
 
 
 def init_cont(cont, init_range):
     """Initializes a container uniformly."""
     for m in cont:
-        if hasattr(m, 'weight'):
+        if hasattr(m, "weight"):
             m.weight.data.uniform_(-init_range, init_range)
-        if hasattr(m, 'bias'):
+        if hasattr(m, "bias"):
             m.bias.data.fill_(0)
 
 
 class CudaModule(nn.Module):
     """A helper to run a module on a particular device using CUDA."""
+
     def __init__(self, device_id):
         super(CudaModule, self).__init__()
         self.device_id = device_id
@@ -56,6 +57,7 @@ class CudaModule(nn.Module):
 
 class RnnContextEncoder(CudaModule):
     """A module that encodes dialogues context using an RNN."""
+
     def __init__(self, n, k, nembed, nhid, init_range, device_id):
         super(RnnContextEncoder, self).__init__(device_id)
         self.nhid = nhid
@@ -63,10 +65,7 @@ class RnnContextEncoder(CudaModule):
         # use the same embedding for counts and values
         self.embeder = nn.Embedding(n, nembed)
         # an RNN to encode a sequence of counts and values
-        self.encoder = nn.GRU(
-            input_size=nembed,
-            hidden_size=nhid,
-            bias=True)
+        self.encoder = nn.GRU(input_size=nembed, hidden_size=nhid, bias=True)
 
         self.embeder.weight.data.uniform_(-init_range, init_range)
         init_rnn(self.encoder, init_range)
@@ -82,6 +81,7 @@ class RnnContextEncoder(CudaModule):
 
 class MlpContextEncoder(CudaModule):
     """A module that encodes dialogues context using an MLP."""
+
     def __init__(self, n, k, nembed, nhid, init_range, device_id):
         super(MlpContextEncoder, self).__init__(device_id)
 
@@ -89,10 +89,7 @@ class MlpContextEncoder(CudaModule):
         self.cnt_enc = nn.Embedding(n, nembed)
         self.val_enc = nn.Embedding(n, nembed)
 
-        self.encoder = nn.Sequential(
-            nn.Tanh(),
-            nn.Linear(k * nembed, nhid)
-        )
+        self.encoder = nn.Sequential(nn.Tanh(), nn.Linear(k * nembed, nhid))
 
         self.cnt_enc.weight.data.uniform_(-init_range, init_range)
         self.val_enc.weight.data.uniform_(-init_range, init_range)

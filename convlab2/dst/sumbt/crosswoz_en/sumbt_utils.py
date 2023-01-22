@@ -8,9 +8,11 @@ import torch
 
 from convlab2.dst.sumbt.crosswoz_en.convert_to_glue_format import null
 
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
-                    datefmt='%m/%d/%Y %H:%M:%S',
-                    level=logging.INFO)
+logging.basicConfig(
+    format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
+    datefmt="%m/%d/%Y %H:%M:%S",
+    level=logging.INFO,
+)
 logger = logging.getLogger(__name__)
 
 
@@ -32,11 +34,13 @@ class DataProcessor(object):
     @classmethod
     def _read_tsv(cls, input_file, quotechar=None):
         """Reads a tab separated value file."""
-        with open(input_file, "r", encoding='utf-8') as f:
+        with open(input_file, "r", encoding="utf-8") as f:
             reader = csv.reader(f, delimiter="\t", quotechar=quotechar)
             lines = []
             for line in reader:
-                if len(line) > 0 and line[0][0] == '#':  # ignore comments (starting with '#')
+                if (
+                    len(line) > 0 and line[0][0] == "#"
+                ):  # ignore comments (starting with '#')
                     continue
                 lines.append(line)
             return lines
@@ -49,12 +53,25 @@ class Processor(DataProcessor):
         super(Processor, self).__init__()
 
         # crosswoz dataset
-        with open(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))), config.data_dir, "ontology.json"), "r") as fp_ontology:
+        with open(
+            os.path.join(
+                os.path.dirname(
+                    os.path.dirname(
+                        os.path.dirname(
+                            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                        )
+                    )
+                ),
+                config.data_dir,
+                "ontology.json",
+            ),
+            "r",
+        ) as fp_ontology:
             ontology = json.load(fp_ontology)
             for slot in ontology.keys():
                 ontology[slot].append(null)
 
-        assert config.target_slot == 'all'
+        assert config.target_slot == "all"
         # if not config.target_slot == 'all':
         #     slot_idx = {'attraction': '0:1:2', 'bus': '3:4:5:6', 'hospital': '7',
         #                 'hotel': '8:9:10:11:12:13:14:15:16:17', \
@@ -71,10 +88,12 @@ class Processor(DataProcessor):
         # select slots to train
         nslots = len(ontology.keys())
         target_slot = list(ontology.keys())
-        if config.target_slot == 'all':
+        if config.target_slot == "all":
             self.target_slot_idx = [*range(0, nslots)]
         else:
-            self.target_slot_idx = sorted([int(x) for x in config.target_slot.split(':')])
+            self.target_slot_idx = sorted(
+                [int(x) for x in config.target_slot.split(":")]
+            )
 
         for idx in range(0, nslots):
             if not idx in self.target_slot_idx:
@@ -85,23 +104,26 @@ class Processor(DataProcessor):
         # for i, slot in enumerate(self.target_slot):
         #     if slot == "pricerange":
         #         self.target_slot[i] = "price range"
-        logger.info('Processor: target_slot')
+        logger.info("Processor: target_slot")
         logger.info(self.target_slot)
 
     def get_train_examples(self, data_dir, accumulation=False):
         """See base class."""
         return self._create_examples(
-            self._read_tsv(os.path.join(data_dir, "train.tsv")), "train", accumulation)
+            self._read_tsv(os.path.join(data_dir, "train.tsv")), "train", accumulation
+        )
 
     def get_dev_examples(self, data_dir, accumulation=False):
         """See base class."""
         return self._create_examples(
-            self._read_tsv(os.path.join(data_dir, "dev.tsv")), "dev", accumulation)
+            self._read_tsv(os.path.join(data_dir, "dev.tsv")), "dev", accumulation
+        )
 
     def get_test_examples(self, data_dir, accumulation=False):
         """See base class."""
         return self._create_examples(
-            self._read_tsv(os.path.join(data_dir, "test.tsv")), "test", accumulation)
+            self._read_tsv(os.path.join(data_dir, "test.tsv")), "test", accumulation
+        )
 
     def get_labels(self):
         """See base class."""
@@ -112,7 +134,11 @@ class Processor(DataProcessor):
         prev_dialogue_index = None
         examples = []
         for (i, line) in enumerate(lines):
-            guid = "%s-%s-%s" % (set_type, line[0], line[1])  # line[0]: dialogue index, line[1]: turn index
+            guid = "%s-%s-%s" % (
+                set_type,
+                line[0],
+                line[1],
+            )  # line[0]: dialogue index, line[1]: turn index
             if accumulation:
                 if prev_dialogue_index is None or prev_dialogue_index != line[0]:
                     text_a = line[2]
@@ -129,7 +155,8 @@ class Processor(DataProcessor):
             label = [line[4 + idx] for idx in self.target_slot_idx]
 
             examples.append(
-                InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
+                InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label)
+            )
         return examples
 
 
@@ -138,52 +165,51 @@ def normalize_text(text):
     # lower case every word
     text = text.lower()
     # replace white spaces in front and end
-    text = re.sub(r'^\s*|\s*$', '', text)
+    text = re.sub(r"^\s*|\s*$", "", text)
 
     # hotel domain pfb30
     text = re.sub(r"b&b", "bed and breakfast", text)
     text = re.sub(r"b and b", "bed and breakfast", text)
 
     # replace st.
-    text = text.replace(';', ',')
-    text = re.sub('$\/', '', text)
-    text = text.replace('/', ' and ')
+    text = text.replace(";", ",")
+    text = re.sub("$\/", "", text)
+    text = text.replace("/", " and ")
 
     # replace other special characters
-    text = text.replace('-', ' ')
-    text = re.sub('[\"\<>@\(\)]', '', text)  # remove
+    text = text.replace("-", " ")
+    text = re.sub('["\<>@\(\)]', "", text)  # remove
 
     # insert white space before and after tokens:
-    for token in ['?', '.', ',', '!']:
+    for token in ["?", ".", ",", "!"]:
         text = insertSpace(token, text)
 
     # insert white space for 's
-    text = insertSpace('\'s', text)
+    text = insertSpace("'s", text)
 
     # replace it's, does't, you'd ... etc
-    text = re.sub('^\'', '', text)
-    text = re.sub('\'$', '', text)
-    text = re.sub('\'\s', ' ', text)
-    text = re.sub('\s\'', ' ', text)
+    text = re.sub("^'", "", text)
+    text = re.sub("'$", "", text)
+    text = re.sub("'\s", " ", text)
+    text = re.sub("\s'", " ", text)
     for fromx, tox in replacements:
-        text = ' ' + text + ' '
+        text = " " + text + " "
         text = text.replace(fromx, tox)[1:-1]
 
     # remove multiple spaces
-    text = re.sub(' +', ' ', text)
+    text = re.sub(" +", " ", text)
 
     # concatenate numbers
     tmp = text
     tokens = text.split()
     i = 1
     while i < len(tokens):
-        if re.match(u'^\d+$', tokens[i]) and \
-                re.match(u'\d+$', tokens[i - 1]):
+        if re.match("^\d+$", tokens[i]) and re.match("\d+$", tokens[i - 1]):
             tokens[i - 1] += tokens[i]
             del tokens[i]
         else:
             i += 1
-    text = ' '.join(tokens)
+    text = " ".join(tokens)
 
     return text
 
@@ -194,17 +220,21 @@ def insertSpace(token, text):
         sidx = text.find(token, sidx)
         if sidx == -1:
             break
-        if sidx + 1 < len(text) and re.match('[0-9]', text[sidx - 1]) and \
-                re.match('[0-9]', text[sidx + 1]):
+        if (
+            sidx + 1 < len(text)
+            and re.match("[0-9]", text[sidx - 1])
+            and re.match("[0-9]", text[sidx + 1])
+        ):
             sidx += 1
             continue
-        if text[sidx - 1] != ' ':
-            text = text[:sidx] + ' ' + text[sidx:]
+        if text[sidx - 1] != " ":
+            text = text[:sidx] + " " + text[sidx:]
             sidx += 1
-        if sidx + len(token) < len(text) and text[sidx + len(token)] != ' ':
-            text = text[:sidx + 1] + ' ' + text[sidx + 1:]
+        if sidx + len(token) < len(text) and text[sidx + len(token)] != " ":
+            text = text[: sidx + 1] + " " + text[sidx + 1 :]
         sidx += 1
     return text
+
 
 # convert tokens in labels to the identifier in vocabulary
 def get_label_embedding(labels, max_seq_length, tokenizer, device):
@@ -212,7 +242,7 @@ def get_label_embedding(labels, max_seq_length, tokenizer, device):
     for label in labels:
         label_tokens = ["[CLS]"] + tokenizer.tokenize(label) + ["[SEP]"]
         # just truncate, some names are unreasonable long
-        label_token_ids = tokenizer.convert_tokens_to_ids(label_tokens)[:max_seq_length]    
+        label_token_ids = tokenizer.convert_tokens_to_ids(label_tokens)[:max_seq_length]
         label_len = len(label_token_ids)
 
         label_padding = [0] * (max_seq_length - len(label_token_ids))
@@ -221,7 +251,9 @@ def get_label_embedding(labels, max_seq_length, tokenizer, device):
 
         features.append((label_token_ids, label_len))
 
-    all_label_token_ids = torch.tensor([f[0] for f in features], dtype=torch.long).to(device)
+    all_label_token_ids = torch.tensor([f[0] for f in features], dtype=torch.long).to(
+        device
+    )
     all_label_len = torch.tensor([f[1] for f in features], dtype=torch.long).to(device)
 
     return all_label_token_ids, all_label_len
@@ -280,7 +312,9 @@ class InputFeatures(object):
         self.label_id = label_id
 
 
-def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer, max_turn_length):
+def convert_examples_to_features(
+    examples, label_list, max_seq_length, tokenizer, max_turn_length
+):
     """Loads a data file into a list of `InputBatch`s."""
 
     label_map = [{label: i for i, label in enumerate(labels)} for labels in label_list]
@@ -293,16 +327,20 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
 
     max_turn = 0
     for (ex_index, example) in enumerate(examples):
-        if max_turn < int(example.guid.split('-')[2]):
-            max_turn = int(example.guid.split('-')[2])
+        if max_turn < int(example.guid.split("-")[2]):
+            max_turn = int(example.guid.split("-")[2])
     max_turn_length = min(max_turn + 1, max_turn_length)
     logger.info("max_turn_length = %d" % max_turn)
 
     for (ex_index, example) in enumerate(examples):
-        tokens_a = [x if x != '#' else '[SEP]' for x in tokenizer.tokenize(example.text_a)]
+        tokens_a = [
+            x if x != "#" else "[SEP]" for x in tokenizer.tokenize(example.text_a)
+        ]
         tokens_b = None
         if example.text_b:
-            tokens_b = [x if x != '#' else '[SEP]' for x in tokenizer.tokenize(example.text_b)]
+            tokens_b = [
+                x if x != "#" else "[SEP]" for x in tokenizer.tokenize(example.text_b)
+            ]
             # Modifies `tokens_a` and `tokens_b` in place so that the total
             # length is less than the specified length.
             # Account for [CLS], [SEP], [SEP] with "- 3"
@@ -310,7 +348,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
         else:
             # Account for [CLS] and [SEP] with "- 2"
             if len(tokens_a) > max_seq_length - 2:
-                tokens_a = tokens_a[:(max_seq_length - 2)]
+                tokens_a = tokens_a[: (max_seq_length - 2)]
 
         # The convention in BERT is:
         # (a) For sequence pairs:
@@ -348,18 +386,17 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
         FLAG_TEST = False
         if example.label is not None:
             label_id = []
-            label_info = 'label: '
+            label_info = "label: "
             for i, label in enumerate(example.label):
-                if label == 'dontcare':
-                    label = 'do not care'
+                if label == "dontcare":
+                    label = "do not care"
                 label_id.append(label_map[i][label])
-                label_info += '%s (id = %d) ' % (label, label_map[i][label])
+                label_info += "%s (id = %d) " % (label, label_map[i][label])
 
             if ex_index < 5:
                 logger.info("*** Example ***")
                 logger.info("guid: %s" % example.guid)
-                logger.info("tokens: %s" % " ".join(
-                    [str(x) for x in tokens]))
+                logger.info("tokens: %s" % " ".join([str(x) for x in tokens]))
                 logger.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
                 logger.info("input_len: %s" % " ".join([str(x) for x in input_len]))
                 logger.info("label: " + label_info)
@@ -367,32 +404,39 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
             FLAG_TEST = True
             label_id = None
 
-        curr_dialogue_idx = example.guid.split('-')[1]
-        curr_turn_idx = int(example.guid.split('-')[2])
+        curr_dialogue_idx = example.guid.split("-")[1]
+        curr_turn_idx = int(example.guid.split("-")[2])
 
         if prev_dialogue_idx is not None and prev_dialogue_idx != curr_dialogue_idx:
             if prev_turn_idx < max_turn_length:
-                features += [InputFeatures(input_ids=all_padding,
-                                           input_len=all_padding_len,
-                                           label_id=[-1] * slot_dim)] \
-                            * (max_turn_length - prev_turn_idx - 1)
+                features += [
+                    InputFeatures(
+                        input_ids=all_padding,
+                        input_len=all_padding_len,
+                        label_id=[-1] * slot_dim,
+                    )
+                ] * (max_turn_length - prev_turn_idx - 1)
             # print(len(features), max_turn_length)
             assert len(features) % max_turn_length == 0
 
         if prev_dialogue_idx is None or prev_turn_idx < max_turn_length:
             features.append(
-                InputFeatures(input_ids=input_ids,
-                              input_len=input_len,
-                              label_id=label_id))
+                InputFeatures(
+                    input_ids=input_ids, input_len=input_len, label_id=label_id
+                )
+            )
 
         prev_dialogue_idx = curr_dialogue_idx
         prev_turn_idx = curr_turn_idx
 
     if prev_turn_idx < max_turn_length:
-        features += [InputFeatures(input_ids=all_padding,
-                                   input_len=all_padding_len,
-                                   label_id=[-1] * slot_dim)] \
-                    * (max_turn_length - prev_turn_idx - 1)
+        features += [
+            InputFeatures(
+                input_ids=all_padding,
+                input_len=all_padding_len,
+                label_id=[-1] * slot_dim,
+            )
+        ] * (max_turn_length - prev_turn_idx - 1)
     assert len(features) % max_turn_length == 0
 
     all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
@@ -412,7 +456,6 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
 
 
 def eval_all_accs(pred_slot, labels, accuracies):
-
     def _eval_acc(_pred_slot, _labels):
         slot_dim = _labels.size(-1)
         accuracy = (_pred_slot == _labels).view(-1, slot_dim)
@@ -426,24 +469,26 @@ def eval_all_accs(pred_slot, labels, accuracies):
 
     # 7 domains
     joint_acc, slot_acc, num_turn, num_data = _eval_acc(pred_slot, labels)
-    accuracies['joint7'] += joint_acc
-    accuracies['slot7'] += slot_acc
-    accuracies['num_turn'] += num_turn
-    accuracies['num_slot7'] += num_data
+    accuracies["joint7"] += joint_acc
+    accuracies["slot7"] += slot_acc
+    accuracies["num_turn"] += num_turn
+    accuracies["num_slot7"] += num_data
 
     # restaurant domain
-    joint_acc, slot_acc, num_turn, num_data = _eval_acc(pred_slot[:,:,18:25], labels[:,:,18:25])
-    accuracies['joint_rest'] += joint_acc
-    accuracies['slot_rest'] += slot_acc
-    accuracies['num_slot_rest'] += num_data
+    joint_acc, slot_acc, num_turn, num_data = _eval_acc(
+        pred_slot[:, :, 18:25], labels[:, :, 18:25]
+    )
+    accuracies["joint_rest"] += joint_acc
+    accuracies["slot_rest"] += slot_acc
+    accuracies["num_slot_rest"] += num_data
 
-    pred_slot5 = torch.cat((pred_slot[:,:,0:3], pred_slot[:,:,8:]), 2)
-    label_slot5 = torch.cat((labels[:,:,0:3], labels[:,:,8:]), 2)
+    pred_slot5 = torch.cat((pred_slot[:, :, 0:3], pred_slot[:, :, 8:]), 2)
+    label_slot5 = torch.cat((labels[:, :, 0:3], labels[:, :, 8:]), 2)
 
     # 5 domains (excluding bus and hotel domain)
     joint_acc, slot_acc, num_turn, num_data = _eval_acc(pred_slot5, label_slot5)
-    accuracies['joint5'] += joint_acc
-    accuracies['slot5'] += slot_acc
-    accuracies['num_slot5'] += num_data
+    accuracies["joint5"] += joint_acc
+    accuracies["slot5"] += slot_acc
+    accuracies["num_slot5"] += num_data
 
     return accuracies

@@ -19,22 +19,16 @@ from convlab2.e2e.rnn_rollout.models.utils import *
 
 
 class MlpContextEncoder(nn.Module):
-    """ Simple encoder for the dialogue context. Encoder counts and values via MLP. """
+    """Simple encoder for the dialogue context. Encoder counts and values via MLP."""
+
     def __init__(self, n, k, nembed, nhid, dropout, init_range, skip_values=False):
         super(MlpContextEncoder, self).__init__()
 
         # embeddings for counts and values
-        self.cnt_enc = nn.Sequential(
-            nn.Embedding(n, nembed),
-            nn.Dropout(dropout))
-        self.val_enc = nn.Sequential(
-            nn.Embedding(n, nembed),
-            nn.Dropout(dropout))
+        self.cnt_enc = nn.Sequential(nn.Embedding(n, nembed), nn.Dropout(dropout))
+        self.val_enc = nn.Sequential(nn.Embedding(n, nembed), nn.Dropout(dropout))
 
-        self.encoder = nn.Sequential(
-            nn.Linear(k * nembed, nhid),
-            nn.Tanh()
-        )
+        self.encoder = nn.Sequential(nn.Linear(k * nembed, nhid), nn.Tanh())
 
         # a flag to only use counts to encode the context
         self.skip_values = skip_values

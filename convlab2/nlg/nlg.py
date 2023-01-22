@@ -7,7 +7,7 @@ class NLG(Module):
 
     def generate(self, action):
         """Generate a natural language utterance conditioned on the dialog act.
-        
+
         Args:
             action (list of list):
                 The dialog action produced by dialog policy module, which is in dialog act format.
@@ -15,4 +15,4 @@ class NLG(Module):
             utterance (str):
                 A natural langauge utterance.
         """
-        return ''
+        return ""

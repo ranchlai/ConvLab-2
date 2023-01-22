@@ -10,15 +10,16 @@ from collections import OrderedDict
 
 
 def get_domain(name):
-    if name == 'object_division':
+    if name == "object_division":
         return ObjectDivisionDomain()
-    if name == 'trade':
+    if name == "trade":
         return ObjectTradeDomain()
-    raise()
+    raise ()
 
 
 class Domain(object):
-    """ Domain interface. """
+    """Domain interface."""
+
     def selection_length(self):
         pass
 
@@ -46,7 +47,7 @@ class Domain(object):
 
 class ObjectDivisionDomain(Domain):
     def __init__(self):
-        self.item_pattern = re.compile('^item([0-9])=(-?[0-9])+$')
+        self.item_pattern = re.compile("^item([0-9])=(-?[0-9])+$")
 
     def selection_length(self):
         return 6
@@ -62,8 +63,11 @@ class ObjectDivisionDomain(Domain):
 
         def gen(cnts, idx=0, choice=[]):
             if idx >= len(cnts):
-                left_choice = ['item%d=%d' % (i, c) for i, c in enumerate(choice)]
-                right_choice = ['item%d=%d' % (i, n - c) for i, (n, c) in enumerate(zip(cnts, choice))]
+                left_choice = ["item%d=%d" % (i, c) for i, c in enumerate(choice)]
+                right_choice = [
+                    "item%d=%d" % (i, n - c)
+                    for i, (n, c) in enumerate(zip(cnts, choice))
+                ]
                 return [left_choice + right_choice]
             choices = []
             for c in range(cnts[idx] + 1):
@@ -71,10 +75,11 @@ class ObjectDivisionDomain(Domain):
                 choices += gen(cnts, idx + 1, choice)
                 choice.pop()
             return choices
+
         choices = gen(cnts)
         if with_disagreement:
-            choices.append(['<no_agreement>'] * self.selection_length())
-            choices.append(['<disconnect>'] * self.selection_length())
+            choices.append(["<no_agreement>"] * self.selection_length())
+            choices.append(["<disconnect>"] * self.selection_length())
         return choices
 
     def parse_context(self, ctx):
@@ -84,8 +89,8 @@ class ObjectDivisionDomain(Domain):
 
     def score(self, context, choice):
         assert len(choice) == (self.selection_length())
-        choice = choice[0:len(choice) // 2]
-        if choice[0] in ('<no_agreement>', '<disconnect>', '<disagree>'):
+        choice = choice[0 : len(choice) // 2]
+        if choice[0] in ("<no_agreement>", "<disconnect>", "<disagree>"):
             return 0
         _, vals = self.parse_context(context)
         score = 0
@@ -98,7 +103,7 @@ class ObjectDivisionDomain(Domain):
 
     def parse_choice(self, choice):
         match = self.item_pattern.match(choice)
-        assert match is not None, 'choice %s' % choice
+        assert match is not None, "choice %s" % choice
         # Returns item idx and it's count
         return (int(match.groups()[0]), int(match.groups()[1]))
 
@@ -111,7 +116,7 @@ class ObjectDivisionDomain(Domain):
         for x, n in zip(choice, cnts):
             if x < 0 or x > n:
                 raise Exception()
-        return ['item%d=%d' % (i, x) for i, x in enumerate(choice)]
+        return ["item%d=%d" % (i, x) for i, x in enumerate(choice)]
 
     def _to_int(self, x):
         try:
@@ -148,7 +153,7 @@ class ObjectTradeDomain(ObjectDivisionDomain):
 
         def gen(cnts, idx=0, choice=[]):
             if idx >= len(cnts):
-                left_choice = ['item%d=%d' % (i, c) for i, c in enumerate(choice)]
+                left_choice = ["item%d=%d" % (i, c) for i, c in enumerate(choice)]
                 return [left_choice]
             choices = []
             for c in range(-cnts[idx], self.max_items + 1):
@@ -157,9 +162,10 @@ class ObjectTradeDomain(ObjectDivisionDomain):
                 choice.pop()
 
             return choices
+
         choices = gen(cnts)
-        choices.append(['<no_agreement>'] * self.selection_length())
-        choices.append(['<disconnect>'] * self.selection_length())
+        choices.append(["<no_agreement>"] * self.selection_length())
+        choices.append(["<disconnect>"] * self.selection_length())
         return choices
 
     def score_choices(self, choices, ctxs):
@@ -169,7 +175,7 @@ class ObjectTradeDomain(ObjectDivisionDomain):
         for i in range(len(cnts)):
             n = 0
             for agent_id, (choice, ctx) in enumerate(zip(choices, ctxs)):
-                taken = self._to_int(choice[i][choice[i].find("=") + 1:])
+                taken = self._to_int(choice[i][choice[i].find("=") + 1 :])
                 n += taken
                 scores[agent_id] += int(ctx[2 * i + 1]) * taken
             agree = agree and (n == 0)
@@ -177,7 +183,7 @@ class ObjectTradeDomain(ObjectDivisionDomain):
 
     def score(self, context, choice):
         assert len(choice) == (self.selection_length())
-        if choice[0] == '<no_agreement>':
+        if choice[0] == "<no_agreement>":
             return 0
         _, vals = self.parse_context(context)
         score = 0
@@ -197,4 +203,4 @@ class ObjectTradeDomain(ObjectDivisionDomain):
         for x, n in zip(choice, cnts):
             if x < -n or x > 4:
                 raise Exception()
-        return ['item%d=%d' % (i, x) for i, x in enumerate(choice)]
+        return ["item%d=%d" % (i, x) for i, x in enumerate(choice)]

@@ -5,8 +5,7 @@ from convlab2.dialog_agent.agent import Agent
 
 
 class Session(ABC):
-    """Base dialog session controller, which manages the agents to conduct a complete dialog session.
-    """
+    """Base dialog session controller, which manages the agents to conduct a complete dialog session."""
 
     @abstractmethod
     def next_agent(self):
@@ -22,7 +21,7 @@ class Session(ABC):
     @abstractmethod
     def next_response(self, observation):
         """Generated the next response.
-        
+
         Args:
             observation (str or dict): The agent observation of next agent.
         Returns:
@@ -53,7 +52,9 @@ class BiSession(Session):
             The dialog history, formatted as [[user_uttr1, sys_uttr1], [user_uttr2, sys_uttr2], ...]
     """
 
-    def __init__(self, sys_agent: Agent, user_agent: Agent, kb_query=None, evaluator=None):
+    def __init__(
+        self, sys_agent: Agent, user_agent: Agent, kb_query=None, evaluator=None
+    ):
         """
         Args:
             sys_agent (Agent):
@@ -97,7 +98,7 @@ class BiSession(Session):
 
         The variable type of responses can be either 1) str or 2) dialog act, depends on the dialog mode settings of the
         two agents which are supposed to be the same.
-        
+
         Args:
             last_observation:
                 Last agent response.
@@ -119,14 +120,18 @@ class BiSession(Session):
             self.evaluator.add_sys_da(self.user_agent.get_in_da())
             self.evaluator.add_usr_da(self.user_agent.get_out_da())
         session_over = self.user_agent.is_terminated()
-        if hasattr(self.sys_agent, 'dst'):
-            self.sys_agent.dst.state['terminated'] = session_over
+        if hasattr(self.sys_agent, "dst"):
+            self.sys_agent.dst.state["terminated"] = session_over
         # if session_over and self.evaluator:
-            # prec, rec, f1 = self.evaluator.inform_F1()
-            # print('inform prec. {} rec. {} F1 {}'.format(prec, rec, f1))
-            # print('book rate {}'.format(self.evaluator.book_rate()))
-            # print('task success {}'.format(self.evaluator.task_success()))
-        reward = self.user_agent.get_reward() if self.evaluator is None else self.evaluator.get_reward()
+        # prec, rec, f1 = self.evaluator.inform_F1()
+        # print('inform prec. {} rec. {} F1 {}'.format(prec, rec, f1))
+        # print('book rate {}'.format(self.evaluator.book_rate()))
+        # print('task success {}'.format(self.evaluator.task_success()))
+        reward = (
+            self.user_agent.get_reward()
+            if self.evaluator is None
+            else self.evaluator.get_reward()
+        )
         sys_response = self.next_response(user_response)
         self.dialog_history.append([self.user_agent.name, user_response])
         self.dialog_history.append([self.sys_agent.name, sys_response])

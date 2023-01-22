@@ -7,31 +7,51 @@ import json
 class _Config:
     def __init__(self):
         self._init_logging_handler()
-        self.eos_m_token = 'EOS_M'       
+        self.eos_m_token = "EOS_M"
         self.beam_len_bonus = 0.5
 
-        self.mode = 'unknown'
-        self.m = 'TSD'
-        self.prev_z_method = 'none'
+        self.mode = "unknown"
+        self.m = "TSD"
+        self.prev_z_method = "none"
 
         self.seed = 0
-  
+
     def init_handler(self, tsdf_init_config):
         self.__dict__.update(tsdf_init_config)
-        self.vocab_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.vocab_path)
-        self.entity = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.entity)
-        self.glove_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.glove_path)
-        self.model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.model_path)
-        self.result_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.result_path)
+        self.vocab_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), self.vocab_path
+        )
+        self.entity = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), self.entity
+        )
+        self.glove_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), self.glove_path
+        )
+        self.model_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), self.model_path
+        )
+        self.result_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), self.result_path
+        )
 
-        if tsdf_init_config['dataset']=='multiwoz':
-            self.train = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.train)
-            self.dev = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.dev)
-            self.test = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.test)
+        if tsdf_init_config["dataset"] == "multiwoz":
+            self.train = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), self.train
+            )
+            self.dev = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), self.dev
+            )
+            self.test = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), self.test
+            )
             for i, db in enumerate(self.db):
-                self.db[i] = os.path.join(os.path.dirname(os.path.abspath(__file__)), db)
-        elif tsdf_init_config['dataset']=='camrest':
-            self.data = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.data)
+                self.db[i] = os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)), db
+                )
+        elif tsdf_init_config["dataset"] == "camrest":
+            self.data = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), self.data
+            )
             self.db = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.db)
 
         # init_method = {
@@ -161,22 +181,24 @@ class _Config:
     #     self.pretrain = False
 
     def __str__(self):
-        s = ''
-        for k,v in self.__dict__.items():
-            s += '{} : {}\n'.format(k,v)
+        s = ""
+        for k, v in self.__dict__.items():
+            s += "{} : {}\n".format(k, v)
         return s
 
     def _init_logging_handler(self):
         current_time = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
 
         stderr_handler = logging.StreamHandler()
-        log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'log')
+        log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "log")
         if not os.path.exists(log_dir):
             os.mkdir(log_dir)
-        file_handler = logging.FileHandler(os.path.join(log_dir, 'log_{}.txt').format(current_time))
+        file_handler = logging.FileHandler(
+            os.path.join(log_dir, "log_{}.txt").format(current_time)
+        )
         logging.basicConfig(handlers=[stderr_handler, file_handler])
         logger = logging.getLogger()
         logger.setLevel(logging.DEBUG)
 
-global_config = _Config()
 
+global_config = _Config()

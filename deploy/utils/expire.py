@@ -80,7 +80,9 @@ class ExpireDict(object):
         if self.max_items is not None:
             if len(self.values) > self.max_items:
                 items_sorted = sorted(self.values.items(), key=lambda x: x[1][0])
-                expire_keys = expire_keys.union(set([k for k, _ in items_sorted[:self.max_items // 2]]))
+                expire_keys = expire_keys.union(
+                    set([k for k, _ in items_sorted[: self.max_items // 2]])
+                )
             pass
 
         if self.expire_sec is not None:
@@ -97,12 +99,12 @@ class ExpireDict(object):
         return datetime.datetime.now().timestamp()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     aaa = ExpireDict(max_items=2)
-    aaa['a'] = 1
-    aaa['a'] = 2
-    aaa['b'] = 'sss'
-    aaa['c'] = 'sss11'
+    aaa["a"] = 1
+    aaa["a"] = 2
+    aaa["b"] = "sss"
+    aaa["c"] = "sss11"
     print(aaa)
     pp = aaa.pop_expire()
     print(pp)

@@ -7,17 +7,17 @@ def str_similar(a, b):
 
 
 def _log(info):
-    with open('fuzzy_recognition.log', 'a+') as f:
-        f.write('{}\n'.format(info))
+    with open("fuzzy_recognition.log", "a+") as f:
+        f.write("{}\n".format(info))
     f.close()
 
 
 def minDistance(word1, word2):
     """The minimum edit distance between word 1 and 2."""
     if not word1:
-        return len(word2 or '') or 0
+        return len(word2 or "") or 0
     if not word2:
-        return len(word1 or '') or 0
+        return len(word1 or "") or 0
     size1 = len(word1)
     size2 = len(word2)
     tmp = list(range(size2 + 1))
@@ -52,11 +52,11 @@ def normalize_value(value_set, domain, slot, value):
     """
     slot = slot.lower()
     value = value.lower()
-    value = ' '.join(value.split())
+    value = " ".join(value.split())
     try:
         assert domain in value_set
     except:
-        raise Exception('domain <{}> not found in value set'.format(domain))
+        raise Exception("domain <{}> not found in value set".format(domain))
     if slot not in value_set[domain]:
         return value
         # raise Exception(
@@ -77,12 +77,12 @@ def normalize_value(value_set, domain, slot, value):
     v = special_match(domain, slot, value)
     if v is not None:
         return v
-    if v != 'dontcare':
+    if v != "dontcare":
         _log(
-            'Failed: domain {} slot {} value {}, raw value returned.'.format(
-                domain,
-                slot,
-                value))
+            "Failed: domain {} slot {} value {}, raw value returned.".format(
+                domain, slot, value
+            )
+        )
     return value
 
 
@@ -95,13 +95,13 @@ def _transform_value(value):
     if " - " in value:
         cand_list.append(value.replace(" - ", "-"))
     # center <-> centre
-    if value == 'center':
-        cand_list.append('centre')
-    elif value == 'centre':
-        cand_list.append('center')
+    if value == "center":
+        cand_list.append("centre")
+    elif value == "centre":
+        cand_list.append("center")
     # the + value
-    if not value.startswith('the '):
-        cand_list.append('the ' + value)
+    if not value.startswith("the "):
+        cand_list.append("the " + value)
     return cand_list
 
 
@@ -123,13 +123,13 @@ def _match_or_contain(value, value_list):
 def special_match(domain, slot, value):
     """special slot fuzzy matching"""
     matched_result = None
-    if slot == 'arriveby' or slot == 'leaveat':
+    if slot == "arriveby" or slot == "leaveat":
         matched_result = _match_time(value)
-    elif slot == 'price' or slot == 'entrance fee':
+    elif slot == "price" or slot == "entrance fee":
         matched_result = _match_pound_price(value)
-    elif slot == 'trainid':
+    elif slot == "trainid":
         matched_result = _match_trainid(value)
-    elif slot == 'duration':
+    elif slot == "duration":
         matched_result = _match_duration(value)
     return matched_result
 
@@ -159,9 +159,9 @@ def _match_pound_price(value):
     if mat is not None and len(mat.groups()) > 0:
         return mat.groups()[0]
     if "1 pound" in value.lower():
-        return '1 pound'
-    if 'free' in value:
-        return 'free'
+        return "1 pound"
+    if "free" in value:
+        return "free"
     return None
 
 
@@ -179,4 +179,6 @@ if __name__ == "__main__":
     print(
         minDistance(
             "museum of archaeology and anthropology",
-            "museum of archaelogy and anthropology"))
+            "museum of archaelogy and anthropology",
+        )
+    )

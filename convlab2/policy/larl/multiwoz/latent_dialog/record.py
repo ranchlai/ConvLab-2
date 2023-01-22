@@ -1,17 +1,23 @@
 import numpy as np
-from convlab2.policy.larl.multiwoz.latent_dialog.enc2dec.decoders import TEACH_FORCE, GEN, DecoderRNN, GEN_VALID
+from convlab2.policy.larl.multiwoz.latent_dialog.enc2dec.decoders import (
+    TEACH_FORCE,
+    GEN,
+    DecoderRNN,
+    GEN_VALID,
+)
 from collections import Counter
 
 
 class UniquenessSentMetric(object):
     """Metric that evaluates the number of unique sentences."""
+
     def __init__(self):
         self.seen = set()
         self.all_sents = []
 
     def record(self, sen):
-        self.seen.add(' '.join(sen))
-        self.all_sents.append(' '.join(sen))
+        self.seen.add(" ".join(sen))
+        self.all_sents.append(" ".join(sen))
 
     def value(self):
         return len(self.seen)
@@ -22,6 +28,7 @@ class UniquenessSentMetric(object):
 
 class UniquenessWordMetric(object):
     """Metric that evaluates the number of unique sentences."""
+
     def __init__(self):
         self.seen = set()
 
@@ -37,7 +44,9 @@ def record_task(n_epsd, model, val_data, config, ppl_f, dialog, ctx_gen_eval, rl
     record_rl_task(n_epsd, dialog, ctx_gen_eval, rl_f)
 
 
-def record(n_epsd, model, val_data, sv_config, lm_model, ppl_f, dialog, ctx_gen_eval, rl_f):
+def record(
+    n_epsd, model, val_data, sv_config, lm_model, ppl_f, dialog, ctx_gen_eval, rl_f
+):
     record_ppl_with_lm(n_epsd, model, val_data, sv_config, lm_model, ppl_f)
     record_rl(n_epsd, dialog, ctx_gen_eval, rl_f)
 
@@ -67,22 +76,24 @@ def record_ppl_with_lm(n_epsd, model, data, config, lm_model, ppl_f):
         # move from GPU to CPU
         labels = labels.cpu()
         pred_labels = [t.cpu().data.numpy() for t in outputs[DecoderRNN.KEY_SEQUENCE]]
-        pred_labels = np.array(pred_labels, dtype=int).squeeze(-1).swapaxes(0, 1)  # (batch_size, max_dec_len)
+        pred_labels = (
+            np.array(pred_labels, dtype=int).squeeze(-1).swapaxes(0, 1)
+        )  # (batch_size, max_dec_len)
         # clean up the pred labels
-        clean_pred_labels = np.zeros((pred_labels.shape[0], pred_labels.shape[1]+1))
+        clean_pred_labels = np.zeros((pred_labels.shape[0], pred_labels.shape[1] + 1))
         clean_pred_labels[:, 0] = model.sys_id
         for b_id in range(pred_labels.shape[0]):
             for t_id in range(pred_labels.shape[1]):
                 token = pred_labels[b_id, t_id]
                 clean_pred_labels[b_id, t_id + 1] = token
-                if token in [model.eos_id] or t_id == pred_labels.shape[1]-1:
+                if token in [model.eos_id] or t_id == pred_labels.shape[1] - 1:
                     break
 
         pred_out_lens = np.sum(np.sign(clean_pred_labels), axis=1)
         max_pred_lens = np.max(pred_out_lens)
-        clean_pred_labels = clean_pred_labels[:, 0:int(max_pred_lens)]
-        batch['outputs'] = clean_pred_labels
-        batch['output_lens'] = pred_out_lens
+        clean_pred_labels = clean_pred_labels[:, 0 : int(max_pred_lens)]
+        batch["outputs"] = clean_pred_labels
+        batch["output_lens"] = pred_out_lens
         loss = lm_model(batch, mode=TEACH_FORCE)
         gen_loss_list.append(loss.nll.item())
 
@@ -91,7 +102,7 @@ def record_ppl_with_lm(n_epsd, model, data, config, lm_model, ppl_f):
     gen_avg_loss = np.average(gen_loss_list)
     gen_avg_ppl = np.exp(gen_avg_loss)
 
-    ppl_f.write('{}\t{}\t{}\n'.format(n_epsd, avg_ppl, gen_avg_ppl))
+    ppl_f.write("{}\t{}\t{}\n".format(n_epsd, avg_ppl, gen_avg_ppl))
     ppl_f.flush()
     model.train()
 
@@ -108,7 +119,7 @@ def record_ppl(n_epsd, model, val_data, config, ppl_f):
         loss_list.append(loss.nll.item())
     aver_loss = np.average(loss_list)
     aver_ppl = np.exp(aver_loss)
-    ppl_f.write('{}\t{}\n'.format(n_epsd, aver_ppl))
+    ppl_f.write("{}\t{}\n".format(n_epsd, aver_ppl))
     ppl_f.flush()
     model.train()
 
@@ -127,7 +138,7 @@ def record_rl(n_epsd, dialog, ctx_gen, rl_f):
         conv_list.append(conv)
         agree_list.append(float(agree) if agree is not None else 0.0)
         for turn in conv:
-            if turn[0] == 'System':
+            if turn[0] == "System":
                 sent_metric.record(turn[1])
                 word_metric.record(turn[1])
 
@@ -138,7 +149,11 @@ def record_rl(n_epsd, dialog, ctx_gen, rl_f):
     unique_word_num = word_metric.value()
     print(sent_metric.top_n(10))
 
-    rl_f.write('{}\t{}\t{}\t{}\t{}\n'.format(n_epsd, aver_reward, aver_agree, unique_sent_num, unique_word_num))
+    rl_f.write(
+        "{}\t{}\t{}\t{}\t{}\n".format(
+            n_epsd, aver_reward, aver_agree, unique_sent_num, unique_word_num
+        )
+    )
     rl_f.flush()
 
 
@@ -156,7 +171,7 @@ def record_rl_task(n_epsd, dialog, goal_gen, rl_f):
         reward_list.append(true_reward)
         conv_list.append(conv)
         for turn in conv:
-            if turn[0] == 'System':
+            if turn[0] == "System":
                 sent_metric.record(turn[1])
                 word_metric.record(turn[1])
 
@@ -164,6 +179,8 @@ def record_rl_task(n_epsd, dialog, goal_gen, rl_f):
     aver_reward = np.average(reward_list)
     unique_sent_num = sent_metric.value()
     unique_word_num = word_metric.value()
-    rl_f.write('{}\t{}\t{}\t{}\n'.format(n_epsd, aver_reward, unique_sent_num, unique_word_num))
+    rl_f.write(
+        "{}\t{}\t{}\t{}\n".format(n_epsd, aver_reward, unique_sent_num, unique_word_num)
+    )
     rl_f.flush()
     print("End RL testing")

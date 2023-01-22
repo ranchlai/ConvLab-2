@@ -1,8 +1,10 @@
-complete number of dialogs/tot: 0.299
-success number of dialogs/tot: 0.253
-average precision: 0.49259671331322424
-average recall: 0.48095032059206516
-average f1: 0.4437872685208314
-average book rate: 0.3691452991452991
-average turn (succ): 12.735177865612648
-average turn (all): 24.684
+complete number of dialogs/tot: 0.3
+success number of dialogs/tot: 0.3
+average precision: 0.71
+average recall: 0.5595238095238095
+average f1: 0.579047619047619
+average book rate: 0.0
+average turn (succ): 6.0
+average turn (all): 28.0
+percentage of domains that satisfy the database constraints: 0.562
+percentage of dialogs that satisfy the database constraints: 0.500

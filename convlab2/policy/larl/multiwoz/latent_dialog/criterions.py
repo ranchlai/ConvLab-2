@@ -19,31 +19,38 @@ class NLLEntropy(_Loss):
         target = labels.view(-1)
 
         if self.avg_type is None:
-            loss = F.nll_loss(pred, target, size_average=False,
-                              ignore_index=self.padding_idx)
-        elif self.avg_type == 'seq':
-            loss = F.nll_loss(pred, target, size_average=False,
-                              ignore_index=self.padding_idx)
-            loss = loss / batch_size
-        elif self.avg_type == 'real_word':
             loss = F.nll_loss(
-                pred, target, ignore_index=self.padding_idx, reduce=False)
+                pred, target, size_average=False, ignore_index=self.padding_idx
+            )
+        elif self.avg_type == "seq":
+            loss = F.nll_loss(
+                pred, target, size_average=False, ignore_index=self.padding_idx
+            )
+            loss = loss / batch_size
+        elif self.avg_type == "real_word":
+            loss = F.nll_loss(pred, target, ignore_index=self.padding_idx, reduce=False)
             loss = loss.view(-1, net_output.size(1))
             loss = th.sum(loss, dim=1)
             word_cnt = th.sum(th.sign(labels), dim=1).float()
             loss = loss / word_cnt
             loss = th.mean(loss)
-        elif self.avg_type == 'word':
-            loss = F.nll_loss(pred, target, size_average=True,
-                              ignore_index=self.padding_idx)
+        elif self.avg_type == "word":
+            loss = F.nll_loss(
+                pred, target, size_average=True, ignore_index=self.padding_idx
+            )
         else:
-            raise ValueError('Unknown average type')
+            raise ValueError("Unknown average type")
 
         return loss
 
 
 class NLLEntropy4CLF(_Loss):
-    def __init__(self, dictionary, bad_tokens=['<disconnect>', '<disagree>'], reduction='elementwise_mean'):
+    def __init__(
+        self,
+        dictionary,
+        bad_tokens=["<disconnect>", "<disagree>"],
+        reduction="elementwise_mean",
+    ):
         super(NLLEntropy4CLF, self).__init__()
         w = th.Tensor(len(dictionary)).fill_(1)
         for token in bad_tokens:
@@ -59,10 +66,12 @@ class NLLEntropy4CLF(_Loss):
 
 
 class CombinedNLLEntropy4CLF(_Loss):
-    def __init__(self, dictionary, corpus, np2var, bad_tokens=['<disconnect>', '<disagree>']):
+    def __init__(
+        self, dictionary, corpus, np2var, bad_tokens=["<disconnect>", "<disagree>"]
+    ):
         super(CombinedNLLEntropy4CLF, self).__init__()
         self.dictionary = dictionary
-        self.domain = domain.get_domain('object_division')
+        self.domain = domain.get_domain("object_division")
         self.corpus = corpus
         self.np2var = np2var
         self.bad_tokens = bad_tokens
@@ -78,8 +87,7 @@ class CombinedNLLEntropy4CLF(_Loss):
             goal = goals_id[bth]  # list, id, len=goal_len
             goal_str = self.corpus.id2goal(goal)  # list, str, len=goal_len
             outcome = outcomes_id[bth]  # list, id, len=outcome_len
-            outcome_str = self.corpus.id2outcome(
-                outcome)  # list, str, len=outcome_len
+            outcome_str = self.corpus.id2outcome(outcome)  # list, str, len=outcome_len
 
             if outcome_str[0] in self.bad_tokens:
                 continue
@@ -93,13 +101,14 @@ class CombinedNLLEntropy4CLF(_Loss):
             for i in range(self.domain.selection_length()):
                 idxs = np.array([self.dictionary[c[i]] for c in choices])
                 idxs_var = self.np2var(idxs, LONG)  # (option_amount, )
-                choices_logits.append(
-                    th.gather(sel_outs[i], 0, idxs_var).unsqueeze(1))
+                choices_logits.append(th.gather(sel_outs[i], 0, idxs_var).unsqueeze(1))
 
-            choice_logit = th.sum(th.cat(choices_logits, 1),
-                                  1, keepdim=False)  # (option_amount, )
+            choice_logit = th.sum(
+                th.cat(choices_logits, 1), 1, keepdim=False
+            )  # (option_amount, )
             choice_logit = choice_logit.sub(
-                choice_logit.max().item())  # (option_amount, )
+                choice_logit.max().item()
+            )  # (option_amount, )
             prob = F.softmax(choice_logit, dim=0)  # (option_amount, )
 
             label = choices.index(outcome_str)
@@ -121,7 +130,7 @@ class CatKLLoss(_Loss):
         if unit_average:
             return th.mean(y_kl)
         else:
-            return th.sum(y_kl)/batch_size
+            return th.sum(y_kl) / batch_size
 
 
 class Entropy(_Loss):
@@ -143,7 +152,6 @@ class Entropy(_Loss):
 
 
 class BinaryNLLEntropy(_Loss):
-
     def __init__(self, size_average=True):
         super(BinaryNLLEntropy, self).__init__()
         self.size_average = size_average
@@ -156,7 +164,8 @@ class BinaryNLLEntropy(_Loss):
         """
         batch_size = net_output.size(0)
         loss = F.binary_cross_entropy_with_logits(
-            net_output, label_output, size_average=self.size_average)
+            net_output, label_output, size_average=self.size_average
+        )
         if self.size_average is False:
             loss /= batch_size
         return loss

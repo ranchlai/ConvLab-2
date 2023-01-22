@@ -4,10 +4,12 @@ import pickle
 import torch
 from pytorch_pretrained_bert import BertTokenizer
 from collections import defaultdict
+
 ### this file is to convert the raw woz data into the format required for prepross.py
-bert=True
-bert_type='bert-large-uncased'
-tokenizer=BertTokenizer.from_pretrained(bert_type)
+bert = True
+bert_type = "bert-large-uncased"
+tokenizer = BertTokenizer.from_pretrained(bert_type)
+
 
 def _truncate_seq_pair(tokens_a, tokens_b, max_length):
     """Truncates a sequence pair in place to the maximum length."""
@@ -19,52 +21,55 @@ def _truncate_seq_pair(tokens_a, tokens_b, max_length):
             tokens_a.pop()
         else:
             tokens_b.pop()
-            
 
-cldict={'pricerange':'price range','leaveat':'leave at','arriveby':'arrive by'}
+
+cldict = {"pricerange": "price range", "leaveat": "leave at", "arriveby": "arrive by"}
+
+
 def preslot(strl):
-    s=strl.split('-')
-    k=s[1].split(' ')
-    if len(k)==1 and k[0] in cldict:
-        return s[0]+' - '+cldict[k[0]]
-    if len(k)==1:
-        return s[0]+' - '+k[0]
+    s = strl.split("-")
+    k = s[1].split(" ")
+    if len(k) == 1 and k[0] in cldict:
+        return s[0] + " - " + cldict[k[0]]
+    if len(k) == 1:
+        return s[0] + " - " + k[0]
     else:
-        return s[0]+' - '+k[0]+' '+k[1]
+        return s[0] + " - " + k[0] + " " + k[1]
 
 
 def convert_data():
-    path = 'data/'
-    sl_dict = json.load(open(os.path.join(path, 'mwoz2_sl.dict')))
-    dm_dict = json.load(open(os.path.join(path, 'mwoz2_dm.dict')))
-    mode = 'real'
-    fp = os.path.join(path, '{}_dials.json'.format(mode))
-    with open(fp, 'r') as json_file:
+    path = "data/"
+    sl_dict = json.load(open(os.path.join(path, "mwoz2_sl.dict")))
+    dm_dict = json.load(open(os.path.join(path, "mwoz2_dm.dict")))
+    mode = "real"
+    fp = os.path.join(path, "{}_dials.json".format(mode))
+    with open(fp, "r") as json_file:
         data = json.load(json_file)
 
     data_input = []
     for s in data:
-        sdict = {'user_input': [],
-                 'system_input': [],
-                 'belief_input': [],
-                 'labeld': [],
-                 'labels': [],
-                 'labelv': [],
-                 }
+        sdict = {
+            "user_input": [],
+            "system_input": [],
+            "belief_input": [],
+            "labeld": [],
+            "labels": [],
+            "labelv": [],
+        }
 
         prev_label = []
         prev_labelv = [[]]
         texta = []
-        belief_input = ['[CLS]', '[SEP]']
-        for i, turn in enumerate(s['dialogue']):
+        belief_input = ["[CLS]", "[SEP]"]
+        for i, turn in enumerate(s["dialogue"]):
             svs = defaultdict(list)
-            for st in turn['belief_state']:  # loop slot-value pairs
-                if st['act'] == 'inform':
-                    dsl, val = st['slots'][0][0], st['slots'][0][1]
-                    if val == 'dontcare':
+            for st in turn["belief_state"]:  # loop slot-value pairs
+                if st["act"] == "inform":
+                    dsl, val = st["slots"][0][0], st["slots"][0][1]
+                    if val == "dontcare":
                         val = "do not care"
-                    dm = dsl.split('-')[0]
-                    sl = dsl.split('-')[1]
+                    dm = dsl.split("-")[0]
+                    sl = dsl.split("-")[1]
 
                     if sl in list(cldict.keys()):
                         sl = cldict[sl]
@@ -72,54 +77,56 @@ def convert_data():
                     svs[dm].sort(key=lambda x: sl_dict[dm][x[0]], reverse=True)
             svs = sorted(svs.items(), key=lambda x: dm_dict[x[0]], reverse=True)
 
-            sdict['belief_input'].append(belief_input)
+            sdict["belief_input"].append(belief_input)
 
-            labeld = ['[CLS]']
-            labels = [['[CLS]', '[SEP]']]
-            labelv = [[['[CLS]', '[SEP]'], ['[CLS]', '[SEP]']]]
-            belief_input = ['[CLS]']
+            labeld = ["[CLS]"]
+            labels = [["[CLS]", "[SEP]"]]
+            labelv = [[["[CLS]", "[SEP]"], ["[CLS]", "[SEP]"]]]
+            belief_input = ["[CLS]"]
             for dsv in svs:
                 labeld.append(dsv[0])
-                labels.append(['[CLS]'])
-                labelv.append([['[CLS]', '[SEP]']])
-                belief_input.extend([dsv[0]] + ['-'])
+                labels.append(["[CLS]"])
+                labelv.append([["[CLS]", "[SEP]"]])
+                belief_input.extend([dsv[0]] + ["-"])
                 for sv in dsv[1]:
                     labels[-1].append(sv[0])
-                    labelv[-1].append(['[CLS]'] + tokenizer.tokenize(sv[1]) + ['[SEP]'])
-                    belief_input.extend([sv[0]] + [','] + tokenizer.tokenize(sv[1]) + [';'])
-                labels[-1].append('[SEP]')
-                labelv[-1].append(['[CLS]', '[SEP]'])
-            labeld.append('[SEP]')
-            labels.append(['[CLS]', '[SEP]'])
-            labelv.append([['[CLS]', '[SEP]'], ['[CLS]', '[SEP]']])
+                    labelv[-1].append(["[CLS]"] + tokenizer.tokenize(sv[1]) + ["[SEP]"])
+                    belief_input.extend(
+                        [sv[0]] + [","] + tokenizer.tokenize(sv[1]) + [";"]
+                    )
+                labels[-1].append("[SEP]")
+                labelv[-1].append(["[CLS]", "[SEP]"])
+            labeld.append("[SEP]")
+            labels.append(["[CLS]", "[SEP]"])
+            labelv.append([["[CLS]", "[SEP]"], ["[CLS]", "[SEP]"]])
 
-            belief_input.append('[SEP]')
+            belief_input.append("[SEP]")
 
             assert len(labels) == len(labelv)
-            sdict['labeld'].append(labeld)
-            sdict['labels'].append(labels)
-            sdict['labelv'].append(labelv)
-            a = turn['system_transcript']
-            b = turn['transcript']
+            sdict["labeld"].append(labeld)
+            sdict["labels"].append(labels)
+            sdict["labelv"].append(labelv)
+            a = turn["system_transcript"]
+            b = turn["transcript"]
             if bert:
-                ta = ['[CLS]', 'system', ':'] + tokenizer.tokenize(a) + ['[SEP]']
-                tb = ['[CLS]', 'user', ':'] + tokenizer.tokenize(b) + ['[SEP]']
-            sdict['system_input'].append(ta)
-            sdict['user_input'].append(tb)
+                ta = ["[CLS]", "system", ":"] + tokenizer.tokenize(a) + ["[SEP]"]
+                tb = ["[CLS]", "user", ":"] + tokenizer.tokenize(b) + ["[SEP]"]
+            sdict["system_input"].append(ta)
+            sdict["user_input"].append(tb)
 
         data_input.append(sdict)
 
     print(len(data_input))
-    print(data_input[0]['belief_input'])
+    print(data_input[0]["belief_input"])
 
-    fp = os.path.join(path, 'mwoz2_format_{}.json'.format(mode))
-    with open(fp, 'w') as f:
+    fp = os.path.join(path, "mwoz2_format_{}.json".format(mode))
+    with open(fp, "w") as f:
         for d in data_input:
-            f.write(json.dumps(d) + '\n')
+            f.write(json.dumps(d) + "\n")
 
 
-switch=0
-if __name__=='__main__':
+switch = 0
+if __name__ == "__main__":
     convert_data()
     #
     # path ='data/'

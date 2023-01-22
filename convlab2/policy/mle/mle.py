@@ -10,7 +10,6 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class MLEAbstract(Policy):
-
     def __init__(self, archive_file, model_file):
         self.vector = None
         self.policy = None
@@ -26,7 +25,7 @@ class MLEAbstract(Policy):
         s_vec = torch.Tensor(self.vector.state_vectorize(state))
         a = self.policy.select_action(s_vec.to(device=DEVICE), False).cpu()
         action = self.vector.action_devectorize(a.detach().numpy())
-        state['system_action'] = action
+        state["system_action"] = action
         return action
 
     def init_session(self):
@@ -40,27 +39,39 @@ class MLEAbstract(Policy):
             if not model_file:
                 raise Exception("No model for MLE Policy is specified!")
             archive_file = cached_path(model_file)
-        model_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'save')
+        model_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "save")
         if not os.path.exists(model_dir):
             os.mkdir(model_dir)
-        if not os.path.exists(os.path.join(model_dir, 'best_mle.pol.mdl')):
-            archive = zipfile.ZipFile(archive_file, 'r')
+        if not os.path.exists(os.path.join(model_dir, "best_mle.pol.mdl")):
+            archive = zipfile.ZipFile(archive_file, "r")
             archive.extractall(model_dir)
 
-        policy_mdl = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename + '_mle.pol.mdl')
+        policy_mdl = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), filename + "_mle.pol.mdl"
+        )
         if os.path.exists(policy_mdl):
             self.policy.load_state_dict(torch.load(policy_mdl, map_location=DEVICE))
-            logging.info('<<dialog policy>> loaded checkpoint from file: {}'.format(policy_mdl))
+            logging.info(
+                "<<dialog policy>> loaded checkpoint from file: {}".format(policy_mdl)
+            )
 
     def load(self, filename):
         policy_mdl_candidates = [
-            filename + '.pol.mdl',
-            filename + '_mle.pol.mdl',
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), filename + '.pol.mdl'),
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), filename + '_mle.pol.mdl')
+            filename + ".pol.mdl",
+            filename + "_mle.pol.mdl",
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), filename + ".pol.mdl"
+            ),
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), filename + "_mle.pol.mdl"
+            ),
         ]
         for policy_mdl in policy_mdl_candidates:
             if os.path.exists(policy_mdl):
                 self.policy.load_state_dict(torch.load(policy_mdl, map_location=DEVICE))
-                logging.info('<<dialog policy>> loaded checkpoint from file: {}'.format(policy_mdl))
+                logging.info(
+                    "<<dialog policy>> loaded checkpoint from file: {}".format(
+                        policy_mdl
+                    )
+                )
                 break

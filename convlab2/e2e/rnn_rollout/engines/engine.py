@@ -25,15 +25,17 @@ import numpy as np
 from convlab2.e2e.rnn_rollout.data import STOP_TOKENS
 import convlab2.e2e.rnn_rollout.vis as vis
 
+
 class Criterion(object):
     """Weighted CrossEntropyLoss."""
-    def __init__(self, dictionary, device_id=None, bad_toks=[], reduction='mean'):
+
+    def __init__(self, dictionary, device_id=None, bad_toks=[], reduction="mean"):
         w = torch.Tensor(len(dictionary)).fill_(1)
         for tok in bad_toks:
             w[dictionary.get_idx(tok)] = 0.0
         if device_id is not None:
             w = w.cuda(device_id)
-        # https://pytorch.org/docs/stable/nn.html 
+        # https://pytorch.org/docs/stable/nn.html
         self.crit = nn.CrossEntropyLoss(w, reduction=reduction)
 
     def __call__(self, out, tgt):
@@ -45,23 +47,38 @@ class Engine(object):
 
     Performs training and evaluation.
     """
+
     def __init__(self, model, args, device_id=None, verbose=False):
         self.model = model
         self.args = args
         self.device_id = device_id
         self.verbose = verbose
-        self.opt = optim.SGD(self.model.parameters(), lr=self.args.lr,
+        self.opt = optim.SGD(
+            self.model.parameters(),
+            lr=self.args.lr,
             momentum=self.args.momentum,
-            nesterov=(self.args.nesterov and self.args.momentum > 0))
+            nesterov=(self.args.nesterov and self.args.momentum > 0),
+        )
         self.crit = Criterion(self.model.word_dict, device_id=device_id)
         self.sel_crit = Criterion(
-            self.model.item_dict, device_id=device_id, bad_toks=['<disconnect>', '<disagree>'])
+            self.model.item_dict,
+            device_id=device_id,
+            bad_toks=["<disconnect>", "<disagree>"],
+        )
         if self.args.visual:
-            self.model_plot = vis.ModulePlot(self.model, plot_weight=False, plot_grad=True)
-            self.loss_plot = vis.Plot(['train', 'valid', 'valid_select'],
-                'loss', 'loss', 'epoch', running_n=1)
-            self.ppl_plot = vis.Plot(['train', 'valid', 'valid_select'],
-                'perplexity', 'ppl', 'epoch', running_n=1)
+            self.model_plot = vis.ModulePlot(
+                self.model, plot_weight=False, plot_grad=True
+            )
+            self.loss_plot = vis.Plot(
+                ["train", "valid", "valid_select"], "loss", "loss", "epoch", running_n=1
+            )
+            self.ppl_plot = vis.Plot(
+                ["train", "valid", "valid_select"],
+                "perplexity",
+                "ppl",
+                "epoch",
+                running_n=1,
+            )
 
     def forward(model, batch, requires_grad=False):
         """A helper function to perform a forward pass on a batch."""
@@ -104,7 +121,9 @@ class Engine(object):
         for batch in trainset:
             self.t += 1
             # forward pass
-            out, hid, tgt, sel_out, sel_tgt = Engine.forward(self.model, batch, requires_grad=True)
+            out, hid, tgt, sel_out, sel_tgt = Engine.forward(
+                self.model, batch, requires_grad=True
+            )
 
             # compute LM loss and selection loss
             loss = self.crit(out.view(-1, N), tgt)
@@ -127,9 +146,13 @@ class Engine(object):
     def train_single(self, N, trainset):
         """A helper function to train on a random batch."""
         batch = random.choice(trainset)
-        out, hid, tgt, sel_out, sel_tgt = Engine.forward(self.model, batch, requires_grad=True)
-        loss = self.crit(out.view(-1, N), tgt) + \
-            self.sel_crit(sel_out, sel_tgt) * self.model.args.sel_weight
+        out, hid, tgt, sel_out, sel_tgt = Engine.forward(
+            self.model, batch, requires_grad=True
+        )
+        loss = (
+            self.crit(out.view(-1, N), tgt)
+            + self.sel_crit(sel_out, sel_tgt) * self.model.args.sel_weight
+        )
         self.opt.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.clip)
@@ -144,7 +167,9 @@ class Engine(object):
         valid_loss, select_loss = 0, 0
         for batch in validset:
             # compute forward pass
-            out, hid, tgt, sel_out, sel_tgt = Engine.forward(self.model, batch, requires_grad=False)
+            out, hid, tgt, sel_out, sel_tgt = Engine.forward(
+                self.model, batch, requires_grad=False
+            )
 
             # evaluate LM and selection losses
             valid_loss += tgt.size(0) * self.crit(out.view(-1, N), tgt).item()
@@ -152,7 +177,7 @@ class Engine(object):
 
         # dividing by the number of words in the input, not the tokens modeled,
         # because the latter includes padding
-        return valid_loss / validset_stats['nonpadn'], select_loss / len(validset)
+        return valid_loss / validset_stats["nonpadn"], select_loss / len(validset)
 
     def iter(self, N, epoch, lr, traindata, validdata):
         """Performs on iteration of the training.
@@ -165,20 +190,26 @@ class Engine(object):
         valid_loss, valid_select_loss = self.valid_pass(N, validset, validset_stats)
 
         if self.verbose:
-            logging.info('| epoch %03d | train_loss %.3f | train_ppl %.3f | s/epoch %.2f | lr %0.8f' % (
-                epoch, train_loss, np.exp(train_loss), train_time, lr))
-            logging.info('| epoch %03d | valid_loss %.3f | valid_ppl %.3f' % (
-                epoch, valid_loss, np.exp(valid_loss)))
-            logging.info('| epoch %03d | valid_select_loss %.3f | valid_select_ppl %.3f' % (
-                epoch, valid_select_loss, np.exp(valid_select_loss)))
+            logging.info(
+                "| epoch %03d | train_loss %.3f | train_ppl %.3f | s/epoch %.2f | lr %0.8f"
+                % (epoch, train_loss, np.exp(train_loss), train_time, lr)
+            )
+            logging.info(
+                "| epoch %03d | valid_loss %.3f | valid_ppl %.3f"
+                % (epoch, valid_loss, np.exp(valid_loss))
+            )
+            logging.info(
+                "| epoch %03d | valid_select_loss %.3f | valid_select_ppl %.3f"
+                % (epoch, valid_select_loss, np.exp(valid_select_loss))
+            )
 
         if self.args.visual:
-            self.loss_plot.update('train', epoch, train_loss)
-            self.loss_plot.update('valid', epoch, valid_loss)
-            self.loss_plot.update('valid_select', epoch, valid_select_loss)
-            self.ppl_plot.update('train', epoch, np.exp(train_loss))
-            self.ppl_plot.update('valid', epoch, np.exp(valid_loss))
-            self.ppl_plot.update('valid_select', epoch, np.exp(valid_select_loss))
+            self.loss_plot.update("train", epoch, train_loss)
+            self.loss_plot.update("valid", epoch, valid_loss)
+            self.loss_plot.update("valid_select", epoch, valid_select_loss)
+            self.ppl_plot.update("train", epoch, np.exp(train_loss))
+            self.ppl_plot.update("valid", epoch, np.exp(valid_loss))
+            self.ppl_plot.update("valid_select", epoch, np.exp(valid_select_loss))
 
         return train_loss, valid_loss, valid_select_loss
 
@@ -200,8 +231,10 @@ class Engine(object):
                 best_model = copy.deepcopy(self.model)
 
         if self.verbose:
-            logging.info('| start annealing | best validselectloss %.3f | best validselectppl %.3f' % (
-                best_valid_select_loss, np.exp(best_valid_select_loss)))
+            logging.info(
+                "| start annealing | best validselectloss %.3f | best validselectppl %.3f"
+                % (best_valid_select_loss, np.exp(best_valid_select_loss))
+            )
 
         self.model = best_model
         for epoch in range(self.args.max_epoch + 1, 100):
@@ -214,6 +247,7 @@ class Engine(object):
 
             traindata = corpus.train_dataset(self.args.bsz, device_id=self.device_id)
             train_loss, valid_loss, valid_select_loss = self.iter(
-                N, epoch, lr, traindata, validdata)
+                N, epoch, lr, traindata, validdata
+            )
 
         return train_loss, valid_loss, valid_select_loss

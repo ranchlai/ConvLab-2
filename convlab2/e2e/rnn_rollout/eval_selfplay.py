@@ -25,14 +25,14 @@ from convlab2.e2e.rnn_rollout.domain import get_domain
 
 def parse_line(line, domain):
     # skip the 'debug:' token
-    tokens = line.split(' ')[1:]
-    context = tokens[:2 * domain.input_length()]
-    choice_str = tokens[-domain.selection_length():]
+    tokens = line.split(" ")[1:]
+    context = tokens[: 2 * domain.input_length()]
+    choice_str = tokens[-domain.selection_length() :]
 
     cnts, vals = domain.parse_context(context)
     picks = []
-    for i, c in enumerate(choice_str[:domain.selection_length() // 2]):
-        if c in ('<disconnect>', '<no_agreement>'):
+    for i, c in enumerate(choice_str[: domain.selection_length() // 2]):
+        if c in ("<disconnect>", "<no_agreement>"):
             picks.append(-1)
         else:
             idx, pick = domain.parse_choice(c)
@@ -48,7 +48,7 @@ def parse_log(file_name, domain):
     """
     dataset, current = [], []
     for line in data.read_lines(file_name):
-        if line.startswith('debug:'):
+        if line.startswith("debug:"):
             cnts, vals, picks = parse_line(line, domain)
             current.append((cnts, vals, picks))
         if len(current) == 2:
@@ -72,7 +72,9 @@ def gen_choices(cnts, idx=0, choice=[]):
     It generates both yours and your opponent choices.
     """
     if idx >= len(cnts):
-        return [(choice[:], [n - c for n, c in zip(cnts, choice)]),]
+        return [
+            (choice[:], [n - c for n, c in zip(cnts, choice)]),
+        ]
     choices = []
     for c in range(cnts[idx] + 1):
         choice.append(c)
@@ -83,11 +85,14 @@ def gen_choices(cnts, idx=0, choice=[]):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='A script to compute Pareto efficiency')
-    parser.add_argument('--log_file', type=str, default='',
-        help='location of the log file')
-    parser.add_argument('--domain', type=str, default='object_division',
-        help='domain for the dialogue')
+        description="A script to compute Pareto efficiency"
+    )
+    parser.add_argument(
+        "--log_file", type=str, default="", help="location of the log file"
+    )
+    parser.add_argument(
+        "--domain", type=str, default="object_division", help="domain for the dialogue"
+    )
 
     args = parser.parse_args()
     domain = get_domain(args.domain)
@@ -114,20 +119,26 @@ def main():
         for cand1, cand2 in choices:
             cand_score1 = compute_score(vals1, cand1)
             cand_score2 = compute_score(vals2, cand2)
-            if (cand_score1 > score1 and cand_score2 >= score2) or (cand_score1 >= score1 and cand_score2 > score2):
+            if (cand_score1 > score1 and cand_score2 >= score2) or (
+                cand_score1 >= score1 and cand_score2 > score2
+            ):
                 can_improve = True
 
         avg_score1 += score1
         avg_score2 += score2
         avg_can_improve += int(can_improve)
 
-    print('pareto opt (%%)\t:\t%.2f' %  (100. * (1 - avg_can_improve / avg_agree)))
-    print('agree (%%)\t:\t%.2f' % (100. * avg_agree / len(dataset)))
-    print('score (all)\t:\t%.2f vs. %.2f' % (
-        1. * avg_score1 / len(dataset), 1. * avg_score2 / len(dataset)))
-    print('score (agreed)\t:\t%.2f vs. %.2f' % (
-        1. * avg_score1 / avg_agree, 1. * avg_score2 / avg_agree))
+    print("pareto opt (%%)\t:\t%.2f" % (100.0 * (1 - avg_can_improve / avg_agree)))
+    print("agree (%%)\t:\t%.2f" % (100.0 * avg_agree / len(dataset)))
+    print(
+        "score (all)\t:\t%.2f vs. %.2f"
+        % (1.0 * avg_score1 / len(dataset), 1.0 * avg_score2 / len(dataset))
+    )
+    print(
+        "score (agreed)\t:\t%.2f vs. %.2f"
+        % (1.0 * avg_score1 / avg_agree, 1.0 * avg_score2 / avg_agree)
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

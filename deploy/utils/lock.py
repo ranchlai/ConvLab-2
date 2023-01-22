@@ -30,14 +30,18 @@ class LockBase(object):
 
 
 class GlobalLock(LockBase):
-    def __init__(self, name: str = 'lock', is_rlock=False):
+    def __init__(self, name: str = "lock", is_rlock=False):
         super().__init__()
         cls = type(self)
-        mp_name = 'mp_' + name
-        th_name = 'th_' + name
+        mp_name = "mp_" + name
+        th_name = "th_" + name
         cls.create_mp_lock(mp_name, is_rlock)
         cls.create_th_lock(th_name, is_rlock)
-        self.locks = [lk for lk in [getattr(cls, mp_name), getattr(cls, th_name)] if lk is not None]
+        self.locks = [
+            lk
+            for lk in [getattr(cls, mp_name), getattr(cls, th_name)]
+            if lk is not None
+        ]
 
     @classmethod
     def create_mp_lock(cls, name, is_rlock):
@@ -65,14 +69,18 @@ class GlobalLock(LockBase):
 
 
 class GlobalSemaphore(LockBase):
-    def __init__(self, value: int = 1, name: str = 'sem'):
+    def __init__(self, value: int = 1, name: str = "sem"):
         super().__init__()
         cls = type(self)
-        mp_name = 'mp_' + name
-        th_name = 'th_' + name
+        mp_name = "mp_" + name
+        th_name = "th_" + name
         cls.create_mp_sem(mp_name, value)
         cls.create_th_sem(th_name, value)
-        self.locks = [lk for lk in [getattr(cls, mp_name), getattr(cls, th_name)] if lk is not None]
+        self.locks = [
+            lk
+            for lk in [getattr(cls, mp_name), getattr(cls, th_name)]
+            if lk is not None
+        ]
 
     @classmethod
     def create_mp_sem(cls, name, value):
@@ -170,7 +178,7 @@ class ResourceLock(object):
         self.sema.leave()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     lock = GlobalLock(is_rlock=False)
     with lock:
         print("running")

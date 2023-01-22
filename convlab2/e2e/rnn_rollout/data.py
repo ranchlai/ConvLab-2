@@ -17,26 +17,26 @@ import numpy as np
 
 
 SPECIAL = [
-    '<eos>',
-    '<unk>',
-    '<selection>',
-    '<pad>',
+    "<eos>",
+    "<unk>",
+    "<selection>",
+    "<pad>",
 ]
 
 STOP_TOKENS = [
-    '<eos>',
-    '<selection>',
+    "<eos>",
+    "<selection>",
 ]
 
 
 def get_tag(tokens, tag):
-    return tokens[tokens.index('<' + tag + '>') + 1:tokens.index('</' + tag + '>')]
+    return tokens[tokens.index("<" + tag + ">") + 1 : tokens.index("</" + tag + ">")]
 
 
 def read_lines(file_name):
-    assert os.path.exists(file_name), 'file does not exists %s' % file_name
+    assert os.path.exists(file_name), "file does not exists %s" % file_name
     lines = []
-    with open(file_name, 'r') as f:
+    with open(file_name, "r") as f:
         for line in f:
             lines.append(line.strip())
     return lines
@@ -61,11 +61,11 @@ class Dictionary(object):
         return [self.idx2word[i] for i in idx]
 
     def w2i(self, words):
-        unk = self.word2idx.get('<unk>', None)
+        unk = self.word2idx.get("<unk>", None)
         return [self.word2idx.get(w, unk) for w in words]
 
     def get_idx(self, word):
-        unk = self.word2idx.get('<unk>', None)
+        unk = self.word2idx.get("<unk>", None)
         return self.word2idx.get(word, unk)
 
     def get_word(self, idx):
@@ -76,7 +76,7 @@ class Dictionary(object):
 
     def read_tag(domain, file_name, tag, freq_cutoff=-1, init_dict=True):
         token_freqs = OrderedDict()
-        with open(file_name, 'r') as f:
+        with open(file_name, "r") as f:
             for line in f:
                 tokens = line.strip().split()
                 tokens = get_tag(tokens, tag)
@@ -97,8 +97,8 @@ class ItemDictionary(Dictionary):
 
     def w2i(self, words, inv=False):
         # pick last selection_size if inv=True, otherwise first selection_size
-        words = words[self.selection_size:] if inv else words[:self.selection_size]
-        token = ' '.join(words)
+        words = words[self.selection_size :] if inv else words[: self.selection_size]
+        token = " ".join(words)
         return self.word2idx[token]
 
     def read_tag(domain, file_name, tag, init_dict=False):
@@ -106,17 +106,17 @@ class ItemDictionary(Dictionary):
 
         def generate(item_id, selection=[]):
             if item_id >= dictionary.selection_size:
-                dictionary.add_word(' '.join(selection))
+                dictionary.add_word(" ".join(selection))
                 return
             for i in range(5):
-                selection.append('item%d=%d' % (item_id, i))
+                selection.append("item%d=%d" % (item_id, i))
                 generate(item_id + 1, selection)
                 selection.pop()
 
         generate(0)
 
-        for token in ['<disagree>', '<no_agreement>', '<disconnect>']:
-            dictionary.add_word(' '.join([token] * dictionary.selection_size))
+        for token in ["<disagree>", "<no_agreement>", "<disconnect>"]:
+            dictionary.add_word(" ".join([token] * dictionary.selection_size))
 
         return dictionary
 
@@ -126,7 +126,7 @@ class CountDictionary(Dictionary):
         super(CountDictionary, self).__init__(init)
 
     def get_key(words):
-        key = '_'.join(words[i] for i in range(0, len(words), 2))
+        key = "_".join(words[i] for i in range(0, len(words), 2))
         return key
 
     def get_idx(self, words):
@@ -135,7 +135,7 @@ class CountDictionary(Dictionary):
 
     def read_tag(domain, file_name, tag, init_dict=False):
         token_freqs = OrderedDict()
-        with open(file_name, 'r') as f:
+        with open(file_name, "r") as f:
             for line in f:
                 tokens = line.strip().split()
                 tokens = get_tag(tokens, tag)
@@ -144,31 +144,47 @@ class CountDictionary(Dictionary):
         token_freqs = sorted(token_freqs.items(), key=lambda x: x[1], reverse=True)
         dictionary = CountDictionary(init=init_dict)
         for token, freq in token_freqs:
-                dictionary.add_word(token)
+            dictionary.add_word(token)
         return dictionary
 
 
 def create_dicts_from_file(domain, file_name, freq_cutoff):
     assert os.path.exists(file_name)
-    word_dict = Dictionary.read_tag(domain, file_name, 'dialogue', freq_cutoff=freq_cutoff)
-    item_dict = ItemDictionary.read_tag(domain, file_name, 'output', init_dict=False)
-    item_dict_old = Dictionary.read_tag(domain, file_name, 'output', init_dict=False)
-    context_dict = Dictionary.read_tag(domain, file_name, 'input', init_dict=False)
-    count_dict = CountDictionary.read_tag(domain, file_name, 'input', init_dict=False)
+    word_dict = Dictionary.read_tag(
+        domain, file_name, "dialogue", freq_cutoff=freq_cutoff
+    )
+    item_dict = ItemDictionary.read_tag(domain, file_name, "output", init_dict=False)
+    item_dict_old = Dictionary.read_tag(domain, file_name, "output", init_dict=False)
+    context_dict = Dictionary.read_tag(domain, file_name, "input", init_dict=False)
+    count_dict = CountDictionary.read_tag(domain, file_name, "input", init_dict=False)
     return word_dict, item_dict, context_dict, item_dict_old, count_dict
 
 
 class WordCorpus(object):
-    def __init__(self, domain, path, freq_cutoff=2, train='train.txt',
-        valid='val.txt', test='test.txt', verbose=False, sep_sel=False):
+    def __init__(
+        self,
+        domain,
+        path,
+        freq_cutoff=2,
+        train="train.txt",
+        valid="val.txt",
+        test="test.txt",
+        verbose=False,
+        sep_sel=False,
+    ):
         self.domain = domain
         self.verbose = verbose
         self.sep_sel = sep_sel
         # Only add words from the train dataset
-        self.word_dict, self.item_dict, self.context_dict, self.item_dict_old, self.count_dict = create_dicts_from_file(
-            domain,
-            os.path.join(path, train),
-            freq_cutoff=freq_cutoff)
+        (
+            self.word_dict,
+            self.item_dict,
+            self.context_dict,
+            self.item_dict_old,
+            self.count_dict,
+        ) = create_dicts_from_file(
+            domain, os.path.join(path, train), freq_cutoff=freq_cutoff
+        )
 
         self.train = self.tokenize(os.path.join(path, train)) if train else []
         self.valid = self.tokenize(os.path.join(path, valid)) if valid else []
@@ -182,7 +198,9 @@ class WordCorpus(object):
         random.shuffle(lines)
 
         def make_mask(choices, inv=False):
-            items = torch.Tensor([self.item_dict.w2i(c, inv=inv) for c in choices]).long()
+            items = torch.Tensor(
+                [self.item_dict.w2i(c, inv=inv) for c in choices]
+            ).long()
             mask = torch.Tensor(len(self.item_dict)).zero_()
             mask.scatter_(0, items, torch.Tensor(items.size(0)).fill_(1))
             return mask.unsqueeze(0)
@@ -191,33 +209,43 @@ class WordCorpus(object):
             items = torch.Tensor([self.item_dict.w2i(c) for c in choices]).long()
             return items
 
-
-        unk = self.word_dict.get_idx('<unk>')
+        unk = self.word_dict.get_idx("<unk>")
         dataset, total, unks = [], 0, 0
         for line in lines:
             tokens = line.split()
-            input_idxs = self.context_dict.w2i(get_tag(tokens, 'input'))
-            count_idx = self.count_dict.get_idx(get_tag(tokens, 'input'))
-            word_idxs = self.word_dict.w2i(get_tag(tokens, 'dialogue'))
-            item_idx = self.item_dict.w2i(get_tag(tokens, 'output'), inv=False)
-            item_idx_inv = self.item_dict.w2i(get_tag(tokens, 'output'), inv=True)
-            items = self.item_dict_old.w2i(get_tag(tokens, 'output'))
+            input_idxs = self.context_dict.w2i(get_tag(tokens, "input"))
+            count_idx = self.count_dict.get_idx(get_tag(tokens, "input"))
+            word_idxs = self.word_dict.w2i(get_tag(tokens, "dialogue"))
+            item_idx = self.item_dict.w2i(get_tag(tokens, "output"), inv=False)
+            item_idx_inv = self.item_dict.w2i(get_tag(tokens, "output"), inv=True)
+            items = self.item_dict_old.w2i(get_tag(tokens, "output"))
 
-            #valid_choices = self.domain.generate_choices(get_tag(tokens, 'input'), with_disagreement=False)
-            #valid_mask = make_mask(valid_choices)
-            partner_input_idxs = self.context_dict.w2i(get_tag(tokens, 'partner_input'))
+            # valid_choices = self.domain.generate_choices(get_tag(tokens, 'input'), with_disagreement=False)
+            # valid_mask = make_mask(valid_choices)
+            partner_input_idxs = self.context_dict.w2i(get_tag(tokens, "partner_input"))
             if self.sep_sel:
-                dataset.append((input_idxs, word_idxs, items, partner_input_idxs, count_idx))
+                dataset.append(
+                    (input_idxs, word_idxs, items, partner_input_idxs, count_idx)
+                )
             else:
-                dataset.append((input_idxs, word_idxs, [item_idx, item_idx_inv],
-                    partner_input_idxs, count_idx))
+                dataset.append(
+                    (
+                        input_idxs,
+                        word_idxs,
+                        [item_idx, item_idx_inv],
+                        partner_input_idxs,
+                        count_idx,
+                    )
+                )
 
             total += len(input_idxs) + len(word_idxs) + len(partner_input_idxs)
             unks += np.count_nonzero([idx == unk for idx in word_idxs])
 
         if self.verbose:
-            print('dataset %s, total %d, unks %s, ratio %0.2f%%' % (
-                file_name, total, unks, 100. * unks / total))
+            print(
+                "dataset %s, total %d, unks %s, ratio %0.2f%%"
+                % (file_name, total, unks, 100.0 * unks / total)
+            )
         return dataset
 
     def train_dataset(self, bsz, shuffle=True):
@@ -235,13 +263,10 @@ class WordCorpus(object):
 
         # Sort and pad
         dataset.sort(key=lambda x: len(x[1]))
-        pad = self.word_dict.get_idx('<pad>')
+        pad = self.word_dict.get_idx("<pad>")
 
         batches = []
-        stats = {
-            'n': 0,
-            'nonpadn': 0
-        }
+        stats = {"n": 0, "nonpadn": 0}
 
         for i in range(0, len(dataset), bsz):
             inputs, words = [], []
@@ -261,14 +286,16 @@ class WordCorpus(object):
             max_len = len(words[-1])
 
             for j in range(len(words)):
-                stats['n'] += max_len
-                stats['nonpadn'] += len(words[j])
+                stats["n"] += max_len
+                stats["nonpadn"] += len(words[j])
                 words[j] += [pad] * (max_len - len(words[j]))
 
             ctx = torch.Tensor(inputs).long().transpose(0, 1).contiguous()
             data = torch.Tensor(words).long().transpose(0, 1).contiguous()
             if self.sep_sel:
-                sel_tgt = torch.Tensor(items).long().transpose(0, 1).contiguous().view(-1)
+                sel_tgt = (
+                    torch.Tensor(items).long().transpose(0, 1).contiguous().view(-1)
+                )
             else:
                 sel_tgt = [torch.Tensor(it).long().view(-1) for it in items]
 
@@ -285,7 +312,7 @@ class WordCorpus(object):
 
 class SentenceCorpus(WordCorpus):
     def _split_into_sentences(self, dataset):
-        stops = [self.word_dict.get_idx(w) for w in ['YOU:', 'THEM:']]
+        stops = [self.word_dict.get_idx(w) for w in ["YOU:", "THEM:"]]
         sent_dataset = []
         for ctx, words, items, partner_ctx, count_idx in dataset:
             sents, current = [], []
@@ -330,13 +357,10 @@ class SentenceCorpus(WordCorpus):
 
         dataset = self._split_into_sentences(dataset)
 
-        pad = self.word_dict.get_idx('<pad>')
+        pad = self.word_dict.get_idx("<pad>")
 
         batches = []
-        stats = {
-            'n': 0,
-            'nonpadn': 0
-        }
+        stats = {"n": 0, "nonpadn": 0}
 
         i = 0
         while i < len(dataset):
@@ -375,12 +399,11 @@ class SentenceCorpus(WordCorpus):
                     for j in range(len(batch)):
                         batch[j].append(pad)
 
-
                 max_len = max([len(sent) for sent in batch])
                 ln = torch.LongTensor(len(batch))
                 for j in range(len(batch)):
-                    stats['n'] += max_len
-                    stats['nonpadn'] += len(batch[j]) - 1
+                    stats["n"] += max_len
+                    stats["nonpadn"] += len(batch[j]) - 1
                     ln[j] = len(batch[j]) - 2
                     batch[j] += [pad] * (max_len - len(batch[j]))
                 sent = torch.Tensor(batch).long().transpose(0, 1).contiguous()
@@ -391,7 +414,9 @@ class SentenceCorpus(WordCorpus):
                 tgts.append(tgt)
 
             ctx = torch.Tensor(ctxs).long().transpose(0, 1).contiguous()
-            partner_ctx = torch.Tensor(partner_ctxs).long()#.view(-1).contiguous() #.transpose(0, 1).contiguous()
+            partner_ctx = torch.Tensor(
+                partner_ctxs
+            ).long()  # .view(-1).contiguous() #.transpose(0, 1).contiguous()
             if self.sep_sel:
                 sel_tgt = torch.Tensor(items).long().view(-1)
             else:
@@ -402,7 +427,9 @@ class SentenceCorpus(WordCorpus):
             rev_idxs = self._make_reverse_idxs(inpts, lens)
             hid_idxs = self._make_hidden_idxs(lens)
 
-            batches.append((ctx, partner_ctx, inpts, lens, tgts, sel_tgt, rev_idxs, hid_idxs, cnt))
+            batches.append(
+                (ctx, partner_ctx, inpts, lens, tgts, sel_tgt, rev_idxs, hid_idxs, cnt)
+            )
 
         if shuffle:
             random.shuffle(batches)
@@ -415,16 +442,16 @@ class PhraseCorpus(WordCorpus):
         lines = read_lines(file_name)
         random.shuffle(lines)
 
-        unk = self.word_dict.get_idx('<unk>')
+        unk = self.word_dict.get_idx("<unk>")
         dataset, total, unks = [], 0, 0
         for line in lines:
             tokens = line.split()
-            dialog, items = get_tag(tokens, 'dialogue'), get_tag(tokens, 'output')
+            dialog, items = get_tag(tokens, "dialogue"), get_tag(tokens, "output")
 
-            for words in re.split(r'(?:YOU|THEM):', ' '.join(dialog))[1:-1]:
-                if words is '':
+            for words in re.split(r"(?:YOU|THEM):", " ".join(dialog))[1:-1]:
+                if words is "":
                     continue
-                words = words.strip().split(' ')
+                words = words.strip().split(" ")
                 word_idxs = self.word_dict.w2i(words)
                 item_idxs = self.item_dict.w2i(items)
                 dataset.append(word_idxs)
@@ -432,8 +459,10 @@ class PhraseCorpus(WordCorpus):
                 unks += np.count_nonzero([idx == unk for idx in word_idxs])
 
         if self.verbose:
-            print('dataset %s, total %d, unks %s, ratio %0.2f%%' % (
-                file_name, total, unks, 100. * unks / total))
+            print(
+                "dataset %s, total %d, unks %s, ratio %0.2f%%"
+                % (file_name, total, unks, 100.0 * unks / total)
+            )
         return dataset
 
     def _split_into_batches(self, dataset, bsz, shuffle=True):
@@ -442,13 +471,10 @@ class PhraseCorpus(WordCorpus):
 
         # Sort and pad
         dataset.sort(key=lambda x: len(x))
-        pad = self.word_dict.get_idx('<pad>')
+        pad = self.word_dict.get_idx("<pad>")
 
         batches = []
-        stats = {
-            'n': 0,
-            'nonpadn': 0
-        }
+        stats = {"n": 0, "nonpadn": 0}
 
         for i in range(0, len(dataset), bsz):
             words = []
@@ -458,8 +484,8 @@ class PhraseCorpus(WordCorpus):
             max_len = len(words[-1])
 
             for j in range(len(words)):
-                stats['n'] += max_len
-                stats['nonpadn'] += len(words[j])
+                stats["n"] += max_len
+                stats["nonpadn"] += len(words[j])
                 words[j] += [pad] * (max_len - len(words[j]))
 
             data = torch.Tensor(words).transpose(0, 1).long().contiguous()

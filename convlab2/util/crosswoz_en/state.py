@@ -5,9 +5,9 @@ def default_state():
         belief_state={},
         request_state={},
         terminated=False,
-        history=[]
+        history=[],
     )
-    state['belief_state'] = {
+    state["belief_state"] = {
         "Attraction": {
             "name": "",
             "fee": "",
@@ -15,7 +15,7 @@ def default_state():
             "rating": "",
             "nearby attract.": "",
             "nearby rest.": "",
-            "nearby hotels": ""
+            "nearby hotels": "",
         },
         "Restaurant": {
             "name": "",
@@ -24,7 +24,7 @@ def default_state():
             "rating": "",
             "nearby attract.": "",
             "nearby rest.": "",
-            "nearby hotels": ""
+            "nearby hotels": "",
         },
         "Hotel": {
             "name": "",
@@ -69,15 +69,9 @@ def default_state():
             "rating": "",
             "nearby attract.": "",
             "nearby rest.": "",
-            "nearby hotels": ""
+            "nearby hotels": "",
         },
-        "Metro": {
-            "from": "",
-            "to": ""
-        },
-        "Taxi": {
-            "from": "",
-            "to": ""
-        }
+        "Metro": {"from": "", "to": ""},
+        "Taxi": {"from": "", "to": ""},
     }
     return state

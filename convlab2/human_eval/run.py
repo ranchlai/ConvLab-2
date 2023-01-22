@@ -9,21 +9,21 @@ from task_config import task_config
 from worlds import MultiWozEvalWorld
 
 MASTER_QUALIF = {
-    'QualificationTypeId': '2F1QJWKUDD8XADTFD2Q0G6UTO95ALH',
-    'Comparator': 'Exists',
-    'RequiredToPreview': True
+    "QualificationTypeId": "2F1QJWKUDD8XADTFD2Q0G6UTO95ALH",
+    "Comparator": "Exists",
+    "RequiredToPreview": True,
 }
 
 MASTER_QUALIF_SDBOX = {
-    'QualificationTypeId': '2ARFPLSP75KLA8M8DH1HTEQVJT3SY6',
-    'Comparator': 'Exists',
-    'RequiredToPreview': True
+    "QualificationTypeId": "2ARFPLSP75KLA8M8DH1HTEQVJT3SY6",
+    "Comparator": "Exists",
+    "RequiredToPreview": True,
 }
 
 LOCALE_QUALIF_SDBOX = {
-    'QualificationTypeId': '00000000000000000071',
+    "QualificationTypeId": "00000000000000000071",
     "Comparator": "In",
-    'LocaleValues': [{'Country': "US"}, {'Country': 'HK'}, {'Country': 'IN'} ]
+    "LocaleValues": [{"Country": "US"}, {"Country": "HK"}, {"Country": "IN"}],
 }
 
 
@@ -36,29 +36,29 @@ def main():
     argparser.add_parlai_data_path()
     argparser.add_mturk_args()
     argparser.add_argument(
-        '-dp', '--datapath', default='./',
-        help='path to datasets, defaults to current directory')
+        "-dp",
+        "--datapath",
+        default="./",
+        help="path to datasets, defaults to current directory",
+    )
 
     opt = argparser.parse_args()
 
     # add additional model args
-    opt['override'] = {
-        'no_cuda': True,
-        'interactive_mode': True,
-        'tensorboard_log': False
+    opt["override"] = {
+        "no_cuda": True,
+        "interactive_mode": True,
+        "tensorboard_log": False,
     }
 
     # Set the task name to be the folder name
-    opt['task'] = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
+    opt["task"] = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
     # append the contents of task_config.py to the configuration
     opt.update(task_config)
 
-    mturk_agent_id = 'Tourist'
+    mturk_agent_id = "Tourist"
 
-    mturk_manager = MTurkManager(
-        opt=opt,
-        mturk_agent_ids=[mturk_agent_id]
-    )
+    mturk_manager = MTurkManager(opt=opt, mturk_agent_ids=[mturk_agent_id])
 
     mturk_manager.setup_server()
 
@@ -85,10 +85,7 @@ def main():
             agents = workers[:]
             # workers[0].assignment_generator = assignment_generator
 
-            world = MultiWozEvalWorld(
-                opt=opt,
-                agent=workers[0]
-            )
+            world = MultiWozEvalWorld(opt=opt, agent=workers[0])
 
             while not world.episode_done():
                 print("parley")
@@ -103,7 +100,7 @@ def main():
         mturk_manager.start_task(
             eligibility_function=check_worker_eligibility,
             assign_role_function=assign_worker_roles,
-            task_function=run_conversation
+            task_function=run_conversation,
         )
 
     except BaseException:
@@ -113,5 +110,5 @@ def main():
         mturk_manager.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

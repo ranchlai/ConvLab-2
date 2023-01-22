@@ -7,11 +7,11 @@ import numpy
 import torch
 from convlab2.dst.trade.multiwoz.trade import MultiWOZTRADE
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     seed = 2020
     random.seed(seed)
     numpy.random.seed(seed)
     torch.manual_seed(seed)
 
-    model = MultiWOZTRADE('model/TRADE-multiwozdst/HDD400BSZ32DR0.2ACC-0.3591')
+    model = MultiWOZTRADE("model/TRADE-multiwozdst/HDD400BSZ32DR0.2ACC-0.3591")
     model.evaluate()

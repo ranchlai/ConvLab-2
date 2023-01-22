@@ -22,7 +22,7 @@ from convlab2.nlu import NLU
 
 
 class SVMNLU(NLU):
-    def __init__(self, mode='all'):
+    def __init__(self, mode="all"):
         """
         SVM NLU initialization.
 
@@ -33,22 +33,31 @@ class SVMNLU(NLU):
         Example:
             nlu = SVMNLU(mode='all')
         """
-        assert mode == 'usr' or mode == 'sys' or mode == 'all'
-        model_file = 'https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/svm_multiwoz_{}.zip'.format(mode)
-        config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'configs/multiwoz_{}.cfg'.format(mode))
+        assert mode == "usr" or mode == "sys" or mode == "all"
+        model_file = "https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/svm_multiwoz_{}.zip".format(
+            mode
+        )
+        config_file = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "configs/multiwoz_{}.cfg".format(mode),
+        )
         self.config = configparser.ConfigParser()
         self.config.read(config_file)
         self.c = Classifier.classifier(self.config)
-        model_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                                  self.config.get("train", "output"))
+        model_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            self.config.get("train", "output"),
+        )
         model_dir = os.path.dirname(model_path)
         if not os.path.exists(model_path):
             if not os.path.exists(model_dir):
                 os.makedirs(model_dir)
-            print('Load from model_file param')
+            print("Load from model_file param")
             archive_file = cached_path(model_file)
-            archive = zipfile.ZipFile(archive_file, 'r')
-            archive.extractall(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            archive = zipfile.ZipFile(archive_file, "r")
+            archive.extractall(
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            )
             archive.close()
         self.c.load(model_path)
 
@@ -64,36 +73,28 @@ class SVMNLU(NLU):
             output (dict):
                 The dialog act of utterance.
         """
-        sentinfo = {
-            "turn-id": 0,
-            "asr-hyps": [
-                    {
-                        "asr-hyp": utterance,
-                        "score": 0
-                    }
-                ]
-            }
+        sentinfo = {"turn-id": 0, "asr-hyps": [{"asr-hyp": utterance, "score": 0}]}
         slu_hyps = self.c.decode_sent(sentinfo, self.config.get("decode", "output"))
         act_list = []
         for hyp in slu_hyps:
-            if hyp['slu-hyp']:
-                act_list = hyp['slu-hyp']
+            if hyp["slu-hyp"]:
+                act_list = hyp["slu-hyp"]
                 break
         dialog_act = {}
         for act in act_list:
-            intent = act['act']
-            if intent=='request':
-                domain, slot = act['slots'][0][1].split('-')
-                intent = domain+'-'+intent.capitalize()
-                dialog_act.setdefault(intent,[])
-                dialog_act[intent].append([slot,'?'])
+            intent = act["act"]
+            if intent == "request":
+                domain, slot = act["slots"][0][1].split("-")
+                intent = domain + "-" + intent.capitalize()
+                dialog_act.setdefault(intent, [])
+                dialog_act[intent].append([slot, "?"])
             else:
                 dialog_act.setdefault(intent, [])
-                dialog_act[intent].append(act['slots'][0])
+                dialog_act[intent].append(act["slots"][0])
         tuples = []
         for domain_intent, svs in dialog_act.items():
             for slot, value in svs:
-                domain, intent = domain_intent.split('-')
+                domain, intent = domain_intent.split("-")
                 tuples.append([intent, domain, slot, value])
         return tuples
 
@@ -112,7 +113,7 @@ if __name__ == "__main__":
         "What is the Name of attraction ?",
         "Can I get the name of restaurant?",
         "Can I get the address and phone number of the restaurant?",
-        "do you have a specific area you want to stay in?"
+        "do you have a specific area you want to stay in?",
     ]
     for utt in test_utterances:
         print(utt)

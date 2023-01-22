@@ -5,7 +5,7 @@
 # Copyright 2015 - 2019
 # Cambridge University Engineering Department Dialogue Systems Group
 #
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -35,39 +35,44 @@ class dataset_walker(object):
         f = open(dataListFile)
         for line in f:
             line = line.strip()
-            if (line in self.session_list):
-                raise RuntimeError('Call appears twice: %s' % (line))
+            if line in self.session_list:
+                raise RuntimeError("Call appears twice: %s" % (line))
             self.session_list.append(line)
         f.close()
-        print(dataListFile,len(self.session_list))
+        print(dataListFile, len(self.session_list))
 
     def __iter__(self):
         for session_id in self.session_list:
-            session_id_list = session_id.split('/')
-            session_dirname = os.path.join(self.dataroot,*session_id_list)
-            applog_filename = os.path.join(session_dirname,'log.json')
-            if (self.labels):
-                labels_filename = os.path.join(session_dirname,'label.json')
-                if (not os.path.exists(labels_filename)):
-                    raise RuntimeError('Cant score : cant open labels file %s' % (labels_filename))
+            session_id_list = session_id.split("/")
+            session_dirname = os.path.join(self.dataroot, *session_id_list)
+            applog_filename = os.path.join(session_dirname, "log.json")
+            if self.labels:
+                labels_filename = os.path.join(session_dirname, "label.json")
+                if not os.path.exists(labels_filename):
+                    raise RuntimeError(
+                        "Cant score : cant open labels file %s" % (labels_filename)
+                    )
             else:
                 labels_filename = None
-            print(applog_filename,labels_filename)
-            call = Call(applog_filename,labels_filename)
+            print(applog_filename, labels_filename)
+            call = Call(applog_filename, labels_filename)
             call.dirname = session_dirname
             yield call
-    def __len__(self, ):
+
+    def __len__(
+        self,
+    ):
         return len(self.session_list)
-    
+
 
 class Call(object):
-    def __init__(self,applog_filename,labels_filename):
+    def __init__(self, applog_filename, labels_filename):
         self.applog_filename = applog_filename
         self.labels_filename = labels_filename
         f = open(applog_filename)
         self.log = json.load(f)
         f.close()
-        if (labels_filename != None):
+        if labels_filename != None:
             f = open(labels_filename)
             self.labels = json.load(f)
             f.close()
@@ -75,12 +80,14 @@ class Call(object):
             self.labels = None
 
     def __iter__(self):
-        if (self.labels_filename != None):
-            for (log,labels) in zip(self.log['turns'],self.labels['turns']):
-                yield (log,labels)
-        else: 
-            for log in self.log['turns']:
-                yield (log,None)
-                
-    def __len__(self, ):
-        return len(self.log['turns'])
+        if self.labels_filename != None:
+            for (log, labels) in zip(self.log["turns"], self.labels["turns"]):
+                yield (log, labels)
+        else:
+            for log in self.log["turns"]:
+                yield (log, None)
+
+    def __len__(
+        self,
+    ):
+        return len(self.log["turns"])

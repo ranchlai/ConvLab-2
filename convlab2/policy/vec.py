@@ -2,8 +2,7 @@
 """Vector Interface"""
 
 
-class Vector():
-
+class Vector:
     def __init__(self):
         pass
 
@@ -24,7 +23,7 @@ class Vector():
 
     def action_devectorize(self, action_vec):
         """recover an action
-        
+
         Args:
             action_vec (np.array):
                 Dialog act vector

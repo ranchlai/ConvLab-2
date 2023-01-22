@@ -19,13 +19,14 @@ import convlab2.e2e.rnn_rollout.utils as utils
 class LatentClusteringEngine(EngineBase):
     def __init__(self, model, args, verbose=False):
         super(LatentClusteringEngine, self).__init__(model, args, verbose)
-        self.crit = nn.CrossEntropyLoss(reduction='sum')
-        self.kldiv = nn.KLDivLoss(reduction='sum')
-        self.cluster_crit = nn.NLLLoss(reduction='sum')
+        self.crit = nn.CrossEntropyLoss(reduction="sum")
+        self.kldiv = nn.KLDivLoss(reduction="sum")
+        self.cluster_crit = nn.NLLLoss(reduction="sum")
         self.sel_crit = Criterion(
             self.model.item_dict,
-            bad_toks=['<disconnect>', '<disagree>'],
-            reduction='mean' if args.sep_sel else 'none')
+            bad_toks=["<disconnect>", "<disagree>"],
+            reduction="mean" if args.sep_sel else "none",
+        )
 
         self.sel_model = utils.load_model(args.selection_model_file)
         self.sel_model.eval()
@@ -33,13 +34,15 @@ class LatentClusteringEngine(EngineBase):
     def _make_sel_tgt_probs(self, inpts, lens, rev_idxs, hid_idxs, ctx):
         sel_tgt_probs = []
         for i in range(len(inpts)):
-            sel_prob = self.sel_model(inpts[:i], lens[:i], rev_idxs[:i], hid_idxs[:i], ctx)
+            sel_prob = self.sel_model(
+                inpts[:i], lens[:i], rev_idxs[:i], hid_idxs[:i], ctx
+            )
             sel_tgt_probs.append(F.softmax(sel_prob.detach(), dim=1))
         return sel_tgt_probs
 
     def _append_pad(self, inpts, tgts, sel_tgt_probs, lens, rev_idxs, hid_idxs):
         bsz = inpts[0].size(1)
-        pad = torch.Tensor(bsz).fill_(self.model.word_dict.get_idx('<pad>')).long()
+        pad = torch.Tensor(bsz).fill_(self.model.word_dict.get_idx("<pad>")).long()
         inpts.append(Variable(pad.unsqueeze(0)))
         tgts.append(Variable(pad))
         sel_tgt_probs.append(sel_tgt_probs[-1].clone())
@@ -60,10 +63,12 @@ class LatentClusteringEngine(EngineBase):
         sel_tgt = Variable(sel_tgt)
 
         inpts, tgts, sel_tgt_probs, lens, rev_idxs, hid_idxs = self._append_pad(
-            inpts, tgts, sel_tgt_probs, lens, rev_idxs, hid_idxs)
+            inpts, tgts, sel_tgt_probs, lens, rev_idxs, hid_idxs
+        )
 
         outs, sel_outs, z_probs, z_tgts, stats = self.model(
-            inpts, tgts, sel_tgt_probs, hid_idxs, ctx, cnt)
+            inpts, tgts, sel_tgt_probs, hid_idxs, ctx, cnt
+        )
 
         lang_loss, n = 0, 0
         for out, tgt, ln in zip(outs, tgts[1:], lens[1:]):
@@ -92,8 +97,7 @@ class LatentClusteringEngine(EngineBase):
         return lang_loss + select_loss
 
     def train_batch(self, batch):
-        lang_loss, sel_loss, kldiv_loss, z_loss, stats = self._forward(
-            batch)
+        lang_loss, sel_loss, kldiv_loss, z_loss, stats = self._forward(batch)
 
         loss = lang_loss + sel_loss + kldiv_loss + z_loss
 
@@ -107,7 +111,8 @@ class LatentClusteringEngine(EngineBase):
     def valid_batch(self, batch):
         with torch.no_grad():
             lang_loss, sel_loss, kldiv_loss, z_loss, stats = self._forward(
-                batch, norm_lang=False)
+                batch, norm_lang=False
+            )
 
         return lang_loss.item(), sel_loss.item(), 0, stats
 
@@ -126,7 +131,14 @@ class LatentClusteringEngine(EngineBase):
 
         for batch in trainset:
             self.t += 1
-            loss, (entropy, max_prob, top3_prob, enc_entropy, enc_max_prob, enc_top3_prob) = self.train_batch(batch)
+            loss, (
+                entropy,
+                max_prob,
+                top3_prob,
+                enc_entropy,
+                enc_max_prob,
+                enc_top3_prob,
+            ) = self.train_batch(batch)
 
             if self.args.visual and self.t % 100 == 0:
                 self.model_plot.update(self.t)
@@ -148,10 +160,14 @@ class LatentClusteringEngine(EngineBase):
         total_enc_top3_prob /= len(trainset)
 
         time_elapsed = time.time() - start_time
-        print('| train | avg entropy %.3f | avg max prob %.3f | avg top3 prob %.3f ' % (
-            total_entropy, total_max_prob, total_top3_prob))
-        print('| train | enc avg entropy %.3f | enc avg max prob %.3f | enc avg top3 prob %.3f ' % (
-            total_enc_entropy, total_enc_max_prob, total_enc_top3_prob))
+        print(
+            "| train | avg entropy %.3f | avg max prob %.3f | avg top3 prob %.3f "
+            % (total_entropy, total_max_prob, total_top3_prob)
+        )
+        print(
+            "| train | enc avg entropy %.3f | enc avg max prob %.3f | enc avg top3 prob %.3f "
+            % (total_enc_entropy, total_enc_max_prob, total_enc_top3_prob)
+        )
 
         return total_loss, time_elapsed
 
@@ -166,7 +182,19 @@ class LatentClusteringEngine(EngineBase):
         total_enc_max_prob = 0
         total_enc_top3_prob = 0
         for batch in validset:
-            valid_loss, select_loss, partner_ctx_loss, (entropy, max_prob, top3_prob, enc_entropy, enc_max_prob, enc_top3_prob) = self.valid_batch(batch)
+            (
+                valid_loss,
+                select_loss,
+                partner_ctx_loss,
+                (
+                    entropy,
+                    max_prob,
+                    top3_prob,
+                    enc_entropy,
+                    enc_max_prob,
+                    enc_top3_prob,
+                ),
+            ) = self.valid_batch(batch)
             total_valid_loss += valid_loss
             total_select_loss += select_loss
             total_partner_ctx_loss += partner_ctx_loss
@@ -179,10 +207,10 @@ class LatentClusteringEngine(EngineBase):
 
         # Dividing by the number of words in the input, not the tokens modeled,
         # because the latter includes padding
-        total_valid_loss /= validset_stats['nonpadn']
+        total_valid_loss /= validset_stats["nonpadn"]
         total_select_loss /= len(validset)
         total_partner_ctx_loss /= len(validset)
-        #total_future_loss /= len(validset)
+        # total_future_loss /= len(validset)
         total_entropy /= len(validset)
         total_max_prob /= len(validset)
         total_top3_prob /= len(validset)
@@ -190,15 +218,19 @@ class LatentClusteringEngine(EngineBase):
         total_enc_max_prob /= len(validset)
         total_enc_top3_prob /= len(validset)
 
-        print('| valid | avg entropy %.3f | avg max prob %.3f | avg top3 prob %.3f ' % (
-            total_entropy, total_max_prob, total_top3_prob))
-        print('| valid | enc avg entropy %.3f | enc avg max prob %.3f | enc avg top3 prob %.3f ' % (
-            total_enc_entropy, total_enc_max_prob, total_enc_top3_prob))
+        print(
+            "| valid | avg entropy %.3f | avg max prob %.3f | avg top3 prob %.3f "
+            % (total_entropy, total_max_prob, total_top3_prob)
+        )
+        print(
+            "| valid | enc avg entropy %.3f | enc avg max prob %.3f | enc avg top3 prob %.3f "
+            % (total_enc_entropy, total_enc_max_prob, total_enc_top3_prob)
+        )
 
         extra = {
-            'entropy': total_entropy,
-            'avg_max_prob': total_max_prob,
-            'avg_top3_prob': total_top3_prob,
+            "entropy": total_entropy,
+            "avg_max_prob": total_max_prob,
+            "avg_top3_prob": total_top3_prob,
         }
 
         return total_valid_loss, total_select_loss, total_partner_ctx_loss, extra
@@ -207,7 +239,7 @@ class LatentClusteringEngine(EngineBase):
 class LatentClusteringPredictionEngine(EngineBase):
     def __init__(self, model, args, verbose=False):
         super(LatentClusteringPredictionEngine, self).__init__(model, args, verbose)
-        self.crit = nn.CrossEntropyLoss(reduction='sum')
+        self.crit = nn.CrossEntropyLoss(reduction="sum")
         self.model.train()
 
         self.sel_model = utils.load_model(args.selection_model_file)
@@ -216,7 +248,9 @@ class LatentClusteringPredictionEngine(EngineBase):
     def _make_sel_tgt_probs(self, inpts, lens, rev_idxs, hid_idxs, ctx):
         sel_tgt_probs = []
         for i in range(len(inpts)):
-            sel_prob = self.sel_model(inpts[:i], lens[:i], rev_idxs[:i], hid_idxs[:i], ctx)
+            sel_prob = self.sel_model(
+                inpts[:i], lens[:i], rev_idxs[:i], hid_idxs[:i], ctx
+            )
             sel_tgt_probs.append(F.softmax(sel_prob.detach(), dim=1))
         return sel_tgt_probs
 
@@ -292,8 +326,10 @@ class LatentClusteringPredictionEngine(EngineBase):
         total_max_prob /= len(trainset)
         total_top3_prob /= len(trainset)
         time_elapsed = time.time() - start_time
-        print('| train | avg entropy %.3f | avg max prob %.3f | avg top3 prob %.3f' % (
-            total_entropy, total_max_prob, total_top3_prob))
+        print(
+            "| train | avg entropy %.3f | avg max prob %.3f | avg top3 prob %.3f"
+            % (total_entropy, total_max_prob, total_top3_prob)
+        )
 
         return total_loss, time_elapsed
 
@@ -305,7 +341,12 @@ class LatentClusteringPredictionEngine(EngineBase):
         total_max_prob = 0
         total_top3_prob = 0
         for batch in validset:
-            valid_loss, select_loss, partner_ctx_loss, (entropy, max_prob, top3_prob) = self.valid_batch(batch)
+            (
+                valid_loss,
+                select_loss,
+                partner_ctx_loss,
+                (entropy, max_prob, top3_prob),
+            ) = self.valid_batch(batch)
             total_valid_loss += valid_loss
             total_select_loss += select_loss
             total_partner_ctx_loss += partner_ctx_loss
@@ -315,20 +356,22 @@ class LatentClusteringPredictionEngine(EngineBase):
 
         # Dividing by the number of words in the input, not the tokens modeled,
         # because the latter includes padding
-        total_valid_loss /= validset_stats['nonpadn']
+        total_valid_loss /= validset_stats["nonpadn"]
         total_select_loss /= len(validset)
         total_partner_ctx_loss /= len(validset)
-        #total_future_loss /= len(validset)
+        # total_future_loss /= len(validset)
         total_entropy /= len(validset)
         total_max_prob /= len(validset)
         total_top3_prob /= len(validset)
-        print('| valid | avg entropy %.3f | avg max prob %.3f | avg top3 prob %.3f' % (
-            total_entropy, total_max_prob, total_top3_prob))
+        print(
+            "| valid | avg entropy %.3f | avg max prob %.3f | avg top3 prob %.3f"
+            % (total_entropy, total_max_prob, total_top3_prob)
+        )
 
         extra = {
-            'entropy': total_entropy,
-            'avg_max_prob': total_max_prob,
-            'avg_top3_prob': total_top3_prob,
+            "entropy": total_entropy,
+            "avg_max_prob": total_max_prob,
+            "avg_top3_prob": total_top3_prob,
         }
 
         return total_valid_loss, total_select_loss, total_partner_ctx_loss, extra
@@ -337,8 +380,8 @@ class LatentClusteringPredictionEngine(EngineBase):
 class LatentClusteringLanguageEngine(EngineBase):
     def __init__(self, model, args, verbose=False):
         super(LatentClusteringLanguageEngine, self).__init__(model, args, verbose)
-        self.crit = nn.CrossEntropyLoss(reduction='sum')
-        self.cluster_crit = nn.NLLLoss(reduction='sum')
+        self.crit = nn.CrossEntropyLoss(reduction="sum")
+        self.cluster_crit = nn.NLLLoss(reduction="sum")
 
         self.sel_model = utils.load_model(args.selection_model_file)
         self.sel_model.eval()
@@ -346,13 +389,15 @@ class LatentClusteringLanguageEngine(EngineBase):
     def _make_sel_tgt_probs(self, inpts, lens, rev_idxs, hid_idxs, ctx):
         sel_tgt_probs = []
         for i in range(len(inpts)):
-            sel_prob = self.sel_model(inpts[:i], lens[:i], rev_idxs[:i], hid_idxs[:i], ctx)
+            sel_prob = self.sel_model(
+                inpts[:i], lens[:i], rev_idxs[:i], hid_idxs[:i], ctx
+            )
             sel_tgt_probs.append(F.softmax(sel_prob.detach(), dim=1))
         return sel_tgt_probs
 
     def _append_pad(self, inpts, tgts, sel_tgt_probs, lens, rev_idxs, hid_idxs):
         bsz = inpts[0].size(1)
-        pad = torch.Tensor(bsz).fill_(self.model.word_dict.get_idx('<pad>')).long()
+        pad = torch.Tensor(bsz).fill_(self.model.word_dict.get_idx("<pad>")).long()
         inpts.append(Variable(pad.unsqueeze(0)))
         tgts.append(Variable(pad))
         sel_tgt_probs.append(sel_tgt_probs[-1].clone())
@@ -372,7 +417,8 @@ class LatentClusteringLanguageEngine(EngineBase):
         sel_tgt_probs = self._make_sel_tgt_probs(inpts, lens, rev_idxs, hid_idxs, ctx)
 
         inpts, tgts, sel_tgt_probs, lens, rev_idxs, hid_idxs = self._append_pad(
-            inpts, tgts, sel_tgt_probs, lens, rev_idxs, hid_idxs)
+            inpts, tgts, sel_tgt_probs, lens, rev_idxs, hid_idxs
+        )
 
         outs = model(inpts, tgts, sel_tgt_probs, hid_idxs, ctx, cnt)
 
@@ -387,7 +433,8 @@ class LatentClusteringLanguageEngine(EngineBase):
 
     def train_batch(self, batch):
         lang_loss = self._forward(
-            self.model, batch, sep_sel=self.args.sep_sel, norm_lang=True)
+            self.model, batch, sep_sel=self.args.sep_sel, norm_lang=True
+        )
 
         loss = lang_loss
 
@@ -401,7 +448,8 @@ class LatentClusteringLanguageEngine(EngineBase):
     def valid_batch(self, batch):
         with torch.no_grad():
             lang_loss = self._forward(
-                self.model, batch, sep_sel=self.args.sep_sel, norm_lang=False)
+                self.model, batch, sep_sel=self.args.sep_sel, norm_lang=False
+            )
 
         return lang_loss.item(), 0, 0
 
@@ -477,8 +525,10 @@ class BaselineClusteringEngine(EngineBase):
         total_max_prob /= len(trainset)
         total_top3_prob /= len(trainset)
         time_elapsed = time.time() - start_time
-        print('| train | avg entropy %.3f | avg max prob %.3f | avg top3 prob %.3f' % (
-            total_entropy, total_max_prob, total_top3_prob))
+        print(
+            "| train | avg entropy %.3f | avg max prob %.3f | avg top3 prob %.3f"
+            % (total_entropy, total_max_prob, total_top3_prob)
+        )
 
         return total_loss, time_elapsed
 
@@ -490,7 +540,12 @@ class BaselineClusteringEngine(EngineBase):
         total_max_prob = 0
         total_top3_prob = 0
         for batch in validset:
-            valid_loss, select_loss, partner_ctx_loss, (entropy, max_prob, top3_prob) = self.valid_batch(batch)
+            (
+                valid_loss,
+                select_loss,
+                partner_ctx_loss,
+                (entropy, max_prob, top3_prob),
+            ) = self.valid_batch(batch)
             total_valid_loss += valid_loss
             total_select_loss += select_loss
             total_partner_ctx_loss += partner_ctx_loss
@@ -500,20 +555,22 @@ class BaselineClusteringEngine(EngineBase):
 
         # Dividing by the number of words in the input, not the tokens modeled,
         # because the latter includes padding
-        total_valid_loss /= validset_stats['nonpadn']
+        total_valid_loss /= validset_stats["nonpadn"]
         total_select_loss /= len(validset)
         total_partner_ctx_loss /= len(validset)
-        #total_future_loss /= len(validset)
+        # total_future_loss /= len(validset)
         total_entropy /= len(validset)
         total_max_prob /= len(validset)
         total_top3_prob /= len(validset)
-        print('| valid | avg entropy %.3f | avg max prob %.3f | avg top3 prob %.3f' % (
-            total_entropy, total_max_prob, total_top3_prob))
+        print(
+            "| valid | avg entropy %.3f | avg max prob %.3f | avg top3 prob %.3f"
+            % (total_entropy, total_max_prob, total_top3_prob)
+        )
 
         extra = {
-            'entropy': total_entropy,
-            'avg_max_prob': total_max_prob,
-            'avg_top3_prob': total_top3_prob,
+            "entropy": total_entropy,
+            "avg_max_prob": total_max_prob,
+            "avg_top3_prob": total_top3_prob,
         }
 
         return total_valid_loss, total_select_loss, total_partner_ctx_loss, extra

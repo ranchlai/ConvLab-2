@@ -9,7 +9,7 @@ class DST(Module):
     """DST module interface."""
 
     def update(self, action):
-        """ Update the internal dialog state variable.
+        """Update the internal dialog state variable.
 
         Args:
             action (str or list of list):
@@ -21,7 +21,7 @@ class DST(Module):
         pass
 
     def update_turn(self, sys_utt, user_utt):
-        """ Update the internal dialog state variable with .
+        """Update the internal dialog state variable with .
 
         Args:
             sys_utt (str):

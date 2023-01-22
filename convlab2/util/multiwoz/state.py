@@ -1,24 +1,16 @@
 def default_state():
-    state = dict(user_action=[],
-                 system_action=[],
-                 belief_state={},
-                 request_state={},
-                 terminated=False,
-                 history=[])
-    state['belief_state'] = {
-        "police": {
-            "book": {
-                "booked": []
-            },
-            "semi": {}
-        },
+    state = dict(
+        user_action=[],
+        system_action=[],
+        belief_state={},
+        request_state={},
+        terminated=False,
+        history=[],
+    )
+    state["belief_state"] = {
+        "police": {"book": {"booked": []}, "semi": {}},
         "hotel": {
-            "book": {
-                "booked": [],
-                "people": "",
-                "day": "",
-                "stay": ""
-            },
+            "book": {"booked": [], "people": "", "day": "", "stay": ""},
             "semi": {
                 "name": "",
                 "area": "",
@@ -26,64 +18,36 @@ def default_state():
                 "pricerange": "",
                 "stars": "",
                 "internet": "",
-                "type": ""
-            }
+                "type": "",
+            },
         },
         "attraction": {
-            "book": {
-                "booked": []
-            },
-            "semi": {
-                "type": "",
-                "name": "",
-                "area": ""
-            }
+            "book": {"booked": []},
+            "semi": {"type": "", "name": "", "area": ""},
         },
         "restaurant": {
-            "book": {
-                "booked": [],
-                "people": "",
-                "day": "",
-                "time": ""
-            },
+            "book": {"booked": [], "people": "", "day": "", "time": ""},
             "semi": {
                 "food": "",
                 "pricerange": "",
                 "name": "",
                 "area": "",
-            }
-        },
-        "hospital": {
-            "book": {
-                "booked": []
             },
-            "semi": {
-                "department": ""
-            }
         },
+        "hospital": {"book": {"booked": []}, "semi": {"department": ""}},
         "taxi": {
-            "book": {
-                "booked": []
-            },
-            "semi": {
-                "leaveAt": "",
-                "destination": "",
-                "departure": "",
-                "arriveBy": ""
-            }
+            "book": {"booked": []},
+            "semi": {"leaveAt": "", "destination": "", "departure": "", "arriveBy": ""},
         },
         "train": {
-            "book": {
-                "booked": [],
-                "people": ""
-            },
+            "book": {"booked": [], "people": ""},
             "semi": {
                 "leaveAt": "",
                 "destination": "",
                 "day": "",
                 "arriveBy": "",
-                "departure": ""
-            }
-        }
+                "departure": "",
+            },
+        },
     }
     return state

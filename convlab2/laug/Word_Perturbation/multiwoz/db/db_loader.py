@@ -11,7 +11,7 @@ def list_db_filename(db_dir):
     filenames = os.listdir(db_dir)
     db_filenames = {}
     for filename in filenames:
-        match = re.match(r'^(\w+)_db\.json$', filename)
+        match = re.match(r"^(\w+)_db\.json$", filename)
         if match is not None and os.path.isfile(os.path.join(db_dir, filename)):
             domain = match.group(1)
             db_filenames[domain] = filename
@@ -19,7 +19,10 @@ def list_db_filename(db_dir):
 
 
 def list_db_filepath(db_dir):
-    return {domain: os.path.join(db_dir, filename) for domain, filename in list_db_filename(db_dir).items()}
+    return {
+        domain: os.path.join(db_dir, filename)
+        for domain, filename in list_db_filename(db_dir).items()
+    }
 
 
 class BaseDBLoader(ABC):

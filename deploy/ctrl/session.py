@@ -9,7 +9,6 @@ from deploy.utils import MyLock, ExpireDict
 
 
 class SessionCtrl(object):
-
     def __init__(self, max_items=None, expire_sec=None):
         self.sessions = ExpireDict(max_items, expire_sec)
         # self.sessions = ExpireDict(2, expire_sec)
@@ -38,7 +37,8 @@ class SessionCtrl(object):
 
     def __new_data(self, nlu, dst, policy, nlg):
         return {
-            'model_map': {'nlu': nlu, 'dst': dst, 'policy': policy, 'nlg': nlg}, 'turns': []
+            "model_map": {"nlu": nlu, "dst": dst, "policy": policy, "nlg": nlg},
+            "turns": [],
         }
 
     def __new_token(self):
@@ -48,5 +48,5 @@ class SessionCtrl(object):
         return token
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

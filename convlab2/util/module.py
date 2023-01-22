@@ -3,7 +3,6 @@ from abc import ABC
 
 
 class Module(ABC):
-
     def train(self, *args, **kwargs):
         """Model training entry point"""
         pass

@@ -150,9 +150,12 @@ class ChunkedAttention(nn.Module):
 
     def reverse(self, fwd_inpts, fwd_lens, rev_idxs):
         bwd_inpts, bwd_lens = [], []
-        for inpt, ln, rev_idx in zip(reversed(fwd_inpts), reversed(fwd_lens), reversed(rev_idxs)):
-            bwd_inpt = inpt.gather(0,
-                rev_idx.expand(rev_idx.size(0), rev_idx.size(1), inpt.size(2)))
+        for inpt, ln, rev_idx in zip(
+            reversed(fwd_inpts), reversed(fwd_lens), reversed(rev_idxs)
+        ):
+            bwd_inpt = inpt.gather(
+                0, rev_idx.expand(rev_idx.size(0), rev_idx.size(1), inpt.size(2))
+            )
             bwd_inpts.append(bwd_inpt)
             bwd_lens.append(ln)
 
@@ -161,7 +164,9 @@ class ChunkedAttention(nn.Module):
 
 class BiRnnAttention(ChunkedAttention):
     def __init__(self, query_size, value_size, hid_size, dropout, init_range):
-        super(BiRnnAttention, self).__init__(query_size, value_size, hid_size, init_range)
+        super(BiRnnAttention, self).__init__(
+            query_size, value_size, hid_size, init_range
+        )
 
         self.dropout = nn.Dropout(dropout)
 
@@ -191,7 +196,9 @@ class BiRnnAttention(ChunkedAttention):
         for inpt, ln, hid_idx in zip(inpts, lens, hid_idxs):
             out, _ = rnn(inpt, h)
             hs.append(out)
-            h = out.gather(0, hid_idx.expand(hid_idx.size(0), hid_idx.size(1), out.size(2)))
+            h = out.gather(
+                0, hid_idx.expand(hid_idx.size(0), hid_idx.size(1), out.size(2))
+            )
         return hs
 
     def forward(self, query, fwd_inpts, fwd_lens, rev_idxs, hid_idxs):
@@ -212,7 +219,8 @@ class BiRnnAttention(ChunkedAttention):
 class HierarchicalAttention(ChunkedAttention):
     def __init__(self, query_size, value_size, hid_size, dropout, init_range):
         super(HierarchicalAttention, self).__init__(
-            query_size, value_size, hid_size, init_range)
+            query_size, value_size, hid_size, init_range
+        )
 
         self.word_dropout = nn.Dropout(dropout)
         self.sent_dropout = nn.Dropout(dropout)
@@ -235,8 +243,9 @@ class HierarchicalAttention(ChunkedAttention):
 
     def forward_word_attn(self, query, fwd_word_hs, bwd_word_hs, ln, rev_idx, hid_idx):
         # reverse bwd_word_h
-        bwd_word_hs = bwd_word_hs.gather(0,
-            rev_idx.expand(rev_idx.size(0), rev_idx.size(1), bwd_word_hs.size(2)))
+        bwd_word_hs = bwd_word_hs.gather(
+            0, rev_idx.expand(rev_idx.size(0), rev_idx.size(1), bwd_word_hs.size(2))
+        )
 
         word_hs = torch.cat([fwd_word_hs, bwd_word_hs], 2)
         word_hs = self.word_dropout(word_hs)
@@ -271,16 +280,24 @@ class HierarchicalAttention(ChunkedAttention):
         bwd_inpts, bwd_lens = self.reverse(fwd_inpts, fwd_lens, rev_idxs)
 
         bsz = query.size(0)
-        fwd_word_hs = self.forward_word_rnn(self.fwd_word_rnn, bsz, fwd_inpts,
-            fwd_lens, rev_idxs, hid_idxs)
-        bwd_word_hs = self.forward_word_rnn(self.bwd_word_rnn, bsz, bwd_inpts,
-            reversed(fwd_lens), reversed(rev_idxs), reversed(hid_idxs))
+        fwd_word_hs = self.forward_word_rnn(
+            self.fwd_word_rnn, bsz, fwd_inpts, fwd_lens, rev_idxs, hid_idxs
+        )
+        bwd_word_hs = self.forward_word_rnn(
+            self.bwd_word_rnn,
+            bsz,
+            bwd_inpts,
+            reversed(fwd_lens),
+            reversed(rev_idxs),
+            reversed(hid_idxs),
+        )
 
         iterator = zip(fwd_word_hs, reversed(bwd_word_hs), fwd_lens, rev_idxs, hid_idxs)
         word_hs, word_ps = [], []
         for fwd_word_h, bwd_word_h, ln, rev_idx, hid_idx in iterator:
-            word_h, word_p = self.forward_word_attn(query, fwd_word_h,
-                bwd_word_h, ln, rev_idx, hid_idx)
+            word_h, word_p = self.forward_word_attn(
+                query, fwd_word_h, bwd_word_h, ln, rev_idx, hid_idx
+            )
             word_hs.append(word_h)
             word_ps.append(word_p)
 
@@ -294,7 +311,8 @@ class HierarchicalAttention(ChunkedAttention):
 class SentenceAttention(ChunkedAttention):
     def __init__(self, query_size, value_size, hid_size, dropout, init_range):
         super(SentenceAttention, self).__init__(
-            query_size, value_size, hid_size, init_range)
+            query_size, value_size, hid_size, init_range
+        )
 
         self.word_dropout = nn.Dropout(dropout)
 
@@ -311,8 +329,9 @@ class SentenceAttention(ChunkedAttention):
 
     def forward_word_attn(self, query, fwd_word_hs, bwd_word_hs, ln, rev_idx, hid_idx):
         # reverse bwd_word_h
-        bwd_word_hs = bwd_word_hs.gather(0,
-            rev_idx.expand(rev_idx.size(0), rev_idx.size(1), bwd_word_hs.size(2)))
+        bwd_word_hs = bwd_word_hs.gather(
+            0, rev_idx.expand(rev_idx.size(0), rev_idx.size(1), bwd_word_hs.size(2))
+        )
 
         word_hs = torch.cat([fwd_word_hs, bwd_word_hs], 2)
         word_hs = self.word_dropout(word_hs)
@@ -334,16 +353,26 @@ class SentenceAttention(ChunkedAttention):
         bwd_inpts, bwd_lens = self.reverse([fwd_inpt], [fwd_len], [rev_idx])
 
         bsz = query.size(0)
-        fwd_word_hs = self.forward_word_rnn(self.fwd_word_rnn, bsz, [fwd_inpt],
-            [fwd_len], [rev_idx], [hid_idx])
-        bwd_word_hs = self.forward_word_rnn(self.bwd_word_rnn, bsz, bwd_inpts,
-            reversed([fwd_len]), reversed([rev_idx]), reversed([hid_idx]))
+        fwd_word_hs = self.forward_word_rnn(
+            self.fwd_word_rnn, bsz, [fwd_inpt], [fwd_len], [rev_idx], [hid_idx]
+        )
+        bwd_word_hs = self.forward_word_rnn(
+            self.bwd_word_rnn,
+            bsz,
+            bwd_inpts,
+            reversed([fwd_len]),
+            reversed([rev_idx]),
+            reversed([hid_idx]),
+        )
 
-        iterator = zip(fwd_word_hs, reversed(bwd_word_hs), [fwd_len], [rev_idx], [hid_idx])
+        iterator = zip(
+            fwd_word_hs, reversed(bwd_word_hs), [fwd_len], [rev_idx], [hid_idx]
+        )
         word_hs, word_ps = [], []
         for fwd_word_h, bwd_word_h, ln, rev_idx, hid_idx in iterator:
-            word_h, word_p = self.forward_word_attn(query, fwd_word_h,
-                bwd_word_h, ln, rev_idx, hid_idx)
+            word_h, word_p = self.forward_word_attn(
+                query, fwd_word_h, bwd_word_h, ln, rev_idx, hid_idx
+            )
             word_hs.append(word_h)
             word_ps.append(word_p)
 

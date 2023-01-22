@@ -8,17 +8,16 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class Rule(Policy):
-
-    def __init__(self, is_train=False, character='sys'):
+    def __init__(self, is_train=False, character="sys"):
         self.is_train = is_train
         self.character = character
 
-        if character == 'sys':
+        if character == "sys":
             self.policy = RuleBasedCamrestBot()
-        elif character == 'usr':
+        elif character == "usr":
             self.policy = UserPolicyAgendaCamrest()
         else:
-            raise NotImplementedError('unknown character {}'.format(character))
+            raise NotImplementedError("unknown character {}".format(character))
 
     def predict(self, state):
         """
@@ -37,16 +36,16 @@ class Rule(Policy):
         self.policy.init_session()
 
     def is_terminated(self):
-        if self.character == 'sys':
+        if self.character == "sys":
             return None
         return self.policy.is_terminated()
 
     def get_reward(self):
-        if self.character == 'sys':
+        if self.character == "sys":
             return None
         return self.policy.get_reward()
 
     def get_goal(self):
-        if hasattr(self.policy, 'get_goal'):
+        if hasattr(self.policy, "get_goal"):
             return self.policy.get_goal()
         return None

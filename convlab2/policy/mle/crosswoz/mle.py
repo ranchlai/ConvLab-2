@@ -15,30 +15,42 @@ DEFAULT_ARCHIVE_FILE = os.path.join(DEFAULT_DIRECTORY, "mle_policy_crosswoz.zip"
 
 
 class MLE(MLEAbstract):
-
-    def __init__(self,
-                 archive_file=DEFAULT_ARCHIVE_FILE,
-                 model_file='https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/mle_policy_crosswoz.zip'):
+    def __init__(
+        self,
+        archive_file=DEFAULT_ARCHIVE_FILE,
+        model_file="https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/mle_policy_crosswoz.zip",
+    ):
         root_dir = os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+            os.path.dirname(
+                os.path.dirname(
+                    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                )
+            )
+        )
 
-        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json'), 'r') as f:
+        with open(
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json"), "r"
+        ) as f:
             cfg = json.load(f)
 
-        voc_file = os.path.join(root_dir, 'data/crosswoz/sys_da_voc.json')
-        voc_opp_file = os.path.join(root_dir, 'data/crosswoz/usr_da_voc.json')
-        self.vector = CrossWozVector(sys_da_voc_json=voc_file, usr_da_voc_json=voc_opp_file)
+        voc_file = os.path.join(root_dir, "data/crosswoz/sys_da_voc.json")
+        voc_opp_file = os.path.join(root_dir, "data/crosswoz/usr_da_voc.json")
+        self.vector = CrossWozVector(
+            sys_da_voc_json=voc_file, usr_da_voc_json=voc_opp_file
+        )
 
-        self.policy = MultiDiscretePolicy(self.vector.state_dim, cfg['h_dim'], self.vector.sys_da_dim).to(device=DEVICE)
+        self.policy = MultiDiscretePolicy(
+            self.vector.state_dim, cfg["h_dim"], self.vector.sys_da_dim
+        ).to(device=DEVICE)
 
         if not os.path.isfile(archive_file):
             if not model_file:
                 raise Exception("No model for MLE Policy is specified!")
             archive_file = cached_path(model_file)
-        model_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'save')
+        model_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "save")
         if not os.path.exists(model_dir):
             os.mkdir(model_dir)
-        if not os.path.exists(os.path.join(model_dir, 'best_mle.pol.mdl')):
-            archive = zipfile.ZipFile(archive_file, 'r')
+        if not os.path.exists(os.path.join(model_dir, "best_mle.pol.mdl")):
+            archive = zipfile.ZipFile(archive_file, "r")
             archive.extractall(model_dir)
-        self.load_from_pretrained(archive_file, model_file, cfg['load'])
+        self.load_from_pretrained(archive_file, model_file, cfg["load"])

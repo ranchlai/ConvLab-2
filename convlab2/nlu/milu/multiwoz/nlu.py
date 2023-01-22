@@ -20,17 +20,22 @@ from spacy.symbols import ORTH, LEMMA, POS
 
 DEFAULT_CUDA_DEVICE = -1
 DEFAULT_DIRECTORY = "models"
-DEFAULT_ARCHIVE_FILE = os.path.join(DEFAULT_DIRECTORY, "milu_multiwoz_all_context.tar.gz")
+DEFAULT_ARCHIVE_FILE = os.path.join(
+    DEFAULT_DIRECTORY, "milu_multiwoz_all_context.tar.gz"
+)
+
 
 class MILU(NLU):
     """Multi-intent language understanding model."""
 
-    def __init__(self,
-                archive_file=DEFAULT_ARCHIVE_FILE,
-                cuda_device=DEFAULT_CUDA_DEVICE,
-                model_file="https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/new_milu(20200922)_multiwoz_all_context.tar.gz",
-                context_size=3):
-        """ Constructor for NLU class. """
+    def __init__(
+        self,
+        archive_file=DEFAULT_ARCHIVE_FILE,
+        cuda_device=DEFAULT_CUDA_DEVICE,
+        model_file="https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/new_milu(20200922)_multiwoz_all_context.tar.gz",
+        context_size=3,
+    ):
+        """Constructor for NLU class."""
 
         self.context_size = context_size
         cuda_device = 0 if torch.cuda.is_available() else DEFAULT_CUDA_DEVICE
@@ -42,23 +47,25 @@ class MILU(NLU):
 
             archive_file = cached_path(model_file)
 
-        archive = load_archive(archive_file,
-                            cuda_device=cuda_device)
+        archive = load_archive(archive_file, cuda_device=cuda_device)
         self.tokenizer = SpacyWordSplitter(language="en_core_web_sm")
-        _special_case = [{ORTH: u"id", LEMMA: u"id"}]
-        self.tokenizer.spacy.tokenizer.add_special_case(u"id", _special_case)
-        with open(os.path.join(get_root_path(), 'data/multiwoz/db/postcode.json'), 'r') as f:
+        _special_case = [{ORTH: "id", LEMMA: "id"}]
+        self.tokenizer.spacy.tokenizer.add_special_case("id", _special_case)
+        with open(
+            os.path.join(get_root_path(), "data/multiwoz/db/postcode.json"), "r"
+        ) as f:
             token_list = json.load(f)
 
         for token in token_list:
             token = token.strip()
-            self.tokenizer.spacy.tokenizer.add_special_case(token, [{ORTH: token, LEMMA: token, POS: u'NOUN'}])
+            self.tokenizer.spacy.tokenizer.add_special_case(
+                token, [{ORTH: token, LEMMA: token, POS: "NOUN"}]
+            )
 
         dataset_reader_params = archive.config["dataset_reader"]
         self.dataset_reader = DatasetReader.from_params(dataset_reader_params)
         self.model = archive.model
         self.model.eval()
-
 
     def predict(self, utterance, context=list()):
         """
@@ -72,7 +79,13 @@ class MILU(NLU):
             return []
 
         if self.context_size > 0 and len(context) > 0:
-            context_tokens = sum([self.tokenizer.split_words(utterance+" SENT_END") for utterance in context[-self.context_size:]], [])
+            context_tokens = sum(
+                [
+                    self.tokenizer.split_words(utterance + " SENT_END")
+                    for utterance in context[-self.context_size :]
+                ],
+                [],
+            )
         else:
             context_tokens = self.tokenizer.split_words("SENT_END")
         tokens = self.tokenizer.split_words(utterance)
@@ -80,15 +93,17 @@ class MILU(NLU):
         outputs = self.model.forward_on_instance(instance)
 
         tuples = []
-        for domain_intent, svs in outputs['dialog_act'].items():
+        for domain_intent, svs in outputs["dialog_act"].items():
             for slot, value in svs:
-                domain, intent = domain_intent.split('-')
+                domain, intent = domain_intent.split("-")
                 tuples.append([intent, domain, slot, value])
         return tuples
 
 
 if __name__ == "__main__":
-    nlu = MILU(model_file="https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/milu.tar.gz")
+    nlu = MILU(
+        model_file="https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/milu.tar.gz"
+    )
     test_contexts = [
         "SENT_END",
         "SENT_END",
@@ -115,7 +130,7 @@ if __name__ == "__main__":
         "What is the Name of attraction ?",
         "Can I get the name of restaurant?",
         "Can I get the address and phone number of the restaurant?",
-        "do you have a specific area you want to stay in?"
+        "do you have a specific area you want to stay in?",
     ]
     for ctxt, utt in zip(test_contexts, test_utterances):
         print(ctxt)

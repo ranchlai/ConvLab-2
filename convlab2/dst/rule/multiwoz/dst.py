@@ -21,8 +21,13 @@ class RuleDST(DST):
         DST.__init__(self)
         self.state = default_state()
         path = os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
-        path = os.path.join(path, 'data/multiwoz/value_dict.json')
+            os.path.dirname(
+                os.path.dirname(
+                    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                )
+            )
+        )
+        path = os.path.join(path, "data/multiwoz/value_dict.json")
         self.value_dict = json.load(open(path))
 
     def update(self, user_act=None):
@@ -34,38 +39,44 @@ class RuleDST(DST):
         for intent, domain, slot, value in user_act:
             domain = domain.lower()
             intent = intent.lower()
-            if domain in ['unk', 'general', 'booking']:
+            if domain in ["unk", "general", "booking"]:
                 continue
-            if intent == 'inform':
+            if intent == "inform":
                 k = REF_SYS_DA[domain.capitalize()].get(slot, slot)
                 if k is None:
                     continue
                 try:
-                    assert domain in self.state['belief_state']
+                    assert domain in self.state["belief_state"]
                 except:
-                    raise Exception('Error: domain <{}> not in new belief state'.format(domain))
-                domain_dic = self.state['belief_state'][domain]
-                assert 'semi' in domain_dic
-                assert 'book' in domain_dic
-                if k in domain_dic['semi']:
+                    raise Exception(
+                        "Error: domain <{}> not in new belief state".format(domain)
+                    )
+                domain_dic = self.state["belief_state"][domain]
+                assert "semi" in domain_dic
+                assert "book" in domain_dic
+                if k in domain_dic["semi"]:
                     nvalue = normalize_value(self.value_dict, domain, k, value)
-                    self.state['belief_state'][domain]['semi'][k] = nvalue
-                elif k in domain_dic['book']:
-                    self.state['belief_state'][domain]['book'][k] = value
-                elif k.lower() in domain_dic['book']:
-                    self.state['belief_state'][domain]['book'][k.lower()] = value
-                elif k == 'trainID' and domain == 'train':
-                    self.state['belief_state'][domain]['book'][k] = normalize_value(self.value_dict, domain, k, value)
-                elif k != 'none':
+                    self.state["belief_state"][domain]["semi"][k] = nvalue
+                elif k in domain_dic["book"]:
+                    self.state["belief_state"][domain]["book"][k] = value
+                elif k.lower() in domain_dic["book"]:
+                    self.state["belief_state"][domain]["book"][k.lower()] = value
+                elif k == "trainID" and domain == "train":
+                    self.state["belief_state"][domain]["book"][k] = normalize_value(
+                        self.value_dict, domain, k, value
+                    )
+                elif k != "none":
                     # raise Exception('unknown slot name <{}> of domain <{}>'.format(k, domain))
-                    with open('unknown_slot.log', 'a+') as f:
-                        f.write('unknown slot name <{}> of domain <{}>\n'.format(k, domain))
-            elif intent == 'request':
+                    with open("unknown_slot.log", "a+") as f:
+                        f.write(
+                            "unknown slot name <{}> of domain <{}>\n".format(k, domain)
+                        )
+            elif intent == "request":
                 k = REF_SYS_DA[domain.capitalize()].get(slot, slot)
-                if domain not in self.state['request_state']:
-                    self.state['request_state'][domain] = {}
-                if k not in self.state['request_state'][domain]:
-                    self.state['request_state'][domain][k] = 0
+                if domain not in self.state["request_state"]:
+                    self.state["request_state"][domain] = {}
+                if k not in self.state["request_state"][domain]:
+                    self.state["request_state"][domain][k] = 0
         # self.state['user_action'] = user_act  # should be added outside DST module
         return self.state
 
@@ -74,7 +85,7 @@ class RuleDST(DST):
         self.state = default_state()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # from convlab2.dst.rule.multiwoz import RuleDST
 
     dst = RuleDST()
@@ -85,76 +96,113 @@ if __name__ == '__main__':
 
     # For example, the action below has a key "Hotel-Inform", in which "Hotel" is domain and "Inform" is action type.
     # Each list in the value of "Hotel-Inform" is a slot-value pair. "Area" is slot and "east" is value. "Star" is slot and "4" is value.
-    action = [
-        ["Inform", "Hotel", "Area", "east"],
-        ["Inform", "Hotel", "Stars", "4"]
-    ]
+    action = [["Inform", "Hotel", "Area", "east"], ["Inform", "Hotel", "Stars", "4"]]
 
     # method `update` updates the attribute `state` of tracker, and returns it.
     state = dst.update(action)
     assert state == dst.state
-    assert state == {'user_action': [],
-                     'system_action': [],
-                     'belief_state': {'police': {'book': {'booked': []}, 'semi': {}},
-                                      'hotel': {'book': {'booked': [], 'people': '', 'day': '', 'stay': ''},
-                                                'semi': {'name': '',
-                                                         'area': 'east',
-                                                         'parking': '',
-                                                         'pricerange': '',
-                                                         'stars': '4',
-                                                         'internet': '',
-                                                         'type': ''}},
-                                      'attraction': {'book': {'booked': []},
-                                                     'semi': {'type': '', 'name': '', 'area': ''}},
-                                      'restaurant': {'book': {'booked': [], 'people': '', 'day': '', 'time': ''},
-                                                     'semi': {'food': '', 'pricerange': '', 'name': '', 'area': ''}},
-                                      'hospital': {'book': {'booked': []}, 'semi': {'department': ''}},
-                                      'taxi': {'book': {'booked': []},
-                                               'semi': {'leaveAt': '',
-                                                        'destination': '',
-                                                        'departure': '',
-                                                        'arriveBy': ''}},
-                                      'train': {'book': {'booked': [], 'people': ''},
-                                                'semi': {'leaveAt': '',
-                                                         'destination': '',
-                                                         'day': '',
-                                                         'arriveBy': '',
-                                                         'departure': ''}}},
-                     'request_state': {},
-                     'terminated': False,
-                     'history': []}
+    assert state == {
+        "user_action": [],
+        "system_action": [],
+        "belief_state": {
+            "police": {"book": {"booked": []}, "semi": {}},
+            "hotel": {
+                "book": {"booked": [], "people": "", "day": "", "stay": ""},
+                "semi": {
+                    "name": "",
+                    "area": "east",
+                    "parking": "",
+                    "pricerange": "",
+                    "stars": "4",
+                    "internet": "",
+                    "type": "",
+                },
+            },
+            "attraction": {
+                "book": {"booked": []},
+                "semi": {"type": "", "name": "", "area": ""},
+            },
+            "restaurant": {
+                "book": {"booked": [], "people": "", "day": "", "time": ""},
+                "semi": {"food": "", "pricerange": "", "name": "", "area": ""},
+            },
+            "hospital": {"book": {"booked": []}, "semi": {"department": ""}},
+            "taxi": {
+                "book": {"booked": []},
+                "semi": {
+                    "leaveAt": "",
+                    "destination": "",
+                    "departure": "",
+                    "arriveBy": "",
+                },
+            },
+            "train": {
+                "book": {"booked": [], "people": ""},
+                "semi": {
+                    "leaveAt": "",
+                    "destination": "",
+                    "day": "",
+                    "arriveBy": "",
+                    "departure": "",
+                },
+            },
+        },
+        "request_state": {},
+        "terminated": False,
+        "history": [],
+    }
 
     # Please call `init_session` before a new dialog. This initializes the attribute `state` of tracker with a default state, which `convlab2.util.multiwoz.state.default_state` returns. But You needn't call it before the first dialog, because tracker gets a default state in its constructor.
     dst.init_session()
     action = [["Inform", "Train", "Arrive", "19:45"]]
     state = dst.update(action)
-    assert state == {'user_action': [],
-                     'system_action': [],
-                     'belief_state': {'police': {'book': {'booked': []}, 'semi': {}},
-                                      'hotel': {'book': {'booked': [], 'people': '', 'day': '', 'stay': ''},
-                                                'semi': {'name': '',
-                                                         'area': '',
-                                                         'parking': '',
-                                                         'pricerange': '',
-                                                         'stars': '',
-                                                         'internet': '',
-                                                         'type': ''}},
-                                      'attraction': {'book': {'booked': []},
-                                                     'semi': {'type': '', 'name': '', 'area': ''}},
-                                      'restaurant': {'book': {'booked': [], 'people': '', 'day': '', 'time': ''},
-                                                     'semi': {'food': '', 'pricerange': '', 'name': '', 'area': ''}},
-                                      'hospital': {'book': {'booked': []}, 'semi': {'department': ''}},
-                                      'taxi': {'book': {'booked': []},
-                                               'semi': {'leaveAt': '',
-                                                        'destination': '',
-                                                        'departure': '',
-                                                        'arriveBy': ''}},
-                                      'train': {'book': {'booked': [], 'people': ''},
-                                                'semi': {'leaveAt': '',
-                                                         'destination': '',
-                                                         'day': '',
-                                                         'arriveBy': '19:45',
-                                                         'departure': ''}}},
-                     'request_state': {},
-                     'terminated': False,
-                     'history': []}
+    assert state == {
+        "user_action": [],
+        "system_action": [],
+        "belief_state": {
+            "police": {"book": {"booked": []}, "semi": {}},
+            "hotel": {
+                "book": {"booked": [], "people": "", "day": "", "stay": ""},
+                "semi": {
+                    "name": "",
+                    "area": "",
+                    "parking": "",
+                    "pricerange": "",
+                    "stars": "",
+                    "internet": "",
+                    "type": "",
+                },
+            },
+            "attraction": {
+                "book": {"booked": []},
+                "semi": {"type": "", "name": "", "area": ""},
+            },
+            "restaurant": {
+                "book": {"booked": [], "people": "", "day": "", "time": ""},
+                "semi": {"food": "", "pricerange": "", "name": "", "area": ""},
+            },
+            "hospital": {"book": {"booked": []}, "semi": {"department": ""}},
+            "taxi": {
+                "book": {"booked": []},
+                "semi": {
+                    "leaveAt": "",
+                    "destination": "",
+                    "departure": "",
+                    "arriveBy": "",
+                },
+            },
+            "train": {
+                "book": {"booked": [], "people": ""},
+                "semi": {
+                    "leaveAt": "",
+                    "destination": "",
+                    "day": "",
+                    "arriveBy": "19:45",
+                    "departure": "",
+                },
+            },
+        },
+        "request_state": {},
+        "terminated": False,
+        "history": [],
+    }

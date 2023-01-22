@@ -1,6 +1,7 @@
 import torch
 from convlab2.dst.comer.multiwoz import dict
 
+
 class Beam(object):
     def __init__(self, size, n_best=1, cuda=True):
 
@@ -15,8 +16,7 @@ class Beam(object):
         self.prevKs = []
 
         # The outputs at each time-step.
-        self.nextYs = [self.tt.LongTensor(size)
-                       .fill_(dict.EOS)]
+        self.nextYs = [self.tt.LongTensor(size).fill_(dict.EOS)]
         self.nextYs[0][0] = dict.BOS
 
         # Has EOS topped the beam yet.
@@ -29,7 +29,6 @@ class Beam(object):
         # Time and k pair for finished.
         self.finished = []
         self.n_best = n_best
-
 
     def getCurrentState(self):
         "Get the outputs for the current timestep."
@@ -94,7 +93,6 @@ class Beam(object):
             sentStates = e[:, :, idx]
             sentStates.data.copy_(sentStates.data.index_select(1, positions))
 
-
     def sortFinished(self, minimum=None):
         if minimum is not None:
             i = 0
@@ -112,14 +110,13 @@ class Beam(object):
         """
         Walk back to construct the full hypothesis.
         """
-        #hyp, attn = [], []
+        # hyp, attn = [], []
         hyp, attn = [], []
         for j in range(len(self.prevKs[:timestep]) - 1, -1, -1):
-            hyp.append(self.nextYs[j+1][k])
+            hyp.append(self.nextYs[j + 1][k])
             attn.append(self.attn[j][k])
             k = self.prevKs[j][k]
 
         hyp.append(self.nextYs[0][0])
-        #return hyp[::-1], torch.stack(attn[::-1])
+        # return hyp[::-1], torch.stack(attn[::-1])
         return torch.stack(hyp[::-1]).view(-1, 1), torch.stack(attn[::-1])
-
