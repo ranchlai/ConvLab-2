@@ -5,7 +5,8 @@
 
 """
 import uuid
-from deploy.utils import MyLock, ExpireDict
+
+from deploy.utils import ExpireDict, MyLock
 
 
 class SessionCtrl(object):
@@ -37,7 +38,12 @@ class SessionCtrl(object):
 
     def __new_data(self, nlu, dst, policy, nlg):
         return {
-            "model_map": {"nlu": nlu, "dst": dst, "policy": policy, "nlg": nlg},
+            "model_map": {
+                "nlu": nlu,
+                "dst": dst,
+                "policy": policy,
+                "nlg": nlg,
+            },
             "turns": [],
         }
 

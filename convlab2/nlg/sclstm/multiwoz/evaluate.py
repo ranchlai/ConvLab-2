@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Evaluate NLG models on utterances of Multiwoz test dataset
 Metric: dataset level BLEU-4, slot error rate
@@ -10,7 +11,7 @@ import zipfile
 
 import numpy as np
 import torch
-from nltk.translate.bleu_score import corpus_bleu, SmoothingFunction
+from nltk.translate.bleu_score import SmoothingFunction, corpus_bleu
 
 from convlab2.nlg.sclstm.multiwoz import SCLSTM
 
@@ -31,7 +32,12 @@ def get_bleu4(dialog_acts, golden_utts, gen_utts):
                 continue
             else:
                 for s, v in sorted(svs, key=lambda x: x[0]):
-                    if s == "Internet" or s == "Parking" or s == "none" or v == "none":
+                    if (
+                        s == "Internet"
+                        or s == "Parking"
+                        or s == "none"
+                        or v == "none"
+                    ):
                         continue
                     else:
                         v = v.lower()
@@ -72,7 +78,12 @@ def get_err_slot(dialog_acts, gen_slots):
             if "Request" in da or "general" in da:
                 continue
             for s, v in das[da]:
-                if s == "Internet" or s == "Parking" or s == "none" or v == "none":
+                if (
+                    s == "Internet"
+                    or s == "Parking"
+                    or s == "none"
+                    or v == "none"
+                ):
                     continue
                 slot = da.lower() + "-" + s.lower()
                 counter.setdefault(slot, 0)

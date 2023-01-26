@@ -1,21 +1,22 @@
+# -*- coding: utf-8 -*-
 import argparse
-import torch
-import os
-from pprint import pprint
 import copy
 import json
-import shutil, zipfile
+import os
+import shutil
+import zipfile
 from collections import defaultdict
-from convlab2.dst.dst import DST
-from convlab2.util.multiwoz.state import default_state
-from convlab2.dst.comer.multiwoz import models
-from convlab2.dst.comer.multiwoz import dataloader
-from convlab2.dst.comer.multiwoz import utils
+from pprint import pprint
+
+import torch
 from pytorch_pretrained_bert import BertModel, BertTokenizer
+
+from convlab2.dst.comer.multiwoz import dataloader, models, utils
 from convlab2.dst.comer.multiwoz.create_data import normalize
 from convlab2.dst.comer.multiwoz.dataloader import dataset
-
+from convlab2.dst.dst import DST
 from convlab2.util.file_util import cached_path
+from convlab2.util.multiwoz.state import default_state
 
 
 def revert_state(model_output: dict, reversed_vocab: dict):
@@ -68,7 +69,9 @@ class ComerTracker(DST):
             type=str,
             help="restore checkpoint",
         )
-        parser.add_argument("-seed", type=int, default=1234, help="Random seed")
+        parser.add_argument(
+            "-seed", type=int, default=1234, help="Random seed"
+        )
         parser.add_argument(
             "-model", default="seq2seq", type=str, help="Model selection"
         )
@@ -77,10 +80,16 @@ class ComerTracker(DST):
             "-pretrain", action="store_true", help="load pretrain embedding"
         )
         parser.add_argument("-limit", type=int, default=0, help="data limit")
-        parser.add_argument("-log", default="predict", type=str, help="log directory")
+        parser.add_argument(
+            "-log", default="predict", type=str, help="log directory"
+        )
         parser.add_argument("-unk", action="store_true", help="replace unk")
-        parser.add_argument("-memory", action="store_true", help="memory efficiency")
-        parser.add_argument("-beam_size", type=int, default=1, help="beam search size")
+        parser.add_argument(
+            "-memory", action="store_true", help="memory efficiency"
+        )
+        parser.add_argument(
+            "-beam_size", type=int, default=1, help="beam search size"
+        )
 
         self.root_path = os.path.dirname(os.path.abspath(__file__))
         opt = parser.parse_args([])
@@ -99,7 +108,9 @@ class ComerTracker(DST):
             open(os.path.join(self.root_path, "data/mwoz2_dm.dict"))
         )
         self.tokenizer = BertTokenizer.from_pretrained(bert_type)
-        self.vocab = torch.load(os.path.join(self.root_path, "data/save_data.tgt.dict"))
+        self.vocab = torch.load(
+            os.path.join(self.root_path, "data/save_data.tgt.dict")
+        )
         self.reversed_vocab = {i: j for j, i in self.vocab.items()}
 
         pretrain_embed = {}
@@ -137,8 +148,12 @@ class ComerTracker(DST):
     ):
         """Automatically download the pretrained model and necessary data."""
         if (
-            os.path.exists(os.path.join(self.multiwoz_root, "data/mwoz2_dm.dict"))
-            and os.path.exists(os.path.join(self.multiwoz_root, "data/mwoz2_sl.dict"))
+            os.path.exists(
+                os.path.join(self.multiwoz_root, "data/mwoz2_dm.dict")
+            )
+            and os.path.exists(
+                os.path.join(self.multiwoz_root, "data/mwoz2_sl.dict")
+            )
             and os.path.exists(
                 os.path.join(self.multiwoz_root, "data/save_data.tgt.dict")
             )
@@ -162,7 +177,9 @@ class ComerTracker(DST):
             try:
                 assert target_file in files
             except Exception as e:
-                print("allennlp download file error: COMER model download failed.")
+                print(
+                    "allennlp download file error: COMER model download failed."
+                )
                 raise e
             shutil.copyfile(os.path.join(data_dir, target_file), zip_file_path)
         print("Unzipping comer.zip...")
@@ -183,7 +200,9 @@ class ComerTracker(DST):
             )
         new_state = copy.deepcopy(self.state)
 
-        history = copy.deepcopy(new_state["history"])  # [[sys, usr], [sys, usr],...]
+        history = copy.deepcopy(
+            new_state["history"]
+        )  # [[sys, usr], [sys, usr],...]
         history[-1].append(user_act)  # add current usr
         history[0][0] = ""  # first sen sys
         new_state["belief_state"] = self.model_predict(history)
@@ -248,7 +267,9 @@ class ComerTracker(DST):
             tv = [[self.vocab[w] for w in ws] for ws in tWords]
             tgt_vtmp += [tv]
 
-            tpv = [[[self.vocab[w] for w in ws] for ws in wss] for wss in tvWords]
+            tpv = [
+                [[self.vocab[w] for w in ws] for ws in wss] for wss in tvWords
+            ]
             src_vtmp += [tpv]
 
         src1, src2, src3, tgt, srcv, tgtv = (
@@ -328,7 +349,10 @@ def test_update():
         ["sys", "If you'd like something cheap, I recommend the Allenbell"],
     ]
     tracker.state["history"].append(
-        ["user", "Friday and Can you book it for me and get a reference number ?"]
+        [
+            "user",
+            "Friday and Can you book it for me and get a reference number ?",
+        ]
     )
 
     user_utt = "Friday and Can you book it for me and get a reference number ?"

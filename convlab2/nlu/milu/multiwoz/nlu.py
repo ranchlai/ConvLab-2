@@ -1,22 +1,24 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
 """
 """
 
+import json
 import os
 from pprint import pprint
+
 import torch
 from allennlp.common.checks import check_for_gpu
 from allennlp.data import DatasetReader
 from allennlp.data.tokenizers.word_splitter import SpacyWordSplitter
 from allennlp.models.archival import load_archive
+from spacy.symbols import LEMMA, ORTH, POS
 
-from convlab2.util.file_util import cached_path, get_root_path
-from convlab2.nlu.nlu import NLU
 from convlab2.nlu.milu import dataset_reader, model
-import json
-from spacy.symbols import ORTH, LEMMA, POS
+from convlab2.nlu.nlu import NLU
+from convlab2.util.file_util import cached_path, get_root_path
 
 DEFAULT_CUDA_DEVICE = -1
 DEFAULT_DIRECTORY = "models"
@@ -52,7 +54,8 @@ class MILU(NLU):
         _special_case = [{ORTH: "id", LEMMA: "id"}]
         self.tokenizer.spacy.tokenizer.add_special_case("id", _special_case)
         with open(
-            os.path.join(get_root_path(), "data/multiwoz/db/postcode.json"), "r"
+            os.path.join(get_root_path(), "data/multiwoz/db/postcode.json"),
+            "r",
         ) as f:
             token_list = json.load(f)
 

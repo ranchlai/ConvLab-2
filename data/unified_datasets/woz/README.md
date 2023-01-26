@@ -4,7 +4,7 @@
 
 - Annotations: dialogue act, character-level span for non-categorical slots.
 
-Statistics: 
+Statistics:
 
 |       | \# dialogues | \# utterances | avg. turns | avg. tokens | \# domains |
 | ----- | ------------ | ------------- | ---------- | ----------- | ---------- |
@@ -19,12 +19,12 @@ Statistics:
 - make some rule-based fixes on categorical values to make them in `possible value` lists
 - `belief_states` in WOZ dataset contains `request` intents, which are ignored in processing
 - some state annotations are not consistent with dialogue_act annotations. for example in `woz_train_en.json`, first dialog, 2nd turn:
- 
+
     `user: "How about Chinese food?"`
-   
+
     `chinese food` is included in `dialogue_act` annotation as a `inform` intent, but not updated in `belief_state` annotation.
-    
-    
+
+
 
 ## Original data
 

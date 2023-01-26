@@ -2,11 +2,12 @@
 
 # Arranged from pytorch official tutorials
 
+import json
+
 import torch
 import torch.autograd as autograd
 import torch.nn as nn
 import torch.optim as optim
-import json
 
 torch.manual_seed(1)
 
@@ -24,7 +25,9 @@ def argmax(vec):
 def log_sum_exp(vec):
     max_score = vec[0, argmax(vec)]
     max_score_broadcast = max_score.view(1, -1).expand(1, vec.size()[1])
-    return max_score + torch.log(torch.sum(torch.exp(vec - max_score_broadcast)))
+    return max_score + torch.log(
+        torch.sum(torch.exp(vec - max_score_broadcast))
+    )
 
 
 #####################################################################
@@ -32,7 +35,9 @@ def log_sum_exp(vec):
 
 
 class BiLSTM_CRF(nn.Module):
-    def __init__(self, vocab_size, tag_to_ix, embedding_dim, hidden_dim, emb_weights):
+    def __init__(
+        self, vocab_size, tag_to_ix, embedding_dim, hidden_dim, emb_weights
+    ):
         super(BiLSTM_CRF, self).__init__()
         self.embedding_dim = embedding_dim
         self.hidden_dim = hidden_dim
@@ -51,7 +56,9 @@ class BiLSTM_CRF(nn.Module):
 
         # Matrix of transition parameters.  Entry i,j is the score of
         # transitioning *to* i *from* j.
-        self.transitions = nn.Parameter(torch.randn(self.tagset_size, self.tagset_size))
+        self.transitions = nn.Parameter(
+            torch.randn(self.tagset_size, self.tagset_size)
+        )
 
         # These two statements enforce the constraint that we never transfer
         # to the start tag and we never transfer from the stop tag
@@ -81,7 +88,9 @@ class BiLSTM_CRF(nn.Module):
             for next_tag in range(self.tagset_size):
                 # broadcast the emission score: it is the same regardless of
                 # the previous tag
-                emit_score = feat[next_tag].view(1, -1).expand(1, self.tagset_size)
+                emit_score = (
+                    feat[next_tag].view(1, -1).expand(1, self.tagset_size)
+                )
                 # the ith entry of trans_score is the score of transitioning to
                 # next_tag from i
                 trans_score = self.transitions[next_tag].view(1, -1)
@@ -111,7 +120,11 @@ class BiLSTM_CRF(nn.Module):
             [torch.tensor([self.tag_to_ix[START_TAG]], dtype=torch.long), tags]
         )
         for i, feat in enumerate(feats):
-            score = score + self.transitions[tags[i + 1], tags[i]] + feat[tags[i + 1]]
+            score = (
+                score
+                + self.transitions[tags[i + 1], tags[i]]
+                + feat[tags[i + 1]]
+            )
         score = score + self.transitions[self.tag_to_ix[STOP_TAG], tags[-1]]
         return score
 

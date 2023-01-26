@@ -1,24 +1,25 @@
+# -*- coding: utf-8 -*-
+import ast
 import json
-import torch
-import torch.utils.data as data
-import unicodedata
-import string
-import re
-import random
-import time
 import math
+import os
+import pickle
+import random
+import re
+import string
+import time
+import unicodedata
+from collections import Counter, OrderedDict
+from random import shuffle
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from convlab2.dst.trade.multiwoz.utils.config import *
-import ast
-from collections import Counter
-from collections import OrderedDict
+import torch.utils.data as data
 from embeddings import GloveEmbedding, KazumaCharEmbedding
 from tqdm import tqdm
-import os
-import pickle
-from random import shuffle
+
+from convlab2.dst.trade.multiwoz.utils.config import *
 from convlab2.dst.trade.multiwoz.utils.config import MODE, data_version
 
 from .fix_label import *
@@ -73,7 +74,9 @@ class Lang:
 class Dataset(data.Dataset):
     """Custom data.Dataset compatible with data.DataLoader."""
 
-    def __init__(self, data_info, src_word2id, trg_word2id, sequicity, mem_word2id):
+    def __init__(
+        self, data_info, src_word2id, trg_word2id, sequicity, mem_word2id
+    ):
         """Reads source and target sequences from txt files."""
         self.ID = data_info["ID"]
         self.turn_domain = data_info["turn_domain"]
@@ -319,10 +322,15 @@ def read_langs(
             for ti, turn in enumerate(dial_dict["dialogue"]):
                 turn_domain = turn["domain"]
                 turn_id = turn["turn_idx"]
-                turn_uttr = turn["system_transcript"] + " ; " + turn["transcript"]
+                turn_uttr = (
+                    turn["system_transcript"] + " ; " + turn["transcript"]
+                )
                 turn_uttr_strip = turn_uttr.strip()
                 dialog_history += (
-                    turn["system_transcript"] + " ; " + turn["transcript"] + " ; "
+                    turn["system_transcript"]
+                    + " ; "
+                    + turn["transcript"]
+                    + " ; "
                 )
                 source_text = dialog_history.strip()
                 turn_belief_dict = fix_general_label_error(
@@ -333,7 +341,9 @@ def read_langs(
                 slot_temp = SLOTS
                 if dataset == "train" or dataset == "dev":
                     if args["except_domain"] != "":
-                        slot_temp = [k for k in SLOTS if args["except_domain"] not in k]
+                        slot_temp = [
+                            k for k in SLOTS if args["except_domain"] not in k
+                        ]
                         turn_belief_dict = OrderedDict(
                             [
                                 (k, v)
@@ -342,7 +352,9 @@ def read_langs(
                             ]
                         )
                     elif args["only_domain"] != "":
-                        slot_temp = [k for k in SLOTS if args["only_domain"] in k]
+                        slot_temp = [
+                            k for k in SLOTS if args["only_domain"] in k
+                        ]
                         turn_belief_dict = OrderedDict(
                             [
                                 (k, v)
@@ -352,7 +364,9 @@ def read_langs(
                         )
                 else:
                     if args["except_domain"] != "":
-                        slot_temp = [k for k in SLOTS if args["except_domain"] in k]
+                        slot_temp = [
+                            k for k in SLOTS if args["except_domain"] in k
+                        ]
                         turn_belief_dict = OrderedDict(
                             [
                                 (k, v)
@@ -361,7 +375,9 @@ def read_langs(
                             ]
                         )
                     elif args["only_domain"] != "":
-                        slot_temp = [k for k in SLOTS if args["only_domain"] in k]
+                        slot_temp = [
+                            k for k in SLOTS if args["only_domain"] in k
+                        ]
                         turn_belief_dict = OrderedDict(
                             [
                                 (k, v)
@@ -377,7 +393,12 @@ def read_langs(
                 if (args["all_vocab"] or dataset == "train") and training:
                     mem_lang.index_words(turn_belief_dict, "belief")
 
-                class_label, generate_y, slot_mask, gating_label = [], [], [], []
+                class_label, generate_y, slot_mask, gating_label = (
+                    [],
+                    [],
+                    [],
+                    [],
+                )
                 start_ptr_label, end_ptr_label = [], []
                 for slot in slot_temp:
                     if slot in turn_belief_dict.keys():
@@ -419,7 +440,10 @@ def read_langs(
                 break
 
     # add t{} to the lang file
-    if "t{}".format(max_value_len - 1) not in mem_lang.word2index.keys() and training:
+    if (
+        "t{}".format(max_value_len - 1) not in mem_lang.word2index.keys()
+        and training
+    ):
         for time_i in range(max_value_len):
             mem_lang.index_words("t{}".format(time_i), "utter")
 
@@ -506,7 +530,12 @@ def read_langs2(
                 # if (args["all_vocab"] or dataset == "train") and training:
                 #     mem_lang.index_words(turn_belief_dict, 'belief')
 
-                class_label, generate_y, slot_mask, gating_label = [], [], [], []
+                class_label, generate_y, slot_mask, gating_label = (
+                    [],
+                    [],
+                    [],
+                    [],
+                )
                 start_ptr_label, end_ptr_label = [], []
                 # for slot in slot_temp:
                 #     if slot in turn_belief_dict.keys():
@@ -639,7 +668,12 @@ def read_langs3(
                 # if (args["all_vocab"] or dataset=="train") and training:
                 #     mem_lang.index_words(turn_belief_dict, 'belief')
                 #
-                class_label, generate_y, slot_mask, gating_label = [], [], [], []
+                class_label, generate_y, slot_mask, gating_label = (
+                    [],
+                    [],
+                    [],
+                    [],
+                )
                 start_ptr_label, end_ptr_label = [], []
                 for slot in slot_temp:
                     # if slot in turn_belief_dict.keys():
@@ -705,7 +739,11 @@ def get_seq(pairs, lang, mem_lang, batch_size, type, sequicity):
             data_info[k].append(pair[k])
 
     dataset = Dataset(
-        data_info, lang.word2index, lang.word2index, sequicity, mem_lang.word2index
+        data_info,
+        lang.word2index,
+        lang.word2index,
+        sequicity,
+        mem_lang.word2index,
     )
 
     if args["imbalance_sampler"] and type:
@@ -718,7 +756,10 @@ def get_seq(pairs, lang, mem_lang, batch_size, type, sequicity):
         )
     else:
         data_loader = torch.utils.data.DataLoader(
-            dataset=dataset, batch_size=batch_size, shuffle=type, collate_fn=collate_fn
+            dataset=dataset,
+            batch_size=batch_size,
+            shuffle=type,
+            collate_fn=collate_fn,
         )
     return data_loader
 
@@ -741,7 +782,11 @@ def dump_pretrained_emb(word2index, index2word, dump_path):
 
 def get_slot_information_legacy(ontology):
     ontology_domains = dict(
-        [(k, v) for k, v in ontology.items() if k.split("-")[0] in EXPERIMENT_DOMAINS]
+        [
+            (k, v)
+            for k, v in ontology.items()
+            if k.split("-")[0] in EXPERIMENT_DOMAINS
+        ]
     )
     SLOTS = [
         k.replace(" ", "").lower() if ("book" not in k) else k.lower()
@@ -752,7 +797,9 @@ def get_slot_information_legacy(ontology):
 
 def get_slot_information(ontology):
     ontology_domains = [
-        [k, v] for k, v in ontology.items() if k.split("-")[0] in EXPERIMENT_DOMAINS
+        [k, v]
+        for k, v in ontology.items()
+        if k.split("-")[0] in EXPERIMENT_DOMAINS
     ]
     ## turn "attraction-semi-area" to "attraction-area
     for i in range(len(ontology_domains)):
@@ -793,7 +840,12 @@ def prepare_data_seq(training, task="dst", sequicity=0, batch_size=100):
         os.makedirs(folder_name)
     # load domain-slot pairs from ontology
     ontology = json.load(
-        open(os.path.join(model_root, "data/multi-woz/MULTIWOZ2 2/ontology.json"), "r")
+        open(
+            os.path.join(
+                model_root, "data/multi-woz/MULTIWOZ2 2/ontology.json"
+            ),
+            "r",
+        )
     )
     ALL_SLOTS = get_slot_information(ontology)
     gating_dict = {"ptr": 0, "dontcare": 1, "none": 2}
@@ -802,7 +854,9 @@ def prepare_data_seq(training, task="dst", sequicity=0, batch_size=100):
     lang.index_words(ALL_SLOTS, "slot")
     mem_lang.index_words(ALL_SLOTS, "slot")
     lang_name = "lang-all.pkl" if args["all_vocab"] else "lang-train.pkl"
-    mem_lang_name = "mem-lang-all.pkl" if args["all_vocab"] else "mem-lang-train.pkl"
+    mem_lang_name = (
+        "mem-lang-all.pkl" if args["all_vocab"] else "mem-lang-train.pkl"
+    )
 
     if training:
         # if True:
@@ -816,10 +870,19 @@ def prepare_data_seq(training, task="dst", sequicity=0, batch_size=100):
             sequicity,
             training,
         )
-        train = get_seq(pair_train, lang, mem_lang, batch_size, True, sequicity)
+        train = get_seq(
+            pair_train, lang, mem_lang, batch_size, True, sequicity
+        )
         nb_train_vocab = lang.n_words
         pair_dev, dev_max_len, slot_dev = read_langs(
-            file_dev, gating_dict, ALL_SLOTS, "dev", lang, mem_lang, sequicity, training
+            file_dev,
+            gating_dict,
+            ALL_SLOTS,
+            "dev",
+            lang,
+            mem_lang,
+            sequicity,
+            training,
         )
         dev = get_seq(pair_dev, lang, mem_lang, eval_batch, False, sequicity)
         pair_test, test_max_len, slot_test = read_langs(
@@ -849,16 +912,31 @@ def prepare_data_seq(training, task="dst", sequicity=0, batch_size=100):
                 pickle.dump(mem_lang, handle)
         emb_dump_path = "data/emb{}.json".format(len(lang.index2word))
         if not os.path.exists(emb_dump_path) and args["load_embedding"]:
-            dump_pretrained_emb(lang.word2index, lang.index2word, emb_dump_path)
+            dump_pretrained_emb(
+                lang.word2index, lang.index2word, emb_dump_path
+            )
     else:
         with open(folder_name + lang_name, "rb") as handle:
             lang = pickle.load(handle)
         with open(folder_name + mem_lang_name, "rb") as handle:
             mem_lang = pickle.load(handle)
 
-        pair_train, train_max_len, slot_train, train, nb_train_vocab = [], 0, {}, [], 0
+        pair_train, train_max_len, slot_train, train, nb_train_vocab = (
+            [],
+            0,
+            {},
+            [],
+            0,
+        )
         pair_dev, dev_max_len, slot_dev = read_langs(
-            file_dev, gating_dict, ALL_SLOTS, "dev", lang, mem_lang, sequicity, training
+            file_dev,
+            gating_dict,
+            ALL_SLOTS,
+            "dev",
+            lang,
+            mem_lang,
+            sequicity,
+            training,
         )
         dev = get_seq(pair_dev, lang, mem_lang, eval_batch, False, sequicity)
         pair_test, test_max_len, slot_test = read_langs(
@@ -885,7 +963,9 @@ def prepare_data_seq(training, task="dst", sequicity=0, batch_size=100):
             sequicity,
             training,
         )
-        test_4d = get_seq(pair_test_4d, lang, mem_lang, eval_batch, False, sequicity)
+        test_4d = get_seq(
+            pair_test_4d, lang, mem_lang, eval_batch, False, sequicity
+        )
 
     max_word = max(train_max_len, dev_max_len, test_max_len) + 1
 
@@ -905,14 +985,32 @@ def prepare_data_seq(training, task="dst", sequicity=0, batch_size=100):
         )
     )
     print(SLOTS_LIST[2])
-    print("[Test Set Slots]: Number is {} in total".format(str(len(SLOTS_LIST[3]))))
+    print(
+        "[Test Set Slots]: Number is {} in total".format(
+            str(len(SLOTS_LIST[3]))
+        )
+    )
     print(SLOTS_LIST[3])
     LANG = [lang, mem_lang]
-    return train, dev, test, test_4d, LANG, SLOTS_LIST, gating_dict, nb_train_vocab
+    return (
+        train,
+        dev,
+        test,
+        test_4d,
+        LANG,
+        SLOTS_LIST,
+        gating_dict,
+        nb_train_vocab,
+    )
 
 
 def prepare_data_seq2(
-    training, task="dst", sequicity=0, batch_size=100, source_text="", curr_utterance=""
+    training,
+    task="dst",
+    sequicity=0,
+    batch_size=100,
+    source_text="",
+    curr_utterance="",
 ):
     training = False
     eval_batch = args["eval_batch"] if args["eval_batch"] else batch_size
@@ -948,7 +1046,9 @@ def prepare_data_seq2(
     lang.index_words(ALL_SLOTS, "slot")
     mem_lang.index_words(ALL_SLOTS, "slot")
     lang_name = "lang-all.pkl" if args["all_vocab"] else "lang-train.pkl"
-    mem_lang_name = "mem-lang-all.pkl" if args["all_vocab"] else "mem-lang-train.pkl"
+    mem_lang_name = (
+        "mem-lang-all.pkl" if args["all_vocab"] else "mem-lang-train.pkl"
+    )
 
     if not training:
         with open(folder_name + lang_name, "rb") as handle:
@@ -956,7 +1056,13 @@ def prepare_data_seq2(
         with open(folder_name + mem_lang_name, "rb") as handle:
             mem_lang = pickle.load(handle)
 
-        pair_train, train_max_len, slot_train, train, nb_train_vocab = [], 0, {}, [], 0
+        pair_train, train_max_len, slot_train, train, nb_train_vocab = (
+            [],
+            0,
+            {},
+            [],
+            0,
+        )
         # pair_dev, dev_max_len, slot_dev = read_langs(file_dev, gating_dict, ALL_SLOTS, "dev", lang, mem_lang, sequicity, training)
         # dev = get_seq(pair_dev, lang, mem_lang, eval_batch, False, sequicity)
         utterance = curr_utterance
@@ -988,7 +1094,9 @@ def prepare_data_seq2(
             sequicity,
             training,
         )
-        test_4d = get_seq(pair_test_4d, lang, mem_lang, eval_batch, False, sequicity)
+        test_4d = get_seq(
+            pair_test_4d, lang, mem_lang, eval_batch, False, sequicity
+        )
 
     max_word = test_max_len + 1
     #
@@ -1005,7 +1113,16 @@ def prepare_data_seq2(
     # print("[Test Set Slots]: Number is {} in total".format(str(len(SLOTS_LIST[3]))))
     # print(SLOTS_LIST[3])
     LANG = [lang, mem_lang]
-    return None, None, test, test_4d, LANG, SLOTS_LIST, gating_dict, nb_train_vocab
+    return (
+        None,
+        None,
+        test,
+        test_4d,
+        LANG,
+        SLOTS_LIST,
+        gating_dict,
+        nb_train_vocab,
+    )
 
 
 def prepare_data_seq_cn(training, task="dst", sequicity=0, batch_size=100):
@@ -1052,7 +1169,9 @@ def prepare_data_seq_cn(training, task="dst", sequicity=0, batch_size=100):
     lang.index_words(ALL_SLOTS, "slot")
     mem_lang.index_words(ALL_SLOTS, "slot")
     lang_name = "lang-all.pkl" if args["all_vocab"] else "lang-train.pkl"
-    mem_lang_name = "mem-lang-all.pkl" if args["all_vocab"] else "mem-lang-train.pkl"
+    mem_lang_name = (
+        "mem-lang-all.pkl" if args["all_vocab"] else "mem-lang-train.pkl"
+    )
 
     if training:
         pair_train, train_max_len, slot_train = read_langs(
@@ -1065,10 +1184,19 @@ def prepare_data_seq_cn(training, task="dst", sequicity=0, batch_size=100):
             sequicity,
             training,
         )
-        train = get_seq(pair_train, lang, mem_lang, batch_size, True, sequicity)
+        train = get_seq(
+            pair_train, lang, mem_lang, batch_size, True, sequicity
+        )
         nb_train_vocab = lang.n_words
         pair_dev, dev_max_len, slot_dev = read_langs(
-            file_dev, gating_dict, ALL_SLOTS, "dev", lang, mem_lang, sequicity, training
+            file_dev,
+            gating_dict,
+            ALL_SLOTS,
+            "dev",
+            lang,
+            mem_lang,
+            sequicity,
+            training,
         )
         dev = get_seq(pair_dev, lang, mem_lang, eval_batch, False, sequicity)
         pair_test, test_max_len, slot_test = read_langs(
@@ -1107,9 +1235,22 @@ def prepare_data_seq_cn(training, task="dst", sequicity=0, batch_size=100):
         with open(folder_name + mem_lang_name, "rb") as handle:
             mem_lang = pickle.load(handle)
 
-        pair_train, train_max_len, slot_train, train, nb_train_vocab = [], 0, {}, [], 0
+        pair_train, train_max_len, slot_train, train, nb_train_vocab = (
+            [],
+            0,
+            {},
+            [],
+            0,
+        )
         pair_dev, dev_max_len, slot_dev = read_langs(
-            file_dev, gating_dict, ALL_SLOTS, "dev", lang, mem_lang, sequicity, training
+            file_dev,
+            gating_dict,
+            ALL_SLOTS,
+            "dev",
+            lang,
+            mem_lang,
+            sequicity,
+            training,
         )
         dev = get_seq(pair_dev, lang, mem_lang, eval_batch, False, sequicity)
         pair_test, test_max_len, slot_test = read_langs(
@@ -1136,7 +1277,9 @@ def prepare_data_seq_cn(training, task="dst", sequicity=0, batch_size=100):
             sequicity,
             training,
         )
-        test_4d = get_seq(pair_test_4d, lang, mem_lang, eval_batch, False, sequicity)
+        test_4d = get_seq(
+            pair_test_4d, lang, mem_lang, eval_batch, False, sequicity
+        )
 
     max_word = max(train_max_len, dev_max_len, test_max_len) + 1
 
@@ -1156,14 +1299,32 @@ def prepare_data_seq_cn(training, task="dst", sequicity=0, batch_size=100):
         )
     )
     print(SLOTS_LIST[2])
-    print("[Test Set Slots]: Number is {} in total".format(str(len(SLOTS_LIST[3]))))
+    print(
+        "[Test Set Slots]: Number is {} in total".format(
+            str(len(SLOTS_LIST[3]))
+        )
+    )
     print(SLOTS_LIST[3])
     LANG = [lang, mem_lang]
-    return train, dev, test, test_4d, LANG, SLOTS_LIST, gating_dict, nb_train_vocab
+    return (
+        train,
+        dev,
+        test,
+        test_4d,
+        LANG,
+        SLOTS_LIST,
+        gating_dict,
+        nb_train_vocab,
+    )
 
 
 def prepare_data_seq_cn2(
-    training, task="dst", sequicity=0, batch_size=100, source_text="", curr_utterance=""
+    training,
+    task="dst",
+    sequicity=0,
+    batch_size=100,
+    source_text="",
+    curr_utterance="",
 ):
     training = False
     eval_batch = args["eval_batch"] if args["eval_batch"] else batch_size
@@ -1209,7 +1370,9 @@ def prepare_data_seq_cn2(
     lang.index_words(ALL_SLOTS, "slot")
     mem_lang.index_words(ALL_SLOTS, "slot")
     lang_name = "lang-all.pkl" if args["all_vocab"] else "lang-train.pkl"
-    mem_lang_name = "mem-lang-all.pkl" if args["all_vocab"] else "mem-lang-train.pkl"
+    mem_lang_name = (
+        "mem-lang-all.pkl" if args["all_vocab"] else "mem-lang-train.pkl"
+    )
 
     if not training:
         with open(folder_name + lang_name, "rb") as handle:
@@ -1217,7 +1380,13 @@ def prepare_data_seq_cn2(
         with open(folder_name + mem_lang_name, "rb") as handle:
             mem_lang = pickle.load(handle)
 
-        pair_train, train_max_len, slot_train, train, nb_train_vocab = [], 0, {}, [], 0
+        pair_train, train_max_len, slot_train, train, nb_train_vocab = (
+            [],
+            0,
+            {},
+            [],
+            0,
+        )
         # pair_dev, dev_max_len, slot_dev = read_langs(file_dev, gating_dict, ALL_SLOTS, "dev", lang, mem_lang, sequicity, training)
         # dev   = get_seq(pair_dev, lang, mem_lang, eval_batch, False, sequicity)
         utterance = curr_utterance
@@ -1248,7 +1417,9 @@ def prepare_data_seq_cn2(
             sequicity,
             training,
         )
-        test_4d = get_seq(pair_test_4d, lang, mem_lang, eval_batch, False, sequicity)
+        test_4d = get_seq(
+            pair_test_4d, lang, mem_lang, eval_batch, False, sequicity
+        )
 
     max_word = max(test_max_len, -1) + 1
 
@@ -1262,10 +1433,23 @@ def prepare_data_seq_cn2(
     # print("USE_CUDA={}".format(USE_CUDA))
 
     SLOTS_LIST = [ALL_SLOTS, [], [], slot_test]
-    print("[Test Set Slots]: Number is {} in total".format(str(len(SLOTS_LIST[3]))))
+    print(
+        "[Test Set Slots]: Number is {} in total".format(
+            str(len(SLOTS_LIST[3]))
+        )
+    )
     print(SLOTS_LIST[3])
     LANG = [lang, mem_lang]
-    return None, None, test, test_4d, LANG, SLOTS_LIST, gating_dict, nb_train_vocab
+    return (
+        None,
+        None,
+        test,
+        test_4d,
+        LANG,
+        SLOTS_LIST,
+        gating_dict,
+        nb_train_vocab,
+    )
 
 
 class ImbalancedDatasetSampler(torch.utils.data.sampler.Sampler):
@@ -1279,11 +1463,15 @@ class ImbalancedDatasetSampler(torch.utils.data.sampler.Sampler):
 
         # if indices is not provided,
         # all elements in the dataset will be considered
-        self.indices = list(range(len(dataset))) if indices is None else indices
+        self.indices = (
+            list(range(len(dataset))) if indices is None else indices
+        )
 
         # if num_samples is not provided,
         # draw `len(indices)` samples in each iteration
-        self.num_samples = len(self.indices) if num_samples is None else num_samples
+        self.num_samples = (
+            len(self.indices) if num_samples is None else num_samples
+        )
 
         # distribution of classes in the dataset
         label_to_count = {}
@@ -1296,7 +1484,8 @@ class ImbalancedDatasetSampler(torch.utils.data.sampler.Sampler):
 
         # weight for each sample
         weights = [
-            1.0 / label_to_count[self._get_label(dataset, idx)] for idx in self.indices
+            1.0 / label_to_count[self._get_label(dataset, idx)]
+            for idx in self.indices
         ]
         self.weights = torch.DoubleTensor(weights)
 
@@ -1306,7 +1495,9 @@ class ImbalancedDatasetSampler(torch.utils.data.sampler.Sampler):
     def __iter__(self):
         return (
             self.indices[i]
-            for i in torch.multinomial(self.weights, self.num_samples, replacement=True)
+            for i in torch.multinomial(
+                self.weights, self.num_samples, replacement=True
+            )
         )
 
     def __len__(self):

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import locale
 
 NUMBER_CONSTANT = {
@@ -32,7 +33,13 @@ IN_HUNDRED_CONSTANT = {
     8: "eighty",
     9: "ninety",
 }
-BASE_CONSTANT = {0: " ", 1: "hundred", 2: "thousand", 3: "million", 4: "billion"}
+BASE_CONSTANT = {
+    0: " ",
+    1: "hundred",
+    2: "thousand",
+    3: "million",
+    4: "billion",
+}
 
 # supported number range is 1-n billion;
 def translateNumberToEnglish(number):
@@ -97,7 +104,11 @@ def getUnderThreeNumberString(number):
 def translateTimeToEnglish(t):
     t = t.split(":")
     if t[1] != "00":
-        return translateNumberToEnglish(t[0]) + " " + translateNumberToEnglish(t[1])
+        return (
+            translateNumberToEnglish(t[0])
+            + " "
+            + translateNumberToEnglish(t[1])
+        )
     else:
         return translateNumberToEnglish(t[0]) + " " + "o'clock"
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# coding: utf-8
+# -*- coding: utf-8 -*-
 from __future__ import division, print_function, unicode_literals
 
 import argparse
@@ -11,9 +11,9 @@ import time
 import numpy as np
 import torch
 
-from convlab2.policy.mdrg.multiwoz.utils import util
 from convlab2.policy.mdrg.multiwoz.evaluator import evaluateModel
 from convlab2.policy.mdrg.multiwoz.model import Model
+from convlab2.policy.mdrg.multiwoz.utils import util
 
 parser = argparse.ArgumentParser(description="S2S")
 parser.add_argument(
@@ -32,7 +32,10 @@ parser.add_argument(
     "--no_models", type=int, default=20, help="how many models to evaluate"
 )
 parser.add_argument(
-    "--original", type=str, default="data/multi-woz/model/model/", help="Original path."
+    "--original",
+    type=str,
+    default="data/multi-woz/model/model/",
+    help="Original path.",
 )
 
 parser.add_argument("--dropout", type=float, default=0.0)
@@ -81,7 +84,9 @@ device = torch.device("cuda" if args.cuda else "cpu")
 
 
 def load_config(args):
-    config = util.unicode_to_utf8(json.load(open("%s.json" % args.model_path, "rb")))
+    config = util.unicode_to_utf8(
+        json.load(open("%s.json" % args.model_path, "rb"))
+    )
     for key, value in args.__args.items():
         try:
             config[key] = value.value
@@ -158,14 +163,28 @@ def decode(num=1):
             target_tensor = []
             bs_tensor = []
             db_tensor = []
-            input_tensor, target_tensor, bs_tensor, db_tensor = util.loadDialogue(
-                model, val_file, input_tensor, target_tensor, bs_tensor, db_tensor
+            (
+                input_tensor,
+                target_tensor,
+                bs_tensor,
+                db_tensor,
+            ) = util.loadDialogue(
+                model,
+                val_file,
+                input_tensor,
+                target_tensor,
+                bs_tensor,
+                db_tensor,
             )
             # create an empty matrix with padding tokens
             input_tensor, input_lengths = util.padSequence(input_tensor)
             target_tensor, target_lengths = util.padSequence(target_tensor)
-            bs_tensor = torch.tensor(bs_tensor, dtype=torch.float, device=device)
-            db_tensor = torch.tensor(db_tensor, dtype=torch.float, device=device)
+            bs_tensor = torch.tensor(
+                bs_tensor, dtype=torch.float, device=device
+            )
+            db_tensor = torch.tensor(
+                db_tensor, dtype=torch.float, device=device
+            )
 
             output_words, loss_sentence = model.predict(
                 input_tensor,
@@ -193,14 +212,28 @@ def decode(num=1):
             target_tensor = []
             bs_tensor = []
             db_tensor = []
-            input_tensor, target_tensor, bs_tensor, db_tensor = util.loadDialogue(
-                model, test_file, input_tensor, target_tensor, bs_tensor, db_tensor
+            (
+                input_tensor,
+                target_tensor,
+                bs_tensor,
+                db_tensor,
+            ) = util.loadDialogue(
+                model,
+                test_file,
+                input_tensor,
+                target_tensor,
+                bs_tensor,
+                db_tensor,
             )
             # create an empty matrix with padding tokens
             input_tensor, input_lengths = util.padSequence(input_tensor)
             target_tensor, target_lengths = util.padSequence(target_tensor)
-            bs_tensor = torch.tensor(bs_tensor, dtype=torch.float, device=device)
-            db_tensor = torch.tensor(db_tensor, dtype=torch.float, device=device)
+            bs_tensor = torch.tensor(
+                bs_tensor, dtype=torch.float, device=device
+            )
+            db_tensor = torch.tensor(
+                db_tensor, dtype=torch.float, device=device
+            )
 
             output_words, loss_sentence = model.predict(
                 input_tensor,

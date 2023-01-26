@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
@@ -9,7 +10,7 @@ and report any metrics calculated by the model.
 import argparse
 import json
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
 
 from allennlp.common import Params
 from allennlp.common.util import prepare_environment
@@ -31,13 +32,17 @@ argparser.add_argument(
 )
 
 argparser.add_argument(
-    "input_file", type=str, help="path to the file containing the evaluation data"
+    "input_file",
+    type=str,
+    help="path to the file containing the evaluation data",
 )
 
 argparser.add_argument("--output-file", type=str, help="path to output file")
 
 argparser.add_argument(
-    "--weights-file", type=str, help="a path that overrides which weights file to use"
+    "--weights-file",
+    type=str,
+    help="a path that overrides which weights file to use",
 )
 
 cuda_device = argparser.add_mutually_exclusive_group(required=False)
@@ -101,11 +106,17 @@ def evaluate_from_args(args: argparse.Namespace) -> Dict[str, Any]:
 
     # Try to use the validation dataset reader if there is one - otherwise fall back
     # to the default dataset_reader used for both training and validation.
-    validation_dataset_reader_params = config.pop("validation_dataset_reader", None)
+    validation_dataset_reader_params = config.pop(
+        "validation_dataset_reader", None
+    )
     if validation_dataset_reader_params is not None:
-        dataset_reader = DatasetReader.from_params(validation_dataset_reader_params)
+        dataset_reader = DatasetReader.from_params(
+            validation_dataset_reader_params
+        )
     else:
-        dataset_reader = DatasetReader.from_params(config.pop("dataset_reader"))
+        dataset_reader = DatasetReader.from_params(
+            config.pop("dataset_reader")
+        )
     evaluation_data_path = args.input_file
     logger.info("Reading evaluation data from %s", evaluation_data_path)
     instances = dataset_reader.read(evaluation_data_path)

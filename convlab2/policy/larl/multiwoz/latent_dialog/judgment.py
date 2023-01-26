@@ -1,9 +1,17 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 import torch as th
 import torch.nn.functional as F
 from torch.autograd import Variable
+
 from convlab2.policy.larl.multiwoz.latent_dialog import domain
-from convlab2.policy.larl.multiwoz.latent_dialog.corpora import USR, SYS, BOD, EOS, SEL
+from convlab2.policy.larl.multiwoz.latent_dialog.corpora import (
+    BOD,
+    EOS,
+    SEL,
+    SYS,
+    USR,
+)
 
 
 class Judger(object):
@@ -71,7 +79,9 @@ class Judger(object):
             th.cat(choices_logits, 1), 1, keepdim=False
         )  # (option_amount, )
         # subtract the max to softmax more stable
-        choice_logit = choice_logit.sub(choice_logit.max().item())  # (option_amount, )
+        choice_logit = choice_logit.sub(
+            choice_logit.max().item()
+        )  # (option_amount, )
         prob = F.softmax(choice_logit, dim=0)  # (option_amount, )
         p_test, idx = prob.max(0, keepdim=True)  # idx: (1, )
 

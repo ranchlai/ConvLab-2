@@ -3,25 +3,30 @@
 Created on Sun Jul 14 16:14:07 2019
 @author: truthless
 """
-import sys, os
+import os
+import sys
 
 sys.path.append(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
 )
+import logging
+from argparse import ArgumentParser
+
 import numpy as np
 import torch
-import logging
 from torch import multiprocessing as mp
+
 from convlab2.dialog_agent.agent import PipelineAgent
 from convlab2.dialog_agent.env import Environment
-from convlab2.nlu.svm.multiwoz import SVMNLU
 from convlab2.dst.rule.multiwoz import RuleDST
-from convlab2.policy.rule.multiwoz import RulePolicy
+from convlab2.evaluator.multiwoz_eval import MultiWozEvaluator
+from convlab2.nlg.template.multiwoz import TemplateNLG
+from convlab2.nlu.svm.multiwoz import SVMNLU
 from convlab2.policy.dqn import DQN
 from convlab2.policy.rlmodule import Memory, Transition
-from convlab2.nlg.template.multiwoz import TemplateNLG
-from convlab2.evaluator.multiwoz_eval import MultiWozEvaluator
-from argparse import ArgumentParser
+from convlab2.policy.rule.multiwoz import RulePolicy
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -200,7 +205,9 @@ def sample(env, policy, batchsz, process_num, warm_up=False):
     for i in range(process_num):
         process_args = (i, queue, evt, env, policy, process_batchsz)
         if warm_up:
-            processes.append(mp.Process(target=warmupsampler, args=process_args))
+            processes.append(
+                mp.Process(target=warmupsampler, args=process_args)
+            )
         else:
             processes.append(mp.Process(target=sampler, args=process_args))
     for p in processes:
@@ -242,7 +249,10 @@ if __name__ == "__main__":
         "--load_path", type=str, default="", help="path of model to load"
     )
     parser.add_argument(
-        "--batchsz", type=int, default=100, help="batch size of trajactory sampling"
+        "--batchsz",
+        type=int,
+        default=100,
+        help="batch size of trajactory sampling",
     )
     parser.add_argument(
         "--epoch", type=int, default=200, help="number of epochs to train"

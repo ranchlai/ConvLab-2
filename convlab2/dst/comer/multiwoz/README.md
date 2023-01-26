@@ -16,7 +16,7 @@ Existing approaches to dialogue state tracking rely on pre-defined ontologies co
 
 ## Create Data
 ```
-python3 create_data.py 
+python3 create_data.py
 ```
 ***************************************************************
 
@@ -24,7 +24,7 @@ python3 create_data.py
 ## Preprocessing
 ```
 python3 convert_mw.py
-python3 preprocess_mw.py 
+python3 preprocess_mw.py
 python3 make_emb.py
 ```
 
@@ -39,7 +39,7 @@ bash run.sh
 
 ## Evaluation
 ```
-python3 predict.py 
+python3 predict.py
 ```
 
 *******************************************************************

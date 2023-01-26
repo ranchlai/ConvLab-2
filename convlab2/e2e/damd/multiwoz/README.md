@@ -14,4 +14,3 @@ We implement the inference for deployment here. Please refer to [github](https:/
   year={2020}
 }
    ```
-

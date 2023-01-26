@@ -1,23 +1,28 @@
 # -*- coding: utf-8 -*-
-import torch
-from torch import optim
-from torch import nn
-import numpy as np
+import copy
+import json
 import logging
 import os
-import json
-import copy
+import sys
+import zipfile
+
+import numpy as np
+import torch
+from torch import nn, optim
+
 from convlab2.policy.policy import Policy
 from convlab2.policy.rlmodule import EpsilonGreedyPolicy, MemoryReplay
-from convlab2.util.train_util import init_logging_handler
+from convlab2.policy.rule.multiwoz.rule_based_multiwoz_bot import (
+    RuleBasedMultiwozBot,
+)
 from convlab2.policy.vector.vector_multiwoz import MultiWozVector
-from convlab2.policy.rule.multiwoz.rule_based_multiwoz_bot import RuleBasedMultiwozBot
 from convlab2.util.file_util import cached_path
-import zipfile
-import sys
+from convlab2.util.train_util import init_logging_handler
 
 root_dir = os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
 )
 sys.path.append(root_dir)
 
@@ -28,7 +33,10 @@ class DQN(Policy):
     def __init__(self, is_train=False, dataset="Multiwoz"):
 
         with open(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json"), "r"
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "config.json"
+            ),
+            "r",
         ) as f:
             cfg = json.load(f)
         self.save_dir = os.path.join(
@@ -44,13 +52,17 @@ class DQN(Policy):
         self.is_train = is_train
         if is_train:
             init_logging_handler(
-                os.path.join(os.path.dirname(os.path.abspath(__file__)), cfg["log_dir"])
+                os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)), cfg["log_dir"]
+                )
             )
 
         # construct multiwoz vector
         if dataset == "Multiwoz":
             voc_file = os.path.join(root_dir, "data/multiwoz/sys_da_voc.txt")
-            voc_opp_file = os.path.join(root_dir, "data/multiwoz/usr_da_voc.txt")
+            voc_opp_file = os.path.join(
+                root_dir, "data/multiwoz/usr_da_voc.txt"
+            )
             self.vector = MultiWozVector(
                 voc_file,
                 voc_opp_file,
@@ -94,7 +106,9 @@ class DQN(Policy):
             state["system_action"] = action
         else:
             s_vec = torch.Tensor(self.vector.state_vectorize(state))
-            a = self.net.select_action(s_vec.to(device=DEVICE), is_train=self.is_train)
+            a = self.net.select_action(
+                s_vec.to(device=DEVICE), is_train=self.is_train
+            )
             action = self.vector.action_devectorize(a.numpy())
             state["system_action"] = action
         return action
@@ -132,7 +146,9 @@ class DQN(Policy):
             online_next_q_preds = self.online_net(next_s)
             # Use eval_net to calculate next_q_preds for actions chosen by online_net
             next_q_preds = self.eval_net(next_s)
-        act_q_preds = q_preds.gather(-1, a.argmax(-1).long().unsqueeze(-1)).squeeze(-1)
+        act_q_preds = q_preds.gather(
+            -1, a.argmax(-1).long().unsqueeze(-1)
+        ).squeeze(-1)
         online_actions = online_next_q_preds.argmax(dim=-1, keepdim=True)
         max_next_q_preds = next_q_preds.gather(-1, online_actions).squeeze(-1)
         max_q_targets = r + self.gamma * mask * max_next_q_preds
@@ -167,7 +183,9 @@ class DQN(Policy):
             total_loss += round_loss
         total_loss /= self.training_batch_iter * self.training_iter
         logging.debug(
-            "<<dialog policy dqn>> epoch {}, total_loss {}".format(epoch, total_loss)
+            "<<dialog policy dqn>> epoch {}, total_loss {}".format(
+                epoch, total_loss
+            )
         )
 
         # update the epsilon value
@@ -183,26 +201,36 @@ class DQN(Policy):
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-        torch.save(self.net.state_dict(), directory + "/" + str(epoch) + "_dqn.pol.mdl")
+        torch.save(
+            self.net.state_dict(),
+            directory + "/" + str(epoch) + "_dqn.pol.mdl",
+        )
 
-        logging.info("<<dialog policy>> epoch {}: saved network to mdl".format(epoch))
+        logging.info(
+            "<<dialog policy>> epoch {}: saved network to mdl".format(epoch)
+        )
 
     def load(self, filename):
         dqn_mdl_candidates = [
             filename + "_dqn.pol.mdl",
             os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), filename + "_dqn.pol.mdl"
+                os.path.dirname(os.path.abspath(__file__)),
+                filename + "_dqn.pol.mdl",
             ),
         ]
 
         for dqn_mdl in dqn_mdl_candidates:
             if os.path.exists(dqn_mdl):
-                self.net.load_state_dict(torch.load(dqn_mdl, map_location=DEVICE))
+                self.net.load_state_dict(
+                    torch.load(dqn_mdl, map_location=DEVICE)
+                )
                 self.target_net.load_state_dict(
                     torch.load(dqn_mdl, map_location=DEVICE)
                 )
                 logging.info(
-                    "<<dialog policy>> loaded checkpoint from file: {}".format(dqn_mdl)
+                    "<<dialog policy>> loaded checkpoint from file: {}".format(
+                        dqn_mdl
+                    )
                 )
                 break
 
@@ -215,7 +243,10 @@ class DQN(Policy):
         dataset="Multiwoz",
     ):
         with open(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json"), "r"
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "config.json"
+            ),
+            "r",
         ) as f:
             cfg = json.load(f)
         model = cls(is_train=is_train, dataset=dataset)

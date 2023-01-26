@@ -1,6 +1,7 @@
-from convlab2.policy.larl.multiwoz.latent_dialog.metric import MetricsContainer
-from convlab2.policy.larl.multiwoz.latent_dialog.corpora import EOD, EOS
+# -*- coding: utf-8 -*-
 from convlab2.policy.larl.multiwoz.latent_dialog import evaluators
+from convlab2.policy.larl.multiwoz.latent_dialog.corpora import EOD, EOS
+from convlab2.policy.larl.multiwoz.latent_dialog.metric import MetricsContainer
 
 
 class Dialog(object):
@@ -42,7 +43,9 @@ class Dialog(object):
         return success_r + match_r
 
     def show_metrics(self):
-        return " ".join(["%s=%s" % (k, v) for k, v in self.metrics.dict().items()])
+        return " ".join(
+            ["%s=%s" % (k, v) for k, v in self.metrics.dict().items()]
+        )
 
     def run(self, g_key, goal):
         """Runs one instance of the dialogue."""
@@ -64,8 +67,12 @@ class Dialog(object):
         while True:
             nturn += 1
             # produce an utterance
-            out_words = writer.write()  # out: list of word, str, len = max_words
-            print("\t{} out_words = {}".format(writer.name, " ".join(out_words)))
+            out_words = (
+                writer.write()
+            )  # out: list of word, str, len = max_words
+            print(
+                "\t{} out_words = {}".format(writer.name, " ".join(out_words))
+            )
 
             self.metrics.record("sent_len", len(out_words))
             # self.metrics.record('%s_unique' % writer.name, out_words)
@@ -78,7 +85,10 @@ class Dialog(object):
             if self._is_eod(out_words):
                 break
 
-            if self.args.max_nego_turn > 0 and nturn >= self.args.max_nego_turn:
+            if (
+                self.args.max_nego_turn > 0
+                and nturn >= self.args.max_nego_turn
+            ):
                 # return conv, 0
                 break
 
@@ -115,7 +125,9 @@ class DialogEval(Dialog):
         while True:
             nturn += 1
             # produce an utterance
-            out_words = writer.write()  # out: list of word, str, len = max_words
+            out_words = (
+                writer.write()
+            )  # out: list of word, str, len = max_words
             conv.append((writer.name, out_words))
             # make the other agent to read it
             reader.read(out_words)
@@ -124,7 +136,10 @@ class DialogEval(Dialog):
                 break
 
             writer, reader = reader, writer
-            if self.args.max_nego_turn > 0 and nturn >= self.args.max_nego_turn:
+            if (
+                self.args.max_nego_turn > 0
+                and nturn >= self.args.max_nego_turn
+            ):
                 return conv, 0
 
         # evaluate dialog and produce success

@@ -35,4 +35,3 @@ python run.py --model_type=gpt2 --model_name_or_path=$save_dir$ --num_samples 5 
 ```
 dialog act seq & user utterance
 ```
-

@@ -1,14 +1,17 @@
+# -*- coding: utf-8 -*-
+import logging
 import os
-from convlab2.dialog_agent import BiSession, PipelineAgent
-from convlab2.evaluator.multiwoz_eval import MultiWozEvaluator
-from pprint import pprint
 import random
+from pprint import pprint
+
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import matplotlib.pyplot as plt
-from convlab2.util.analysis_tool.helper import Reporter
 from tqdm import tqdm, trange
-import logging
+
+from convlab2.dialog_agent import BiSession, PipelineAgent
+from convlab2.evaluator.multiwoz_eval import MultiWozEvaluator
+from convlab2.util.analysis_tool.helper import Reporter
 
 
 class Analyzer:
@@ -53,7 +56,10 @@ class Analyzer:
             print()
             if session_over is True:
                 break
-        print("task complete:", sess.user_agent.policy.policy.goal.task_complete())
+        print(
+            "task complete:",
+            sess.user_agent.policy.policy.goal.task_complete(),
+        )
         print("task success:", sess.evaluator.task_success())
         print("book rate:", sess.evaluator.book_rate())
         print("inform precision/recall/f1:", sess.evaluator.inform_F1())
@@ -118,9 +124,12 @@ class Analyzer:
             # print('-' * 50,file=f)
 
             for i in range(40):
-                sys_response, user_response, session_over, reward = sess.next_turn(
-                    sys_response
-                )
+                (
+                    sys_response,
+                    user_response,
+                    session_over,
+                    reward,
+                ) = sess.next_turn(sys_response)
                 print("user in", sess.user_agent.get_in_da(), file=flog)
                 print("user out", sess.user_agent.get_out_da(), file=flog)
                 #
@@ -135,7 +144,8 @@ class Analyzer:
                     hasattr(sess.sys_agent, "get_in_da")
                     and isinstance(sess.sys_agent.get_in_da(), list)
                     and sess.user_agent.get_out_da() != []
-                    and sess.user_agent.get_out_da() != sess.sys_agent.get_in_da()
+                    and sess.user_agent.get_out_da()
+                    != sess.sys_agent.get_in_da()
                 ):
                     for da1 in sess.user_agent.get_out_da():
                         for da2 in sess.sys_agent.get_in_da():
@@ -222,7 +232,10 @@ class Analyzer:
                 )
             domain_set = []
             for da in sess.evaluator.usr_da_array:
-                if da.split("-")[0] != "general" and da.split("-")[0] not in domain_set:
+                if (
+                    da.split("-")[0] != "general"
+                    and da.split("-")[0] not in domain_set
+                ):
                     domain_set.append(da.split("-")[0])
 
             turn_num += step
@@ -277,7 +290,11 @@ class Analyzer:
             % (num_dialogs_satisfying_constraints / total_dialog)
         )
         print("=" * 100)
-        print("complete number of dialogs/tot:", complete_num / total_dialog, file=f)
+        print(
+            "complete number of dialogs/tot:",
+            complete_num / total_dialog,
+            file=f,
+        )
         print("success number of dialogs/tot:", suc_num / total_dialog, file=f)
         print("average precision:", np.mean(precision), file=f)
         print("average recall:", np.mean(recall), file=f)
@@ -335,7 +352,15 @@ class Analyzer:
             np.random.seed(seed)
             torch.manual_seed(seed)
             # print(model_name[i], total_dialog)
-            complete, suc, pre, rec, f1, match, turn = self.comprehensive_analyze(
+            (
+                complete,
+                suc,
+                pre,
+                rec,
+                f1,
+                match,
+                turn,
+            ) = self.comprehensive_analyze(
                 agent_list[i], model_name[i], total_dialog
             )
             y0.append(complete)

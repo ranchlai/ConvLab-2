@@ -1,10 +1,12 @@
-import os
+# -*- coding: utf-8 -*-
 import json
+import os
 import pickle
 import zipfile
+
+from convlab2.policy.vector.vector_camrest import CamrestVector
 from convlab2.util.camrest.state import default_state
 from convlab2.util.dataloader.module_dataloader import ActPolicyDataloader
-from convlab2.policy.vector.vector_camrest import CamrestVector
 
 
 class ActPolicyDataLoaderCamrest(ActPolicyDataloader):
@@ -34,7 +36,10 @@ class ActPolicyDataLoaderCamrest(ActPolicyDataloader):
         raw_data = {}
         for part in ["train", "val", "test"]:
             archive = zipfile.ZipFile(
-                os.path.join(root_dir, "data/camrest/{}.json.zip".format(part)), "r"
+                os.path.join(
+                    root_dir, "data/camrest/{}.json.zip".format(part)
+                ),
+                "r",
             )
             with archive.open("{}.json".format(part), "r") as f:
                 raw_data[part] = json.load(f)
@@ -53,7 +58,9 @@ class ActPolicyDataLoaderCamrest(ActPolicyDataloader):
                         state["terminated"] = True
                     for da in turn["usr"]["slu"]:
                         if da["slots"][0][0] != "slot":
-                            state["belief_state"][da["slots"][0][0]] = da["slots"][0][1]
+                            state["belief_state"][da["slots"][0][0]] = da[
+                                "slots"
+                            ][0][1]
                     action = turn["sys"]["dialog_act"]
                     self.data[part].append(
                         [
@@ -65,5 +72,7 @@ class ActPolicyDataLoaderCamrest(ActPolicyDataloader):
 
         os.makedirs(processed_dir)
         for part in ["train", "val", "test"]:
-            with open(os.path.join(processed_dir, "{}.pkl".format(part)), "wb") as f:
+            with open(
+                os.path.join(processed_dir, "{}.pkl".format(part)), "wb"
+            ) as f:
                 pickle.dump(self.data[part], f)

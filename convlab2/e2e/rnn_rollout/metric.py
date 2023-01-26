@@ -1,13 +1,15 @@
+# -*- coding: utf-8 -*-
 # Copyright 2017-present, Facebook, Inc.
 # All rights reserved.
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from collections import OrderedDict
-import numpy as np
 import pdb
 import time
+from collections import OrderedDict
+
+import numpy as np
 
 import data
 
@@ -208,7 +210,9 @@ class MetricsContainer(object):
         return self.metrics[name].value()
 
     def show(self):
-        return " ".join(["%s=%s" % (k, v.show()) for k, v in self.metrics.iteritems()])
+        return " ".join(
+            ["%s=%s" % (k, v.show()) for k, v in self.metrics.iteritems()]
+        )
 
     def dict(self):
         d = OrderedDict()

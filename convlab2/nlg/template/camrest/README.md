@@ -55,5 +55,3 @@ We evaluate the BLEU4 of delexicalized utterance. The references of a generated 
 | mode  | usr    | sys    |
 | ----- | ------ | ------ |
 | BLEU4 | 0.3131 | 0.2174 |
-
-

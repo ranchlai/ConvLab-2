@@ -1,10 +1,13 @@
+# -*- coding: utf-8 -*-
 import torch
 from torch import nn
 from transformers import BertModel
 
 
 class JointBERT(nn.Module):
-    def __init__(self, model_config, device, slot_dim, intent_dim, intent_weight=None):
+    def __init__(
+        self, model_config, device, slot_dim, intent_dim, intent_weight=None
+    ):
         super(JointBERT, self).__init__()
         self.slot_num_labels = slot_dim
         self.intent_num_labels = intent_dim
@@ -16,7 +19,9 @@ class JointBERT(nn.Module):
         )
 
         print(model_config["pretrained_weights"])
-        self.bert = BertModel.from_pretrained(model_config["pretrained_weights"])
+        self.bert = BertModel.from_pretrained(
+            model_config["pretrained_weights"]
+        )
         self.dropout = nn.Dropout(model_config["dropout"])
         self.context = model_config["context"]
         self.finetune = model_config["finetune"]
@@ -69,7 +74,9 @@ class JointBERT(nn.Module):
         nn.init.xavier_uniform_(self.intent_classifier.weight)
         nn.init.xavier_uniform_(self.slot_classifier.weight)
 
-        self.intent_loss_fct = torch.nn.BCEWithLogitsLoss(pos_weight=self.intent_weight)
+        self.intent_loss_fct = torch.nn.BCEWithLogitsLoss(
+            pos_weight=self.intent_weight
+        )
         self.slot_loss_fct = torch.nn.CrossEntropyLoss()
 
     def forward(
@@ -100,15 +107,19 @@ class JointBERT(nn.Module):
             if not self.finetune or not self.context_grad:
                 with torch.no_grad():
                     context_output = self.bert(
-                        input_ids=context_seq_tensor, attention_mask=context_mask_tensor
+                        input_ids=context_seq_tensor,
+                        attention_mask=context_mask_tensor,
                     )[1]
             else:
                 context_output = self.bert(
-                    input_ids=context_seq_tensor, attention_mask=context_mask_tensor
+                    input_ids=context_seq_tensor,
+                    attention_mask=context_mask_tensor,
                 )[1]
             sequence_output = torch.cat(
                 [
-                    context_output.unsqueeze(1).repeat(1, sequence_output.size(1), 1),
+                    context_output.unsqueeze(1).repeat(
+                        1, sequence_output.size(1), 1
+                    ),
                     sequence_output,
                 ],
                 dim=-1,
@@ -137,7 +148,9 @@ class JointBERT(nn.Module):
                 active_tag_loss
             ]
             active_tag_labels = tag_seq_tensor.view(-1)[active_tag_loss]
-            slot_loss = self.slot_loss_fct(active_tag_logits, active_tag_labels)
+            slot_loss = self.slot_loss_fct(
+                active_tag_logits, active_tag_labels
+            )
 
             outputs = outputs + (slot_loss,)
 
@@ -145,4 +158,6 @@ class JointBERT(nn.Module):
             intent_loss = self.intent_loss_fct(intent_logits, intent_tensor)
             outputs = outputs + (intent_loss,)
 
-        return outputs  # slot_logits, intent_logits, (slot_loss), (intent_loss),
+        return (
+            outputs  # slot_logits, intent_logits, (slot_loss), (intent_loss),
+        )

@@ -1,36 +1,41 @@
-from convlab2.policy.larl.multiwoz.corpora_inference import BOS, EOS, PAD
-from convlab2.policy.larl.multiwoz.latent_dialog.enc2dec.decoders import DecoderRNN
-from convlab2.policy.larl.multiwoz.latent_dialog.utils import (
-    INT,
-    FLOAT,
-    LONG,
-    Pack,
-    cast_type,
-)
-from convlab2.policy.larl.multiwoz.latent_dialog.utils import get_detokenize
-from convlab2.policy.larl.multiwoz.utils.nlp import normalize
-from convlab2.policy.larl.multiwoz.utils import util, delexicalize
-from convlab2.policy.larl.multiwoz import corpora_inference
-from convlab2.policy.larl.multiwoz.latent_dialog import domain
-from convlab2.policy.larl.multiwoz.latent_dialog.models_task import SysPerfectBD2Cat
-from convlab2.policy import Policy
-from convlab2.util.file_util import cached_path
-from convlab2.util.multiwoz.state import default_state
-from convlab2.util.multiwoz.dbquery import Database
-from copy import deepcopy
+# -*- coding: utf-8 -*-
 import json
 import os
+import pickle
 import random
+import re
 import tempfile
 import zipfile
+from copy import deepcopy
 
 import numpy as np
-import re
 import torch
 from nltk import word_tokenize
 from torch.autograd import Variable
-import pickle
 
+from convlab2.policy import Policy
+from convlab2.policy.larl.multiwoz import corpora_inference
+from convlab2.policy.larl.multiwoz.corpora_inference import BOS, EOS, PAD
+from convlab2.policy.larl.multiwoz.latent_dialog import domain
+from convlab2.policy.larl.multiwoz.latent_dialog.enc2dec.decoders import (
+    DecoderRNN,
+)
+from convlab2.policy.larl.multiwoz.latent_dialog.models_task import (
+    SysPerfectBD2Cat,
+)
+from convlab2.policy.larl.multiwoz.latent_dialog.utils import (
+    FLOAT,
+    INT,
+    LONG,
+    Pack,
+    cast_type,
+    get_detokenize,
+)
+from convlab2.policy.larl.multiwoz.utils import delexicalize, util
+from convlab2.policy.larl.multiwoz.utils.nlp import normalize
+from convlab2.util.file_util import cached_path
+from convlab2.util.multiwoz.dbquery import Database
+from convlab2.util.multiwoz.state import default_state
 
 TEACH_FORCE = "teacher_forcing"
 TEACH_GEN = "teacher_gen"
@@ -145,15 +150,23 @@ def delexicaliseReferenceNumber(sent, state):
                 else:
                     val = "[" + domain + "_" + slot + "]"
                 key = normalize(state[domain]["book"]["booked"][0][slot])
-                sent = (" " + sent + " ").replace(" " + key + " ", " " + val + " ")
+                sent = (" " + sent + " ").replace(
+                    " " + key + " ", " " + val + " "
+                )
 
                 # try reference with hashtag
                 key = normalize("#" + state[domain]["book"]["booked"][0][slot])
-                sent = (" " + sent + " ").replace(" " + key + " ", " " + val + " ")
+                sent = (" " + sent + " ").replace(
+                    " " + key + " ", " " + val + " "
+                )
 
                 # try reference with ref#
-                key = normalize("ref#" + state[domain]["book"]["booked"][0][slot])
-                sent = (" " + sent + " ").replace(" " + key + " ", " " + val + " ")
+                key = normalize(
+                    "ref#" + state[domain]["book"]["booked"][0][slot]
+                )
+                sent = (" " + sent + " ").replace(
+                    " " + key + " ", " " + val + " "
+                )
     return sent
 
 
@@ -292,7 +305,9 @@ class LaRL(Policy):
         domain_name = "object_division"
         domain_info = domain.get_domain(domain_name)
         self.db = Database()
-        data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
+        data_path = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), "data"
+        )
         train_data_path = os.path.join(data_path, "train_dials.json")
         if not os.path.exists(train_data_path):
             zipped_file = os.path.join(data_path, "norm-multi-woz.zip")
@@ -300,13 +315,21 @@ class LaRL(Policy):
             archive.extractall(data_path)
 
         norm_multiwoz_path = data_path
-        with open(os.path.join(norm_multiwoz_path, "input_lang.index2word.json")) as f:
+        with open(
+            os.path.join(norm_multiwoz_path, "input_lang.index2word.json")
+        ) as f:
             self.input_lang_index2word = json.load(f)
-        with open(os.path.join(norm_multiwoz_path, "input_lang.word2index.json")) as f:
+        with open(
+            os.path.join(norm_multiwoz_path, "input_lang.word2index.json")
+        ) as f:
             self.input_lang_word2index = json.load(f)
-        with open(os.path.join(norm_multiwoz_path, "output_lang.index2word.json")) as f:
+        with open(
+            os.path.join(norm_multiwoz_path, "output_lang.index2word.json")
+        ) as f:
             self.output_lang_index2word = json.load(f)
-        with open(os.path.join(norm_multiwoz_path, "output_lang.word2index.json")) as f:
+        with open(
+            os.path.join(norm_multiwoz_path, "output_lang.word2index.json")
+        ) as f:
             self.output_lang_word2index = json.load(f)
 
         config = Pack(
@@ -418,7 +441,9 @@ class LaRL(Policy):
     def np2var(self, inputs, dtype):
         if inputs is None:
             return None
-        return cast_type(Variable(torch.from_numpy(inputs)), dtype, self.config.use_gpu)
+        return cast_type(
+            Variable(torch.from_numpy(inputs)), dtype, self.config.use_gpu
+        )
 
     def extract_short_ctx(self, context, context_lens, backward_size=1):
         utts = []
@@ -556,7 +581,9 @@ class LaRL(Policy):
             digitpat = re.compile("\d+")
             usr = re.sub(digitpat, "[value_count]", usr)
             # add database pointer
-            pointer_vector, top_results, num_results = addDBPointer(bstate, self.db)
+            pointer_vector, top_results, num_results = addDBPointer(
+                bstate, self.db
+            )
             # print(top_results)
             # add booking pointer
             pointer_vector = addBookingPointer(bstate, pointer_vector)
@@ -573,7 +600,10 @@ class LaRL(Policy):
         prepared_data["response"]["bs"] = prepared_data["context"][-1]["bs"]
         prepared_data["response"]["db"] = prepared_data["context"][-1]["db"]
         results = [
-            Pack(context=prepared_data["context"], response=prepared_data["response"])
+            Pack(
+                context=prepared_data["context"],
+                response=prepared_data["response"],
+            )
         ]
 
         data_feed = prepare_batch_gen(results, self.config)
@@ -602,14 +632,20 @@ class LaRL(Policy):
         # print("template:",template)
         # print("top_results:",top_results)
         active_domain = (
-            None if len(top_results.keys()) == 0 else list(top_results.keys())[0]
+            None
+            if len(top_results.keys()) == 0
+            else list(top_results.keys())[0]
         )
-        template = template.replace("book [value_count] of them", "book one of them")
+        template = template.replace(
+            "book [value_count] of them", "book one of them"
+        )
         tokens = template.split()
         response = []
         for index, token in enumerate(tokens):
             if token.startswith("[") and (
-                token.endswith("]") or token.endswith("].") or token.endswith("],")
+                token.endswith("]")
+                or token.endswith("].")
+                or token.endswith("],")
             ):
                 domain = token[1:-1].split("_")[0]
                 slot = token[1:-1].split("_")[1]
@@ -639,7 +675,8 @@ class LaRL(Policy):
                                     top_results["train"]["duration"].split()[0]
                                 )
                             elif (
-                                "star" in tokens[index + 1] and active_domain == "hotel"
+                                "star" in tokens[index + 1]
+                                and active_domain == "hotel"
                             ):
                                 response.append(top_results["hotel"]["stars"])
                             else:
@@ -656,14 +693,18 @@ class LaRL(Policy):
                                 if d == "history":
                                     continue
                                 if "destination" in state[d]["semi"]:
-                                    response.append(state[d]["semi"]["destination"])
+                                    response.append(
+                                        state[d]["semi"]["destination"]
+                                    )
                                     break
                         elif "leave" in response or "leaving" in response:
                             for d in state:
                                 if d == "history":
                                     continue
                                 if "departure" in state[d]["semi"]:
-                                    response.append(state[d]["semi"]["departure"])
+                                    response.append(
+                                        state[d]["semi"]["departure"]
+                                    )
                                     break
                         else:
                             try:
@@ -672,7 +713,9 @@ class LaRL(Policy):
                                         continue
                                     for s in ["destination", "departure"]:
                                         if s in state[d]["semi"]:
-                                            response.append(state[d]["semi"][s])
+                                            response.append(
+                                                state[d]["semi"][s]
+                                            )
                                             raise
                             except:
                                 pass
@@ -689,13 +732,17 @@ class LaRL(Policy):
                                 and "arriveBy" in top_results[active_domain]
                             ):
                                 # print('{} -> {}'.format(token, top_results[active_domain]['arriveBy']))
-                                response.append(top_results[active_domain]["arriveBy"])
+                                response.append(
+                                    top_results[active_domain]["arriveBy"]
+                                )
                                 continue
                             for d in state:
                                 if d == "history":
                                     continue
                                 if "arriveBy" in state[d]["semi"]:
-                                    response.append(state[d]["semi"]["arriveBy"])
+                                    response.append(
+                                        state[d]["semi"]["arriveBy"]
+                                    )
                                     break
                         elif (
                             "leave" in " ".join(response[-3:])
@@ -707,17 +754,23 @@ class LaRL(Policy):
                                 and "leaveAt" in top_results[active_domain]
                             ):
                                 # print('{} -> {}'.format(token, top_results[active_domain]['leaveAt']))
-                                response.append(top_results[active_domain]["leaveAt"])
+                                response.append(
+                                    top_results[active_domain]["leaveAt"]
+                                )
                                 continue
                             for d in state:
                                 if d == "history":
                                     continue
                                 if "leaveAt" in state[d]["semi"]:
-                                    response.append(state[d]["semi"]["leaveAt"])
+                                    response.append(
+                                        state[d]["semi"]["leaveAt"]
+                                    )
                                     break
                         elif "book" in response:
                             if state["restaurant"]["book"]["time"] != "":
-                                response.append(state["restaurant"]["book"]["time"])
+                                response.append(
+                                    state["restaurant"]["book"]["time"]
+                                )
                         else:
                             try:
                                 for d in state:
@@ -725,14 +778,18 @@ class LaRL(Policy):
                                         continue
                                     for s in ["arriveBy", "leaveAt"]:
                                         if s in state[d]["semi"]:
-                                            response.append(state[d]["semi"][s])
+                                            response.append(
+                                                state[d]["semi"][s]
+                                            )
                                             raise
                             except:
                                 pass
                             else:
                                 response.append(token)
                     elif slot == "price" and active_domain == "attraction":
-                        value = top_results["attraction"]["entrance fee"].split()[0]
+                        value = top_results["attraction"][
+                            "entrance fee"
+                        ].split()[0]
                         try:
                             value = str(int(value))
                         except:
@@ -819,9 +876,13 @@ class LaRL(Policy):
         db_label = self.np2var(data_feed["db"], FLOAT)
         batch_size = len(ctx_lens)
 
-        utt_summary, _, enc_outs = self.model.utt_encoder(short_ctx_utts.unsqueeze(1))
+        utt_summary, _, enc_outs = self.model.utt_encoder(
+            short_ctx_utts.unsqueeze(1)
+        )
 
-        enc_last = torch.cat([bs_label, db_label, utt_summary.squeeze(1)], dim=1)
+        enc_last = torch.cat(
+            [bs_label, db_label, utt_summary.squeeze(1)], dim=1
+        )
 
         mode = GEN
 
@@ -840,7 +901,9 @@ class LaRL(Policy):
             )
             for z_id in range(self.model.y_size):
                 attn_context.append(
-                    torch.mm(temp_sample_y[:, z_id], z_embeddings[z_id]).unsqueeze(1)
+                    torch.mm(
+                        temp_sample_y[:, z_id], z_embeddings[z_id]
+                    ).unsqueeze(1)
                 )
             attn_context = torch.cat(attn_context, dim=1)
             dec_init_state = torch.sum(attn_context, dim=1).unsqueeze(0)
@@ -872,8 +935,12 @@ class LaRL(Policy):
         # ret_dict['sample_z'] = sample_y
         # ret_dict['log_qy'] = log_qy
 
-        pred_labels = [t.cpu().data.numpy() for t in ret_dict[DecoderRNN.KEY_SEQUENCE]]
-        pred_labels = np.array(pred_labels, dtype=int).squeeze(-1).swapaxes(0, 1)
+        pred_labels = [
+            t.cpu().data.numpy() for t in ret_dict[DecoderRNN.KEY_SEQUENCE]
+        ]
+        pred_labels = (
+            np.array(pred_labels, dtype=int).squeeze(-1).swapaxes(0, 1)
+        )
         de_tknize = get_detokenize()
         for b_id in range(pred_labels.shape[0]):
             # only one val for pred_str now
@@ -928,7 +995,9 @@ def prepare_batch_gen(rows, config):
         # source context
         batch_ctx = []
         for turn in in_row:
-            batch_ctx.append(pad_to(config.max_utt_len, turn["utt"], do_pad=True))
+            batch_ctx.append(
+                pad_to(config.max_utt_len, turn["utt"], do_pad=True)
+            )
         ctx_utts.append(batch_ctx)
         ctx_lens.append(len(batch_ctx))
 

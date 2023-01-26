@@ -1,24 +1,28 @@
-import os
-import torch
-import logging
-import torch.nn as nn
+# -*- coding: utf-8 -*-
 import json
+import logging
+import os
 import pickle
-import sys
 import random
+import sys
+
 import numpy as np
+import torch
+import torch.nn as nn
 
 root_dir = os.path.dirname(
     os.path.dirname(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        )
     )
 )
 sys.path.append(root_dir)
 
+from convlab2.policy.mle.crosswoz.loader import PolicyDataLoaderCrossWoz
 from convlab2.policy.rlmodule import MultiDiscretePolicy
 from convlab2.policy.vector.vector_crosswoz import CrossWozVector
-from convlab2.policy.mle.crosswoz.loader import PolicyDataLoaderCrossWoz
-from convlab2.util.train_util import to_device, init_logging_handler
+from convlab2.util.train_util import init_logging_handler, to_device
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -39,7 +43,9 @@ class MLE_Trainer:
             vector.state_dim, cfg["h_dim"], vector.sys_da_dim
         ).to(device=DEVICE)
         self.policy.eval()
-        self.policy_optim = torch.optim.Adam(self.policy.parameters(), lr=cfg["lr"])
+        self.policy_optim = torch.optim.Adam(
+            self.policy.parameters(), lr=cfg["lr"]
+        )
         self.multi_entropy_loss = nn.MultiLabelSoftMarginLoss()
 
     def policy_loop(self, data):
@@ -86,7 +92,9 @@ class MLE_Trainer:
 
         a_loss /= len(self.data_valid)
         logging.debug(
-            "<<dialog policy>> validation, epoch {}, loss_a:{}".format(epoch, a_loss)
+            "<<dialog policy>> validation, epoch {}, loss_a:{}".format(
+                epoch, a_loss
+            )
         )
         if a_loss < best:
             logging.info("<<dialog policy>> best model saved")
@@ -143,14 +151,18 @@ class MLE_Trainer:
             os.makedirs(directory)
 
         torch.save(
-            self.policy.state_dict(), directory + "/" + str(epoch) + "_mle.pol.mdl"
+            self.policy.state_dict(),
+            directory + "/" + str(epoch) + "_mle.pol.mdl",
         )
 
-        logging.info("<<dialog policy>> epoch {}: saved network to mdl".format(epoch))
+        logging.info(
+            "<<dialog policy>> epoch {}: saved network to mdl".format(epoch)
+        )
 
     def load(self, filename="save/best"):
         policy_mdl = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), filename + "_mle.pol.mdl"
+            os.path.dirname(os.path.abspath(__file__)),
+            filename + "_mle.pol.mdl",
         )
         if os.path.exists(policy_mdl):
             self.policy.load_state_dict(torch.load(policy_mdl))

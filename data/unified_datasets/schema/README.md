@@ -5,7 +5,7 @@
 - Annotations: dialogue act, belief state, character-level span for non-categorical slots.
 - Unseen domains and slots in the test set to quantify the performance in zero-shot or few shot settings.
 
-Statistics: 
+Statistics:
 
 |       | \# dialogues | \# utterances | avg. turns | avg. tokens | \# domains |
 | ----- | ------------ | ------------- | ---------- | ----------- | ---------- |
@@ -25,9 +25,9 @@ Main changes:
 - ~~numerical slot => non-categorical, use string match to get the span.~~
 - add binary_dialogue_act for those binary intents such as 'goodbye', 'request'.
 - add **count** non-categorical, numerical slot for each domain, but not appear in belief state.
-- sys state are updated by previous user frame['state']. 
-- calculate the state update according to prev state and slot spans in current turn slot_vals and all previous dialogue acts. 99.6% non-categorical state update have spans while the rest of them are like "Could you help me search for songs from **two years back** too?" 
-- values in possible values, dialogue act, state, and state_update are in **lowercase**. 
+- sys state are updated by previous user frame['state'].
+- calculate the state update according to prev state and slot spans in current turn slot_vals and all previous dialogue acts. 99.6% non-categorical state update have spans while the rest of them are like "Could you help me search for songs from **two years back** too?"
+- values in possible values, dialogue act, state, and state_update are in **lowercase**.
 
 Notice:
 
@@ -686,4 +686,3 @@ number of unique services belonging to the corresponding domain.
         <td align="center">475 (1)</td>
     </tr>
 </table>
-

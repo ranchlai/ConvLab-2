@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 from copy import deepcopy
+
 from convlab2.util.multiwoz.multiwoz_slot_trans import REF_SYS_DA
 
 
@@ -88,7 +90,9 @@ def lexicalize_da(meta, entities, state, requestable, cur_domain=None):
                         and pair[0] in REF_SYS_DA[domain]
                         and REF_SYS_DA[domain][pair[0]] in entities[domain][n]
                     ):
-                        pair[1] = entities[domain][n][REF_SYS_DA[domain][pair[0]]]
+                        pair[1] = entities[domain][n][
+                            REF_SYS_DA[domain][pair[0]]
+                        ]
                     else:
                         pair[1] = "none"
     tuples = []

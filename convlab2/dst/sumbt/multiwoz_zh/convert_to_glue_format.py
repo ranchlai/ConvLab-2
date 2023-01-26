@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
 import json
 import zipfile
+
 from convlab2.dst.sumbt.multiwoz_zh.sumbt_config import *
 
 
@@ -43,13 +45,21 @@ def convert_to_glue_format(data_dir, sumbt_dir):
         return 0
     print("begin processing data")
 
-    fp_train = open(os.path.join(sumbt_dir, args.tmp_data_dir, "train.tsv"), "w")
+    fp_train = open(
+        os.path.join(sumbt_dir, args.tmp_data_dir, "train.tsv"), "w"
+    )
     fp_dev = open(os.path.join(sumbt_dir, args.tmp_data_dir, "dev.tsv"), "w")
     fp_test = open(os.path.join(sumbt_dir, args.tmp_data_dir, "test.tsv"), "w")
 
-    fp_train.write("# Dialogue ID\tTurn Index\tUser Utterance\tSystem Response\t")
-    fp_dev.write("# Dialogue ID\tTurn Index\tUser Utterance\tSystem Response\t")
-    fp_test.write("# Dialogue ID\tTurn Index\tUser Utterance\tSystem Response\t")
+    fp_train.write(
+        "# Dialogue ID\tTurn Index\tUser Utterance\tSystem Response\t"
+    )
+    fp_dev.write(
+        "# Dialogue ID\tTurn Index\tUser Utterance\tSystem Response\t"
+    )
+    fp_test.write(
+        "# Dialogue ID\tTurn Index\tUser Utterance\tSystem Response\t"
+    )
 
     for domain in sorted(ontology.keys()):
         for slot in sorted(ontology[domain].keys()):
@@ -91,18 +101,22 @@ def convert_to_glue_format(data_dir, sumbt_dir):
 
                     split_fp.write(str(file_id))  # 0: dialogue ID
                     split_fp.write("\t" + str(turn_idx))  # 1: turn index
-                    split_fp.write("\t" + str(user_utterance))  # 2: user utterance
-                    split_fp.write("\t" + str(system_response))  # 3: system response
+                    split_fp.write(
+                        "\t" + str(user_utterance)
+                    )  # 2: user utterance
+                    split_fp.write(
+                        "\t" + str(system_response)
+                    )  # 3: system response
 
                     belief = {}
 
                     for domain in data[file_id]["log"][idx]["metadata"].keys():
-                        for slot in data[file_id]["log"][idx]["metadata"][domain][
-                            "semi"
-                        ].keys():
-                            value = data[file_id]["log"][idx]["metadata"][domain][
-                                "semi"
-                            ][slot].strip()
+                        for slot in data[file_id]["log"][idx]["metadata"][
+                            domain
+                        ]["semi"].keys():
+                            value = data[file_id]["log"][idx]["metadata"][
+                                domain
+                            ]["semi"][slot].strip()
                             # value = value_trans.get(value, value)
                             value = trans_value(value)
 
@@ -117,7 +131,10 @@ def convert_to_glue_format(data_dir, sumbt_dir):
                                 )  # bus-arriveBy not defined
                                 continue
 
-                            if value not in ontology[domain][slot] and value != "未提及":
+                            if (
+                                value not in ontology[domain][slot]
+                                and value != "未提及"
+                            ):
                                 print(
                                     "%s: value (%s) in domain (%s) slot (%s) is not defined in ontology"
                                     % (file_id, value, domain, slot)
@@ -126,9 +143,9 @@ def convert_to_glue_format(data_dir, sumbt_dir):
 
                             belief[str(domain) + "-" + str(slot)] = value
 
-                        for slot in data[file_id]["log"][idx]["metadata"][domain][
-                            "book"
-                        ].keys():
+                        for slot in data[file_id]["log"][idx]["metadata"][
+                            domain
+                        ]["book"].keys():
                             if slot == "booked":
                                 continue
                             if (
@@ -139,14 +156,15 @@ def convert_to_glue_format(data_dir, sumbt_dir):
                             ):
                                 continue  # not defined in ontology
 
-                            value = data[file_id]["log"][idx]["metadata"][domain][
-                                "book"
-                            ][slot].strip()
+                            value = data[file_id]["log"][idx]["metadata"][
+                                domain
+                            ]["book"][slot].strip()
                             value = trans_value(value)
 
                             if str("预订" + slot) not in ontology[domain]:
                                 print(
-                                    "预订%s is not defined in domain %s" % (slot, domain)
+                                    "预订%s is not defined in domain %s"
+                                    % (slot, domain)
                                 )
                                 continue
 

@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-@author: keshuichonglx 
+@author: keshuichonglx
 """
 import collections
 import json
 import os
 import pickle
 import random
-from convlab2.util.file_util import read_zipped_json
 
 import numpy as np
+
+from convlab2.util.file_util import read_zipped_json
 
 domains_set = {
     "restaurant",
@@ -106,7 +107,12 @@ SysDa2Goal = {
         "duration": "duration",
         "none": None,
     },
-    "police": {"addr": "address", "post": "postcode", "phone": "phone", "none": None},
+    "police": {
+        "addr": "address",
+        "post": "postcode",
+        "phone": "phone",
+        "none": None,
+    },
 }
 
 UsrDa2Goal = {
@@ -143,7 +149,12 @@ UsrDa2Goal = {
         "stay": "stay",
         "none": None,
     },
-    "police": {"addr": "address", "phone": "phone", "post": "postcode", "none": None},
+    "police": {
+        "addr": "address",
+        "phone": "phone",
+        "post": "postcode",
+        "none": None,
+    },
     "restaurant": {
         "area": "area",
         "day": "day",
@@ -218,7 +229,11 @@ class UserDataManager(object):
     def usrgoal2seq(goal: dict):
         def add(lt: list, domain_goal: dict, domain: str, intent: str):
             mapping = domain_goal.get(intent, {})
-            slots = [slot for slot in mapping.keys() if isinstance(mapping[slot], str)]
+            slots = [
+                slot
+                for slot in mapping.keys()
+                if isinstance(mapping[slot], str)
+            ]
             if len(slots) > 0:
                 lt.append(domain + "_" + intent)
                 lt.append("(")
@@ -272,9 +287,13 @@ class UserDataManager(object):
                     ret = "InConstraint"
                     if True in check.values() and False in check.values():
                         ret += "[C]"
-                    elif True in check.values() and False not in check.values():
+                    elif (
+                        True in check.values() and False not in check.values()
+                    ):
                         ret += "[R]"
-                    elif True not in check.values() and False in check.values():
+                    elif (
+                        True not in check.values() and False in check.values()
+                    ):
                         ret += "[W]"
                 elif goal_slot in goal.get(domain, {}).get("reqt", []):
                     # in Request
@@ -318,7 +337,12 @@ class UserDataManager(object):
         ret = None
         goal_slot = UsrDa2Goal.get(domain, {}).get(slot, "Unknow")
         if goal_slot is not None and goal_slot != "Unknow":
-            check = {"info": None, "fail_info": None, "book": None, "fail_book": None}
+            check = {
+                "info": None,
+                "fail_info": None,
+                "book": None,
+                "fail_book": None,
+            }
             for zone in check.keys():
                 dt = goal.get(domain, {}).get(zone, {})
                 if goal_slot in dt.keys():
@@ -331,16 +355,20 @@ class UserDataManager(object):
                 if True in check.values():
                     ret = (
                         "In"
-                        + [zone for (zone, value) in check.items() if value == True][
-                            0
-                        ].capitalize()
+                        + [
+                            zone
+                            for (zone, value) in check.items()
+                            if value == True
+                        ][0].capitalize()
                     )
                 else:
                     ret = (
                         "In"
-                        + [zone for (zone, value) in check.items() if value == False][
-                            0
-                        ].capitalize()
+                        + [
+                            zone
+                            for (zone, value) in check.items()
+                            if value == False
+                        ][0].capitalize()
                     )
             else:
                 # not in goal
@@ -398,7 +426,9 @@ class UserDataManager(object):
             elif "=" in word and cur_act is not None:
                 slot_da, value_pos = word.split("=")
                 value_pos = value_pos.lower()
-                slot_goal = UsrDa2Goal.get(domain.lower(), {}).get(slot_da, None)
+                slot_goal = UsrDa2Goal.get(domain.lower(), {}).get(
+                    slot_da, None
+                )
                 if slot_goal is not None:
                     value = None
                     if value_pos == "ininfo":
@@ -449,9 +479,9 @@ class UserDataManager(object):
             if "-" in act:
                 domain, _ = act.split("-")
                 for idx in range(len(da[act])):
-                    da[act][idx][0] = ref_slot_data2stand.get(domain.lower(), {}).get(
-                        da[act][idx][0], da[act][idx][0]
-                    )
+                    da[act][idx][0] = ref_slot_data2stand.get(
+                        domain.lower(), {}
+                    ).get(da[act][idx][0], da[act][idx][0])
         return eval(str(da).lower())
 
     @staticmethod
@@ -499,7 +529,9 @@ class UserDataManager(object):
                 os.path.dirname(
                     os.path.dirname(
                         os.path.dirname(
-                            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                            os.path.dirname(
+                                os.path.dirname(os.path.abspath(__file__))
+                            )
                         )
                     )
                 ),
@@ -516,7 +548,9 @@ class UserDataManager(object):
                 usr_das, sys_das = [], []
                 for turn in range(len(logs) // 2):
                     # <class 'dict'>: {'Hotel-Inform': [['Price', 'cheap'], ['Type', 'hotel']]}
-                    usr_da = self.ref_data2stand(logs[turn * 2].get("dialog_act", {}))
+                    usr_da = self.ref_data2stand(
+                        logs[turn * 2].get("dialog_act", {})
+                    )
                     sys_da = self.ref_data2stand(
                         logs[turn * 2 + 1].get("dialog_act", {})
                     )
@@ -529,7 +563,9 @@ class UserDataManager(object):
                     usr_dass.append(usr_das)
                     sys_dass.append(sys_das)
 
-            self.__org_goals = [UserDataManager.usrgoal2seq(goal) for goal in goals]
+            self.__org_goals = [
+                UserDataManager.usrgoal2seq(goal) for goal in goals
+            ]
             self.__org_usr_dass = [
                 [UserDataManager.usrda2seq(usr_da, goal) for usr_da in usr_das]
                 for (usr_das, goal) in zip(usr_dass, goals)
@@ -552,7 +588,9 @@ class UserDataManager(object):
                 os.path.dirname(
                     os.path.dirname(
                         os.path.dirname(
-                            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                            os.path.dirname(
+                                os.path.dirname(os.path.abspath(__file__))
+                            )
                         )
                     )
                 ),
@@ -561,7 +599,11 @@ class UserDataManager(object):
 
             if os.path.exists(vocab_path):
                 with open(vocab_path, "rb") as f:
-                    self.__voc_goal, self.__voc_usr, self.__voc_sys = pickle.load(f)
+                    (
+                        self.__voc_goal,
+                        self.__voc_usr,
+                        self.__voc_sys,
+                    ) = pickle.load(f)
             else:
                 goals, usr_dass, sys_dass = self.org_data_loader()
 
@@ -590,10 +632,14 @@ class UserDataManager(object):
                 self.__voc_sys = {x: i for i, x in enumerate(word_list)}
 
                 with open(vocab_path, "wb") as f:
-                    pickle.dump((self.__voc_goal, self.__voc_usr, self.__voc_sys), f)
+                    pickle.dump(
+                        (self.__voc_goal, self.__voc_usr, self.__voc_sys), f
+                    )
                 print("voc build ok")
 
-            self.__voc_usr_rev = {val: key for (key, val) in self.__voc_usr.items()}
+            self.__voc_usr_rev = {
+                val: key for (key, val) in self.__voc_usr.items()
+            }
 
         return self.__voc_goal, self.__voc_usr, self.__voc_sys
 
@@ -601,17 +647,27 @@ class UserDataManager(object):
         return len(self.voc_goal), len(self.voc_usr), len(self.voc_sys)
 
     def data_loader(self):
-        if self.__goals is None or self.__usr_dass is None or self.__sys_dass is None:
+        if (
+            self.__goals is None
+            or self.__usr_dass is None
+            or self.__sys_dass is None
+        ):
             org_goals, org_usr_dass, org_sys_dass = self.org_data_loader()
             self.__goals = [self.get_goal_id(goal) for goal in org_goals]
-            self.__usr_dass = [self.get_usrda_id(usr_das) for usr_das in org_usr_dass]
-            self.__sys_dass = [self.get_sysda_id(sys_das) for sys_das in org_sys_dass]
+            self.__usr_dass = [
+                self.get_usrda_id(usr_das) for usr_das in org_usr_dass
+            ]
+            self.__sys_dass = [
+                self.get_sysda_id(sys_das) for sys_das in org_sys_dass
+            ]
         assert len(self.__goals) == len(self.__usr_dass)
         assert len(self.__goals) == len(self.__sys_dass)
         return self.__goals, self.__usr_dass, self.__sys_dass
 
     @staticmethod
-    def train_test_val_split(goals, usr_dass, sys_dass, test_size=0.1, val_size=0.1):
+    def train_test_val_split(
+        goals, usr_dass, sys_dass, test_size=0.1, val_size=0.1
+    ):
         idx = range(len(goals))
         idx_test = random.sample(idx, int(len(goals) * test_size))
         idx_train = list(set(idx) - set(idx_test))
@@ -637,7 +693,11 @@ class UserDataManager(object):
             or self.__sys_dass_seg is None
         ):
             self.data_loader()
-            self.__goals_seg, self.__usr_dass_seg, self.__sys_dass_seg = [], [], []
+            self.__goals_seg, self.__usr_dass_seg, self.__sys_dass_seg = (
+                [],
+                [],
+                [],
+            )
 
             for (goal, usr_das, sys_das) in zip(
                 self.__goals, self.__usr_dass, self.__sys_dass
@@ -645,8 +705,12 @@ class UserDataManager(object):
                 goals, usr_dass, sys_dass = [], [], []
                 for length in range(len(usr_das)):
                     goals.append(goal)
-                    usr_dass.append([usr_das[idx] for idx in range(length + 1)])
-                    sys_dass.append([sys_das[idx] for idx in range(length + 1)])
+                    usr_dass.append(
+                        [usr_das[idx] for idx in range(length + 1)]
+                    )
+                    sys_dass.append(
+                        [sys_das[idx] for idx in range(length + 1)]
+                    )
 
                 self.__goals_seg.append(goals)
                 self.__usr_dass_seg.append(usr_dass)
@@ -686,7 +750,9 @@ class UserDataManager(object):
         )
 
     def get_goal_id(self, goal):
-        return [self.voc_goal.get(word, self.voc_goal[self.unk]) for word in goal]
+        return [
+            self.voc_goal.get(word, self.voc_goal[self.unk]) for word in goal
+        ]
 
     def get_sysda_id(self, sys_das):
         return [
@@ -697,7 +763,10 @@ class UserDataManager(object):
     def get_usrda_id(self, usr_das):
         return [
             [self.voc_usr[self.sos]]
-            + [self.voc_usr.get(word, self.voc_usr[self.unk]) for word in usr_da]
+            + [
+                self.voc_usr.get(word, self.voc_usr[self.unk])
+                for word in usr_da
+            ]
             + [self.voc_usr[self.eos]]
             for usr_da in usr_das
         ]

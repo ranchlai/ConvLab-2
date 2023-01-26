@@ -38,7 +38,3 @@ Machine translated dialogue data using the translated ontology and google transl
 #### Human translation for dialogue data
 
 - `human_val.json.zip`: we sample 250 dialogues from machine translated validation set and ask professional human translators to correct the utterance translation.
-
-
-
-

@@ -1,10 +1,12 @@
+# -*- coding: utf-8 -*-
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 import os
-import numpy as np
 import time
+
+import matplotlib.pyplot as plt
+import numpy as np
 
 from convlab2.util.analysis_tool.htmlwriter import HTMLWriter
 
@@ -129,14 +131,19 @@ class DomainRecorder:
             dalist_usr.append(tmp)
 
         cyclist = [
-            ("-".join(da), self.cycle_start_da[da]) for da in self.cycle_start_da
+            ("-".join(da), self.cycle_start_da[da])
+            for da in self.cycle_start_da
         ]
-        badlist = [("-".join(da), self.bad_inform[da]) for da in self.bad_inform]
+        badlist = [
+            ("-".join(da), self.bad_inform[da]) for da in self.bad_inform
+        ]
         rnilist = [
-            ("-".join(da), self.reqt_not_inform[da]) for da in self.reqt_not_inform
+            ("-".join(da), self.reqt_not_inform[da])
+            for da in self.reqt_not_inform
         ]
         inrlist = [
-            ("-".join(da), self.inform_not_reqt[da]) for da in self.inform_not_reqt
+            ("-".join(da), self.inform_not_reqt[da])
+            for da in self.inform_not_reqt
         ]
 
         dalist_sys = sorted(dalist_sys, key=lambda da: da[1], reverse=True)
@@ -197,7 +204,9 @@ class Reporter:
         fail2 = self.split_domain_nlu(domain, fail2)
         cycle = self.split_domain(domain, cycle)
         turn_num = turn.count(domain) * 2
-        self.recorders[domain].record(suc, inform, fail1, fail2, cycle, turn_num)
+        self.recorders[domain].record(
+            suc, inform, fail1, fail2, cycle, turn_num
+        )
 
     def report(self, com, suc, pre, rec, f1, turn_suc, turn):
         if not os.path.exists("results/"):
@@ -230,8 +239,12 @@ class Reporter:
         writer.write_dialog_loop_png(self.modelname)
 
         for domain in self.recorders:
-            _, suc, pre, rec, f1, _, turn_suc, turn = self.recorders[domain].get_info()
-            _, __, ___, ____, _____, ______ = self.recorders[domain].format_result()
+            _, suc, pre, rec, f1, _, turn_suc, turn = self.recorders[
+                domain
+            ].get_info()
+            _, __, ___, ____, _____, ______ = self.recorders[
+                domain
+            ].format_result()
             writer.write_domain(
                 domain,
                 suc,
@@ -333,13 +346,22 @@ class Reporter:
         y = [i[1] for i in infos]
         plt.bar(x1, y, width=0.1, align="center", label="Success rate")
         y = [i[2] for i in infos]
-        plt.bar(x2, y, width=0.1, align="center", tick_label=domains, label="Precision")
+        plt.bar(
+            x2,
+            y,
+            width=0.1,
+            align="center",
+            tick_label=domains,
+            label="Precision",
+        )
         y = [i[3] for i in infos]
         plt.bar(x3, y, width=0.1, align="center", label="Recall")
         y = [i[4] for i in infos]
         plt.bar(x4, y, width=0.1, align="center", label="Inform F1")
         plt.legend(loc=2, prop=font1)
-        plt.savefig("results/%s/Performance_for_each_domain.png" % self.modelname)
+        plt.savefig(
+            "results/%s/Performance_for_each_domain.png" % self.modelname
+        )
         plt.close()
 
     def plot_freq(self):
@@ -369,7 +391,9 @@ class Reporter:
         self.plot_pi(y, domains)
         font = {"weight": "bold", "size": 25}
         plt.title("Proportions of the dialogue loop", font, pad=30)
-        plt.savefig("results/%s/Proportions_of_the_dialogue_loop.png" % self.modelname)
+        plt.savefig(
+            "results/%s/Proportions_of_the_dialogue_loop.png" % self.modelname
+        )
         plt.close()
 
     def format_result(self):

@@ -1,10 +1,12 @@
-from convlab2.dst.trade.crosswoz.utils.config import *
-from convlab2.dst.trade.crosswoz.models.TRADE import *
-from torch import autograd
-from copy import deepcopy
-import pickle
+# -*- coding: utf-8 -*-
 import os.path
+import pickle
+from copy import deepcopy
 
+from torch import autograd
+
+from convlab2.dst.trade.crosswoz.models.TRADE import *
+from convlab2.dst.trade.crosswoz.utils.config import *
 
 #### LOAD MODEL path
 except_domain = args["except_domain"]
@@ -61,7 +63,9 @@ else:
 
     pbar = tqdm(enumerate(train), total=len(train))
     for i, data_o in pbar:
-        model.train_batch(data_o, int(args["clip"]), SLOTS_LIST[1], reset=(i == 0))
+        model.train_batch(
+            data_o, int(args["clip"]), SLOTS_LIST[1], reset=(i == 0)
+        )
         model.loss_ptr_to_bp.backward()
         for n, p in model.named_parameters():
             if p.grad is not None:
@@ -92,9 +96,16 @@ args["only_domain"] = except_domain
 args["except_domain"] = ""
 args["fisher_sample"] = 0
 args["data_ratio"] = 1
-train_single, dev_single, test_single, _, _, SLOTS_LIST_single, _, _ = prepare_data_seq(
-    True, args["task"], False, batch_size=BSZ
-)
+(
+    train_single,
+    dev_single,
+    test_single,
+    _,
+    _,
+    SLOTS_LIST_single,
+    _,
+    _,
+) = prepare_data_seq(True, args["task"], False, batch_size=BSZ)
 args["except_domain"] = except_domain
 
 

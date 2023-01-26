@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import time
 from collections import OrderedDict
 
@@ -150,7 +151,9 @@ class MetricsContainer(object):
         return self.metrics[name].value()
 
     def show(self):
-        return " ".join(["%s=%s" % (k, v.show()) for k, v in self.metrics.iteritems()])
+        return " ".join(
+            ["%s=%s" % (k, v.show()) for k, v in self.metrics.iteritems()]
+        )
 
     def dict(self):
         d = OrderedDict()

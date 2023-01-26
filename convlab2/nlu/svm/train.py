@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import configparser
 import os
 import pprint
@@ -22,7 +23,9 @@ def train(config):
     print("zip to {}".format(zip_path))
     dataListFile = config.get("train", "dataListFile")
     dataroot = config.get("train", "dataroot")
-    dw = dataset_walker(dataListFile=dataListFile, dataroot=dataroot, labels=True)
+    dw = dataset_walker(
+        dataListFile=dataListFile, dataroot=dataroot, labels=True
+    )
     c = Classifier.classifier(config)
     c.cacheFeature(dw)
     c.train(dw)

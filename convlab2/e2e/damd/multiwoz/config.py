@@ -1,4 +1,7 @@
-import logging, time, os
+# -*- coding: utf-8 -*-
+import logging
+import os
+import time
 
 
 class _Config:
@@ -23,7 +26,9 @@ class _Config:
         self.glove_path = "./data/glove/glove.6B.50d.txt"
         self.domain_file_path = "data/multi-woz-processed/domain_files.json"
         self.slot_value_set_path = "db/value_set_processed.json"
-        self.multi_acts_path = "data/multi-woz-processed/multi_act_mapping_train.json"
+        self.multi_acts_path = (
+            "data/multi-woz-processed/multi_act_mapping_train.json"
+        )
         self.exp_path = "to be generated"
         self.log_time = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
 

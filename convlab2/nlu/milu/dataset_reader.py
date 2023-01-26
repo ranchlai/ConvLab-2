@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
@@ -6,18 +7,18 @@ import logging
 import os
 import random
 import zipfile
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 from allennlp.data.dataset_readers.dataset_reader import DatasetReader
 from allennlp.data.fields import (
-    TextField,
-    SequenceLabelField,
-    MultiLabelField,
-    MetadataField,
     Field,
+    MetadataField,
+    MultiLabelField,
+    SequenceLabelField,
+    TextField,
 )
 from allennlp.data.instance import Instance
-from allennlp.data.token_indexers import TokenIndexer, SingleIdTokenIndexer
+from allennlp.data.token_indexers import SingleIdTokenIndexer, TokenIndexer
 from allennlp.data.tokenizers import Token
 from overrides import overrides
 
@@ -62,7 +63,9 @@ class MILUDatasetReader(DatasetReader):
         self._context_size = context_size
         self._agent = agent
         self._random_context_size = random_context_size
-        self._token_indexers = token_indexers or {"tokens": SingleIdTokenIndexer()}
+        self._token_indexers = token_indexers or {
+            "tokens": SingleIdTokenIndexer()
+        }
         self._token_delimiter = token_delimiter
 
     @overrides
@@ -133,14 +136,18 @@ class MILUDatasetReader(DatasetReader):
                                 "do nt care",
                                 "do n't care",
                             ]:
-                                intents.append(dacts + "+" + dact[0] + "*" + dact[1])
+                                intents.append(
+                                    dacts + "+" + dact[0] + "*" + dact[1]
+                                )
 
                 for dacts in turn["dialog_act"]:
                     for dact in turn["dialog_act"][dacts]:
                         if dacts not in dialog_act:
                             dialog_act[dacts] = turn["dialog_act"][dacts]
                             break
-                        elif dact[0] not in [sv[0] for sv in dialog_act[dacts]]:
+                        elif dact[0] not in [
+                            sv[0] for sv in dialog_act[dacts]
+                        ]:
                             dialog_act[dacts].append(dact)
 
                 num_context = (
@@ -151,7 +158,9 @@ class MILUDatasetReader(DatasetReader):
                 if len(context_tokens_list) > 0 and num_context > 0:
                     wrapped_context_tokens = [
                         Token(token)
-                        for context_tokens in context_tokens_list[-num_context:]
+                        for context_tokens in context_tokens_list[
+                            -num_context:
+                        ]
                         for token in context_tokens
                     ]
                 else:
@@ -160,7 +169,11 @@ class MILUDatasetReader(DatasetReader):
                 context_tokens_list.append(tokens + ["SENT_END"])
 
                 yield self.text_to_instance(
-                    wrapped_context_tokens, wrapped_tokens, tags, intents, dialog_act
+                    wrapped_context_tokens,
+                    wrapped_tokens,
+                    tags,
+                    intents,
+                    dialog_act,
                 )
 
     def text_to_instance(
@@ -177,7 +190,9 @@ class MILUDatasetReader(DatasetReader):
         # pylint: disable=arguments-differ
         fields: Dict[str, Field] = {}
         # print([t.text for t in context_tokens])
-        fields["context_tokens"] = TextField(context_tokens, self._token_indexers)
+        fields["context_tokens"] = TextField(
+            context_tokens, self._token_indexers
+        )
         fields["tokens"] = TextField(tokens, self._token_indexers)
         fields["metadata"] = MetadataField({"words": [x.text for x in tokens]})
         if tags is not None:

@@ -8,14 +8,14 @@ __time__ = "2019/1/31 10:24"
 
 import copy
 import json
+import logging
 import os
 import random
 import re
-import logging
 
 from convlab2.policy.policy import Policy
 from convlab2.task.multiwoz.goal_generator import GoalGenerator
-from convlab2.util.multiwoz.multiwoz_slot_trans import REF_USR_DA, REF_SYS_DA
+from convlab2.util.multiwoz.multiwoz_slot_trans import REF_SYS_DA, REF_USR_DA
 
 DEF_VAL_UNK = "?"  # Unknown
 DEF_VAL_DNC = "dontcare"  # Do not care
@@ -173,7 +173,9 @@ class UserPolicyAgendaMultiWoz(Policy):
                     new_act = dom.capitalize() + "-" + intent.capitalize()
                     new_action[new_act] = []
                     for pairs in action[act]:
-                        slot = REF_USR_DA_M[dom.capitalize()].get(pairs[0], None)
+                        slot = REF_USR_DA_M[dom.capitalize()].get(
+                            pairs[0], None
+                        )
                         if pairs[0] == "none" and pairs[1] == "none":
                             new_action[new_act].append(["none", "none"])
                         elif pairs[0] == "choice" and pairs[1] == "any":
@@ -227,7 +229,10 @@ class UserPolicyAgendaMultiWoz(Policy):
                             logging.warning("illegal pairs: {}".format(pairs))
                             continue
 
-                        if REF_SYS_DA_M[dom].get(pairs[0].lower(), None) is not None:
+                        if (
+                            REF_SYS_DA_M[dom].get(pairs[0].lower(), None)
+                            is not None
+                        ):
                             new_list.append(
                                 [
                                     REF_SYS_DA_M[dom][pairs[0].lower()],
@@ -327,13 +332,21 @@ def check_if_time(value):
 def check_constraint(slot, val_usr, val_sys):
     try:
         if slot == "arriveBy":
-            val1 = int(val_usr.split(":")[0]) * 100 + int(val_usr.split(":")[1])
-            val2 = int(val_sys.split(":")[0]) * 100 + int(val_sys.split(":")[1])
+            val1 = int(val_usr.split(":")[0]) * 100 + int(
+                val_usr.split(":")[1]
+            )
+            val2 = int(val_sys.split(":")[0]) * 100 + int(
+                val_sys.split(":")[1]
+            )
             if val1 < val2:
                 return True
         elif slot == "leaveAt":
-            val1 = int(val_usr.split(":")[0]) * 100 + int(val_usr.split(":")[1])
-            val2 = int(val_sys.split(":")[0]) * 100 + int(val_sys.split(":")[1])
+            val1 = int(val_usr.split(":")[0]) * 100 + int(
+                val_usr.split(":")[1]
+            )
+            val2 = int(val_sys.split(":")[0]) * 100 + int(
+                val_sys.split(":")[1]
+            )
             if val1 > val2:
                 return True
         else:
@@ -361,7 +374,8 @@ class Goal(object):
         for domain in self.domains:
             if "reqt" in self.domain_goals[domain].keys():
                 self.domain_goals[domain]["reqt"] = {
-                    slot: DEF_VAL_UNK for slot in self.domain_goals[domain]["reqt"]
+                    slot: DEF_VAL_UNK
+                    for slot in self.domain_goals[domain]["reqt"]
                 }
 
             if "book" in self.domain_goals[domain].keys():
@@ -381,7 +395,8 @@ class Goal(object):
         for domain in self.domains:
             if "reqt" in self.domain_goals[domain].keys():
                 self.domain_goals[domain]["reqt"] = {
-                    slot: DEF_VAL_UNK for slot in self.domain_goals[domain]["reqt"]
+                    slot: DEF_VAL_UNK
+                    for slot in self.domain_goals[domain]["reqt"]
                 }
 
             if "book" in self.domain_goals[domain].keys():
@@ -412,7 +427,9 @@ class Goal(object):
             if "reqt" in self.domain_goals[domain]:
                 requests = self.domain_goals[domain]["reqt"]
                 unknow_reqts = [
-                    key for (key, val) in requests.items() if val in NOT_SURE_VALS
+                    key
+                    for (key, val) in requests.items()
+                    if val in NOT_SURE_VALS
                 ]
                 if len(unknow_reqts) > 0:
                     return (
@@ -452,7 +469,10 @@ class Agenda(object):
 
         def random_sample(data, minimum=0, maximum=1000):
             return random.sample(
-                data, random.randint(min(len(data), minimum), min(len(data), maximum))
+                data,
+                random.randint(
+                    min(len(data), minimum), min(len(data), maximum)
+                ),
             )
 
         self.CLOSE_ACT = "general-bye"
@@ -532,11 +552,15 @@ class Agenda(object):
             if "inform" in diaact or "recommend" in diaact:
                 for slot, val in sys_action[diaact]:
                     if slot == "name":
-                        self._remove_item(diaact.split("-")[0] + "-inform", "choice")
+                        self._remove_item(
+                            diaact.split("-")[0] + "-inform", "choice"
+                        )
             if "booking" in diaact and self.cur_domain:
                 g_book = self._get_goal_infos(self.cur_domain, goal)[-2]
                 if len(g_book) == 0:
-                    self._push_item(self.cur_domain + "-inform", "NotBook", "none")
+                    self._push_item(
+                        self.cur_domain + "-inform", "NotBook", "none"
+                    )
             if "OfferBook" in diaact:
                 domain = diaact.split("-")[0]
                 g_book = self._get_goal_infos(domain, goal)[-2]
@@ -683,9 +707,13 @@ class Agenda(object):
         return g_reqt, g_info, g_fail_info, g_book, g_fail_book
 
     def _handle_inform(self, domain, intent, slot_vals, goal: Goal):
-        g_reqt, g_info, g_fail_info, g_book, g_fail_book = self._get_goal_infos(
-            domain, goal
-        )
+        (
+            g_reqt,
+            g_info,
+            g_fail_info,
+            g_book,
+            g_fail_book,
+        ) = self._get_goal_infos(domain, goal)
 
         info_right = True
         for [slot, value] in slot_vals:
@@ -694,7 +722,9 @@ class Agenda(object):
                     slot = "duration" if domain == "train" else "time"
                 else:
                     logging.warning(
-                        "illegal booking slot: {}, domain: {}".format(slot, domain)
+                        "illegal booking slot: {}, domain: {}".format(
+                            slot, domain
+                        )
                     )
                     continue
 
@@ -741,16 +771,21 @@ class Agenda(object):
         return False
 
     def _handle_request(self, domain, intent, slot_vals, goal: Goal):
-        g_reqt, g_info, g_fail_info, g_book, g_fail_book = self._get_goal_infos(
-            domain, goal
-        )
+        (
+            g_reqt,
+            g_info,
+            g_fail_info,
+            g_book,
+            g_fail_book,
+        ) = self._get_goal_infos(domain, goal)
         for [slot, _] in slot_vals:
             if slot == "time":
                 if domain in ["train", "restaurant"]:
                     slot = "duration" if domain == "train" else "time"
                 else:
                     logging.warning(
-                        "illegal booking slot: %s, slot: %s domain" % (slot, domain)
+                        "illegal booking slot: %s, slot: %s domain"
+                        % (slot, domain)
                     )
                     continue
 
@@ -768,12 +803,20 @@ class Agenda(object):
 
             else:
 
-                if domain == "taxi" and (slot == "destination" or slot == "departure"):
+                if domain == "taxi" and (
+                    slot == "destination" or slot == "departure"
+                ):
                     places = [
                         dom
                         for dom in goal.domains[: goal.domains.index("taxi")]
                         if dom
-                        in ["attraction", "hotel", "restaurant", "police", "hospital"]
+                        in [
+                            "attraction",
+                            "hotel",
+                            "restaurant",
+                            "police",
+                            "hospital",
+                        ]
                     ]  # name will not appear in reqt
                     if len(places) >= 1 and slot == "destination":
                         place_idx = -1
@@ -788,7 +831,9 @@ class Agenda(object):
                             )
                             not in NOT_SURE_VALS
                         ):
-                            place = goal.domain_goals[places[place_idx]]["info"]["name"]
+                            place = goal.domain_goals[places[place_idx]][
+                                "info"
+                            ]["name"]
                         # elif goal.domain_goals[places[place_idx]]['reqt'].get('address', DEF_VAL_NUL) not in NOT_SURE_VALS:
                         #     place = goal.domain_goals[places[place_idx]]['reqt']['address']
                         else:
@@ -804,9 +849,13 @@ class Agenda(object):
         return False
 
     def _handle_nooffer(self, domain, intent, slot_vals, goal: Goal):
-        g_reqt, g_info, g_fail_info, g_book, g_fail_book = self._get_goal_infos(
-            domain, goal
-        )
+        (
+            g_reqt,
+            g_info,
+            g_fail_info,
+            g_book,
+            g_fail_book,
+        ) = self._get_goal_infos(domain, goal)
         if g_fail_info:
             # update info data to the stack
             for slot in g_info.keys():
@@ -816,18 +865,22 @@ class Agenda(object):
                     self._push_item(domain + "-inform", slot, g_info[slot])
 
             # change fail_info name
-            goal.domain_goals[domain]["fail_info_fail"] = goal.domain_goals[domain].pop(
-                "fail_info"
-            )
+            goal.domain_goals[domain]["fail_info_fail"] = goal.domain_goals[
+                domain
+            ].pop("fail_info")
         elif g_reqt:
             self.close_session()
             return True
         return False
 
     def _handle_nobook(self, domain, intent, slot_vals, goal: Goal):
-        g_reqt, g_info, g_fail_info, g_book, g_fail_book = self._get_goal_infos(
-            domain, goal
-        )
+        (
+            g_reqt,
+            g_info,
+            g_fail_info,
+            g_book,
+            g_fail_book,
+        ) = self._get_goal_infos(domain, goal)
         if g_fail_book:
             # Discard fail_book data and update the book data to the stack
             for slot in g_book.keys():
@@ -837,18 +890,22 @@ class Agenda(object):
                     self._push_item(domain + "-inform", slot, g_book[slot])
 
             # change fail_info name
-            goal.domain_goals[domain]["fail_book_fail"] = goal.domain_goals[domain].pop(
-                "fail_book"
-            )
+            goal.domain_goals[domain]["fail_book_fail"] = goal.domain_goals[
+                domain
+            ].pop("fail_book")
         elif "booked" in goal.domain_goals[domain].keys():
             self.close_session()
             return True
         return False
 
     def _handle_select(self, domain, intent, slot_vals, goal: Goal):
-        g_reqt, g_info, g_fail_info, g_book, g_fail_book = self._get_goal_infos(
-            domain, goal
-        )
+        (
+            g_reqt,
+            g_info,
+            g_fail_info,
+            g_book,
+            g_fail_book,
+        ) = self._get_goal_infos(domain, goal)
         # delete Choice
         for slot, val in slot_vals:
             if slot == "choice" and val.strip().lower() not in [
@@ -858,7 +915,9 @@ class Agenda(object):
                 "one",
             ]:
                 self._push_item(domain + "-inform", "choice", "any")
-        slot_vals = [[slot, val] for [slot, val] in slot_vals if slot != "choice"]
+        slot_vals = [
+            [slot, val] for [slot, val] in slot_vals if slot != "choice"
+        ]
 
         if slot_vals:
             slot = slot_vals[0][0]
@@ -892,7 +951,13 @@ class Agenda(object):
     def _setdefault_current_domain_by_usraction(self, usr_action):
         for diaact in usr_action.keys():
             domain, _ = diaact.split("-")
-            if domain in ["attraction", "hotel", "restaurant", "taxi", "train"]:
+            if domain in [
+                "attraction",
+                "hotel",
+                "restaurant",
+                "taxi",
+                "train",
+            ]:
                 self.cur_domain = domain
 
     def _remove_item(self, diaact, slot=DEF_VAL_UNK):
@@ -974,7 +1039,9 @@ class Agenda(object):
                     elif slot == "day":
                         item["value"] = "the same day"
                     elif slot == "pricerange":
-                        item["value"] = "in the same price range as the {}".format(
+                        item[
+                            "value"
+                        ] = "in the same price range as the {}".format(
                             diaact.split("-")[0]
                         )
                     elif slot == "area":
@@ -989,7 +1056,9 @@ class Agenda(object):
         values = []
         p_diaact, p_slot = self.__check_next_diaact_slot()
         if p_diaact.split("-")[1] == "inform" and p_slot in BOOK_SLOT:
-            for _ in range(10 if self.__cur_push_num == 0 else self.__cur_push_num):
+            for _ in range(
+                10 if self.__cur_push_num == 0 else self.__cur_push_num
+            ):
                 try:
                     item = self.__stack.pop(-1)
                     diaacts.append(item["diaact"])
@@ -1013,7 +1082,9 @@ class Agenda(object):
                 all(
                     [
                         self.__stack[-i - 1]["value"] == DEF_VAL_DNC
-                        for i in range(0, min(len(self.__stack), self.__cur_push_num))
+                        for i in range(
+                            0, min(len(self.__stack), self.__cur_push_num)
+                        )
                     ]
                 )
             ):
@@ -1056,15 +1127,17 @@ class Agenda(object):
 
 
 if __name__ == "__main__":
+    from pprint import pprint
+
     import numpy as np
     import torch
-    from pprint import pprint
-    from convlab2.dialog_agent import PipelineAgent, BiSession
-    from convlab2.evaluator.multiwoz_eval import MultiWozEvaluator
-    from convlab2.policy.rule.multiwoz import RulePolicy
-    from convlab2.nlg.template.multiwoz.nlg import TemplateNLG
+
+    from convlab2.dialog_agent import BiSession, PipelineAgent
     from convlab2.dst.rule.multiwoz.dst import RuleDST
+    from convlab2.evaluator.multiwoz_eval import MultiWozEvaluator
+    from convlab2.nlg.template.multiwoz.nlg import TemplateNLG
     from convlab2.nlu.jointBERT.multiwoz.nlu import BERTNLU
+    from convlab2.policy.rule.multiwoz import RulePolicy
 
     seed = 41
     np.random.seed(seed)
@@ -1128,7 +1201,11 @@ if __name__ == "__main__":
             "reqt": ["postcode"],
         },
         "restaurant": {
-            "info": {"area": "centre", "food": "portuguese", "pricerange": "cheap"},
+            "info": {
+                "area": "centre",
+                "food": "portuguese",
+                "pricerange": "cheap",
+            },
             "fail_info": {
                 "area": "centre",
                 "food": "portuguese",

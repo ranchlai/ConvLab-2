@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
 import torch
 import torch.nn as nn
-from convlab2.dst.comer.multiwoz import dict
 from torch.autograd import Variable
+
+from convlab2.dst.comer.multiwoz import dict
 
 
 def criterion(tgt_vocab_size, use_cuda):

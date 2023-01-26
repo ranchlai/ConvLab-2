@@ -1,7 +1,8 @@
-from convlab2.dst.trade.multiwoz.utils.config import *
-from convlab2.dst.trade.multiwoz.models.TRADE import *
+# -*- coding: utf-8 -*-
 from copy import deepcopy
 
+from convlab2.dst.trade.multiwoz.models.TRADE import *
+from convlab2.dst.trade.multiwoz.utils.config import *
 
 except_domain = args["except_domain"]
 directory = args["path"].split("/")
@@ -33,9 +34,16 @@ else:
 args["only_domain"] = except_domain
 args["except_domain"] = ""
 args["data_ratio"] = 1
-train_single, dev_single, test_single, _, _, SLOTS_LIST_single, _, _ = prepare_data_seq(
-    True, args["task"], False, batch_size=BSZ
-)
+(
+    train_single,
+    dev_single,
+    test_single,
+    _,
+    _,
+    SLOTS_LIST_single,
+    _,
+    _,
+) = prepare_data_seq(True, args["task"], False, batch_size=BSZ)
 args["except_domain"] = except_domain
 
 model = globals()[args["decoder"]](

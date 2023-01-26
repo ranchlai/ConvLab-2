@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 """Dialog controller classes."""
-from abc import ABC, abstractmethod
 import random
+from abc import ABC, abstractmethod
+
 from convlab2.dialog_agent.agent import Agent
 
 
@@ -53,7 +55,11 @@ class BiSession(Session):
     """
 
     def __init__(
-        self, sys_agent: Agent, user_agent: Agent, kb_query=None, evaluator=None
+        self,
+        sys_agent: Agent,
+        user_agent: Agent,
+        kb_query=None,
+        evaluator=None,
     ):
         """
         Args:

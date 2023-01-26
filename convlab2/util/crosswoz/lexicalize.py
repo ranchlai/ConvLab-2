@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 def delexicalize_da(da):
     delexicalized_da = []
     counter = {}
@@ -14,7 +15,17 @@ def delexicalize_da(da):
 
 
 def lexicalize_da(da, cur_domain, entities):
-    not_dish = {"当地口味", "老字号", "其他", "美食林风味", "特色小吃", "美食林臻选", "深夜营业", "名人光顾", "四合院"}
+    not_dish = {
+        "当地口味",
+        "老字号",
+        "其他",
+        "美食林风味",
+        "特色小吃",
+        "美食林臻选",
+        "深夜营业",
+        "名人光顾",
+        "四合院",
+    }
     lexicalized_da = []
     for a in da:
         intent, domain, slot, value = a.split("+")
@@ -59,24 +70,40 @@ def lexicalize_da(da, cur_domain, entities):
                             assert isinstance(entity[slot], list)
                             if value < len(entity[slot]):
                                 value = entity[slot][value]
-                                lexicalized_da.append([intent, domain, slot, value])
+                                lexicalized_da.append(
+                                    [intent, domain, slot, value]
+                                )
                         elif slot == "推荐菜":
                             assert isinstance(entity[slot], list)
-                            dishes = [x for x in entity[slot] if x not in not_dish]
+                            dishes = [
+                                x for x in entity[slot] if x not in not_dish
+                            ]
                             if len(dishes) > value:
                                 value = dishes[value]
-                            lexicalized_da.append([intent, domain, slot, value])
+                            lexicalized_da.append(
+                                [intent, domain, slot, value]
+                            )
                         elif "酒店设施" in slot:
                             assert value == 0
                             slot, value = slot.split("-")
                             assert isinstance(entity[slot], list)
                             if value in entity[slot]:
                                 lexicalized_da.append(
-                                    [intent, domain, "-".join([slot, value]), "是"]
+                                    [
+                                        intent,
+                                        domain,
+                                        "-".join([slot, value]),
+                                        "是",
+                                    ]
                                 )
                             else:
                                 lexicalized_da.append(
-                                    [intent, domain, "-".join([slot, value]), "否"]
+                                    [
+                                        intent,
+                                        domain,
+                                        "-".join([slot, value]),
+                                        "否",
+                                    ]
                                 )
                         elif slot in ["门票", "价格", "人均消费"]:
                             assert value == 0
@@ -93,5 +120,7 @@ def lexicalize_da(da, cur_domain, entities):
                         else:
                             assert value == 0
                             value = entity[slot]
-                            lexicalized_da.append([intent, domain, slot, value])
+                            lexicalized_da.append(
+                                [intent, domain, slot, value]
+                            )
     return lexicalized_da

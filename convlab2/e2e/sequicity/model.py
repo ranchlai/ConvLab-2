@@ -1,8 +1,9 @@
+# -*- coding: utf-8 -*-
 import argparse
+import json
 import logging
 import random
 import time
-import json
 
 import numpy as np
 import torch
@@ -16,9 +17,13 @@ from convlab2.e2e.sequicity.metric import (
     KvretEvaluator,
     MultiWozEvaluator,
 )
-from convlab2.e2e.sequicity.reader import CamRest676Reader, KvretReader, MultiWozReader
-from convlab2.e2e.sequicity.reader import get_glove_matrix
-from convlab2.e2e.sequicity.reader import pad_sequences
+from convlab2.e2e.sequicity.reader import (
+    CamRest676Reader,
+    KvretReader,
+    MultiWozReader,
+    get_glove_matrix,
+    pad_sequences,
+)
 from convlab2.e2e.sequicity.tsd_net import TSD, cuda_
 
 
@@ -91,7 +96,9 @@ class Model:
                 prev_z_py, cfg.max_ts, padding="post", truncating="pre"
             ).transpose((1, 0))
             prev_z_len = np.array([len(_) for _ in prev_z_py])
-            prev_z_input = cuda_(Variable(torch.from_numpy(prev_z_input_np).long()))
+            prev_z_input = cuda_(
+                Variable(torch.from_numpy(prev_z_input_np).long())
+            )
             kw_ret["prev_z_len"] = prev_z_len
             kw_ret["prev_z_input"] = prev_z_input
             kw_ret["prev_z_input_np"] = prev_z_input_np
@@ -100,7 +107,9 @@ class Model:
         u_input_np = pad_sequences(
             u_input_py, cfg.max_ts, padding="post", truncating="pre"
         ).transpose((1, 0))
-        z_input_np = pad_sequences(py_batch["bspan"], padding="post").transpose((1, 0))
+        z_input_np = pad_sequences(
+            py_batch["bspan"], padding="post"
+        ).transpose((1, 0))
         m_input_np = pad_sequences(
             py_batch["response"], cfg.max_ts, padding="post", truncating="post"
         ).transpose((1, 0))
@@ -108,7 +117,9 @@ class Model:
         u_len = np.array(u_len_py)
         m_len = np.array(py_batch["m_len"])
 
-        degree_input = cuda_(Variable(torch.from_numpy(degree_input_np).float()))
+        degree_input = cuda_(
+            Variable(torch.from_numpy(degree_input_np).float())
+        )
         u_input = cuda_(Variable(torch.from_numpy(u_input_np).long()))
         z_input = cuda_(Variable(torch.from_numpy(z_input_np).long()))
         m_input = cuda_(Variable(torch.from_numpy(m_input_np).long()))
@@ -178,7 +189,9 @@ class Model:
                         **kw_ret
                     )
                     loss.backward(retain_graph=turn_num != len(dial_batch) - 1)
-                    grad = torch.nn.utils.clip_grad_norm(self.m.parameters(), 5.0)
+                    grad = torch.nn.utils.clip_grad_norm(
+                        self.m.parameters(), 5.0
+                    )
                     optim.step()
                     sup_loss += loss.item()
                     sup_cnt += 1
@@ -194,7 +207,8 @@ class Model:
             train_time += time.time() - sw
             logging.info("Traning time: {}".format(train_time))
             logging.info(
-                "avg training loss in epoch %d sup:%f" % (epoch, epoch_sup_loss)
+                "avg training loss in epoch %d sup:%f"
+                % (epoch, epoch_sup_loss)
             )
 
             valid_sup_loss, valid_unsup_loss = self.validate()
@@ -214,7 +228,8 @@ class Model:
                 if not early_stop_count:
                     break
                 logging.info(
-                    "early stop countdown %d, learning rate %f" % (early_stop_count, lr)
+                    "early stop countdown %d, learning rate %f"
+                    % (early_stop_count, lr)
                 )
 
     def eval(self, data="test"):
@@ -250,7 +265,9 @@ class Model:
                     turn_states=turn_states,
                     **kw_ret
                 )
-                self.reader.wrap_result(turn_batch, m_idx, z_idx, prev_z=prev_z)
+                self.reader.wrap_result(
+                    turn_batch, m_idx, z_idx, prev_z=prev_z
+                )
                 prev_z = z_idx
         ev = self.EV(result_path=cfg.result_path)
         res = ev.run_metrics()
@@ -270,7 +287,9 @@ class Model:
                 constraints[j] = ent.replace("_", " ")
             degree = self.reader.db_search(constraints)
             degree_input_list = self.reader._degree_vec_mapping(len(degree))
-            degree_input = cuda_(Variable(torch.Tensor(degree_input_list).unsqueeze(0)))
+            degree_input = cuda_(
+                Variable(torch.Tensor(degree_input_list).unsqueeze(0))
+            )
             return degree, degree_input
 
         def denormalize(uttr):
@@ -327,7 +346,10 @@ class Model:
             print("sys:", sys)
             if cfg.prev_z_method == "separate":
                 eob = self.reader.vocab.encode("EOS_Z2")
-                if eob in z_idx[0] and z_idx[0].index(eob) != len(z_idx[0]) - 1:
+                if (
+                    eob in z_idx[0]
+                    and z_idx[0].index(eob) != len(z_idx[0]) - 1
+                ):
                     idx = z_idx[0].index(eob)
                     z_idx[0] = z_idx[0][: idx + 1]
                 for j, word in enumerate(z_idx[0]):
@@ -337,7 +359,9 @@ class Model:
                     z_idx, cfg.max_ts, padding="post", truncating="pre"
                 ).transpose((1, 0))
                 prev_z_len = np.array([len(_) for _ in z_idx])
-                prev_z_input = cuda_(Variable(torch.from_numpy(prev_z_input_np).long()))
+                prev_z_input = cuda_(
+                    Variable(torch.from_numpy(prev_z_input_np).long())
+                )
                 kw_ret["prev_z_len"] = prev_z_len
                 kw_ret["prev_z_input"] = prev_z_input
                 kw_ret["prev_z_input_np"] = prev_z_input_np
@@ -355,7 +379,9 @@ class Model:
                 constraints[j] = ent.replace("_", " ")
             degree = self.reader.db_search(constraints)
             degree_input_list = self.reader._degree_vec_mapping(len(degree))
-            degree_input = cuda_(Variable(torch.Tensor(degree_input_list).unsqueeze(0)))
+            degree_input = cuda_(
+                Variable(torch.Tensor(degree_input_list).unsqueeze(0))
+            )
             return degree, degree_input
 
         self.m.eval()
@@ -520,19 +546,24 @@ class Model:
                     if loss_rl is not None:
                         loss = loss_rl
                         loss.backward()
-                        grad = torch.nn.utils.clip_grad_norm(self.m.parameters(), 2.0)
+                        grad = torch.nn.utils.clip_grad_norm(
+                            self.m.parameters(), 2.0
+                        )
                         optim.step()
                         epoch_loss += loss.item()
                         cnt += 1
                         logging.debug(
-                            "{} loss {}, grad:{}".format(mode, loss.item(), grad)
+                            "{} loss {}, grad:{}".format(
+                                mode, loss.item(), grad
+                            )
                         )
 
                     prev_z = turn_batch["bspan"]
 
             epoch_sup_loss = epoch_loss / (cnt + 1e-8)
             logging.info(
-                "avg training loss in epoch %d sup:%f" % (epoch, epoch_sup_loss)
+                "avg training loss in epoch %d sup:%f"
+                % (epoch, epoch_sup_loss)
             )
 
             valid_sup_loss, valid_unsup_loss = self.validate()
@@ -553,7 +584,8 @@ class Model:
                 if not early_stop_count:
                     break
                 logging.info(
-                    "early stop countdown %d, learning rate %f" % (early_stop_count, lr)
+                    "early stop countdown %d, learning rate %f"
+                    % (early_stop_count, lr)
                 )
 
     def save_model(self, epoch, path=None):
@@ -569,7 +601,9 @@ class Model:
     def load_model(self, path=None):
         if not path:
             path = cfg.model_path
-        all_state = torch.load(path, map_location="cuda" if cfg.cuda else "cpu")
+        all_state = torch.load(
+            path, map_location="cuda" if cfg.cuda else "cpu"
+        )
         self.m.load_state_dict(all_state["lstd"])
         self.base_epoch = all_state.get("epoch", 0)
 
@@ -596,7 +630,9 @@ class Model:
 
     def count_params(self):
 
-        module_parameters = filter(lambda p: p.requires_grad, self.m.parameters())
+        module_parameters = filter(
+            lambda p: p.requires_grad, self.m.parameters()
+        )
         param_cnt = sum([np.prod(p.size()) for p in module_parameters])
 
         print("total trainable params: %d" % param_cnt)

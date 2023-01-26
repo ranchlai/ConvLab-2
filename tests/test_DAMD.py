@@ -1,16 +1,19 @@
+# -*- coding: utf-8 -*-
 # available NLU models
 # from convlab2.nlu.svm.multiwoz import SVMNLU
-from convlab2.nlu.jointBERT.multiwoz import BERTNLU
+import random
+from pprint import pprint
 
-# from convlab2.nlu.milu.multiwoz import MILU
-# available DST models
-# from convlab2.dst.rule.multiwoz import RuleDST
-# from convlab2.dst.mdbt.multiwoz import MDBT
-# from convlab2.dst.sumbt.multiwoz import SUMBT
-# from convlab2.dst.trade.multiwoz import TRADE
-# from convlab2.dst.comer.multiwoz import COMER
-# available Policy models
-from convlab2.policy.rule.multiwoz import RulePolicy
+import numpy as np
+import torch
+
+from convlab2.dialog_agent import BiSession, PipelineAgent
+
+# from convlab2.nlg.sclstm.multiwoz import SCLSTM
+# available E2E models
+# from convlab2.e2e.sequicity.multiwoz import Sequicity
+from convlab2.e2e.damd.multiwoz import Damd
+from convlab2.evaluator.multiwoz_eval import MultiWozEvaluator
 
 # from convlab2.policy.ppo.multiwoz import PPOPolicy
 # from convlab2.policy.pg.multiwoz import PGPolicy
@@ -22,18 +25,18 @@ from convlab2.policy.rule.multiwoz import RulePolicy
 # from convlab2.policy.larl.multiwoz import LaRL
 # available NLG models
 from convlab2.nlg.template.multiwoz import TemplateNLG
+from convlab2.nlu.jointBERT.multiwoz import BERTNLU
 
-# from convlab2.nlg.sclstm.multiwoz import SCLSTM
-# available E2E models
-# from convlab2.e2e.sequicity.multiwoz import Sequicity
-from convlab2.e2e.damd.multiwoz import Damd
-from convlab2.dialog_agent import PipelineAgent, BiSession
-from convlab2.evaluator.multiwoz_eval import MultiWozEvaluator
+# from convlab2.nlu.milu.multiwoz import MILU
+# available DST models
+# from convlab2.dst.rule.multiwoz import RuleDST
+# from convlab2.dst.mdbt.multiwoz import MDBT
+# from convlab2.dst.sumbt.multiwoz import SUMBT
+# from convlab2.dst.trade.multiwoz import TRADE
+# from convlab2.dst.comer.multiwoz import COMER
+# available Policy models
+from convlab2.policy.rule.multiwoz import RulePolicy
 from convlab2.util.analysis_tool.analyzer import Analyzer
-from pprint import pprint
-import random
-import numpy as np
-import torch
 
 
 def set_seed(r_seed):
@@ -69,7 +72,9 @@ def test_end2end():
     # template NLG
     user_nlg = TemplateNLG(is_user=True)
     # assemble
-    user_agent = PipelineAgent(user_nlu, user_dst, user_policy, user_nlg, name="user")
+    user_agent = PipelineAgent(
+        user_nlu, user_dst, user_policy, user_nlg, name="user"
+    )
 
     analyzer = Analyzer(user_agent=user_agent, dataset="multiwoz")
 

@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 import re
+
 import torch
 
 
@@ -37,7 +39,11 @@ def calculateF1(predict_golden):
     # print(TP, FP, FN)
     precision = 1.0 * TP / (TP + FP) if TP + FP else 0.0
     recall = 1.0 * TP / (TP + FN) if TP + FN else 0.0
-    F1 = 2.0 * precision * recall / (precision + recall) if precision + recall else 0.0
+    F1 = (
+        2.0 * precision * recall / (precision + recall)
+        if precision + recall
+        else 0.0
+    )
     return precision, recall, F1
 
 
@@ -73,7 +79,12 @@ def intent2triples(intent_seq):
 
 
 def recover_intent(
-    dataloader, intent_logits, tag_logits, tag_mask_tensor, ori_word_seq, new2ori
+    dataloader,
+    intent_logits,
+    tag_logits,
+    tag_mask_tensor,
+    ori_word_seq,
+    new2ori,
 ):
     # tag_logits = [sequence_length, tag_dim]
     # intent_logits = [intent_dim]

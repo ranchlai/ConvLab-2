@@ -1,14 +1,17 @@
+# -*- coding: utf-8 -*-
 """
 generate user goal for collecting new multiwoz data
 """
 
+import datetime
+import json
+import random
+from pprint import pprint
+
+import numpy as np
+
 from convlab2.task.multiwoz.goal_generator import GoalGenerator
 from convlab2.util.file_util import read_zipped_json
-import random
-import numpy as np
-import json
-import datetime
-from pprint import pprint
 
 
 def extract_slot_combination_from_goal(goal):
@@ -33,19 +36,25 @@ def extract_slot_combination_from_goal(goal):
                     #     for slot in content:
                     #         serialized_goal.append("{}-{}-{}".format(domain, scope, slot))
                     for slot in content:
-                        serialized_goal.append("{}-{}-{}".format(domain, scope, slot))
+                        serialized_goal.append(
+                            "{}-{}-{}".format(domain, scope, slot)
+                        )
     return sorted(serialized_goal)
 
 
 def test_generate_overlap(total_num=1000, seed=42, output_file="goal.json"):
-    train_data = read_zipped_json("../../../data/multiwoz/train.json.zip", "train.json")
+    train_data = read_zipped_json(
+        "../../../data/multiwoz/train.json.zip", "train.json"
+    )
     train_serialized_goals = []
     for d in train_data:
         train_serialized_goals.append(
             extract_slot_combination_from_goal(train_data[d]["goal"])
         )
 
-    test_data = read_zipped_json("../../../data/multiwoz/test.json.zip", "test.json")
+    test_data = read_zipped_json(
+        "../../../data/multiwoz/test.json.zip", "test.json"
+    )
     test_serialized_goals = []
     for d in test_data:
         test_serialized_goals.append(
@@ -96,7 +105,9 @@ def test_generate_overlap(total_num=1000, seed=42, output_file="goal.json"):
     for serialized_goal in serialized_goals:
         if serialized_goal in train_serialized_goals:
             overlap += 1
-    print(len(train_serialized_goals), len(serialized_goals), overlap)  # 8434 1000 199
+    print(
+        len(train_serialized_goals), len(serialized_goals), overlap
+    )  # 8434 1000 199
 
 
 def generate(total_num=1000, seed=42, output_file="goal.json"):

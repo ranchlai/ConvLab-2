@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Sequicity is an end-to-end task-oriented dialog system based on a single sequence-to-sequence model that uses belief span to track dialog believes. We adapt the code from github to work in multiwoz corpus.
 
@@ -5,30 +6,32 @@ Reference:
 
 Lei, W., Jin, X., Kan, M. Y., Ren, Z., He, X., & Yin, D. (2018, July). Sequicity: Simplifying task-oriented dialogue systems with single sequence-to-sequence architectures. In Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers) (pp. 1437-1447).
 """
+import json
+
 # -*- coding: utf-8 -*-
 import os
 import random
 import zipfile
-import json
+
 import numpy as np
 import torch
 from nltk import word_tokenize
 from torch.autograd import Variable
 
-from convlab2.util.file_util import cached_path
+from convlab2.dialog_agent import Agent
 from convlab2.e2e.sequicity.config import global_config as cfg
 from convlab2.e2e.sequicity.model import Model
 from convlab2.e2e.sequicity.reader import pad_sequences
 from convlab2.e2e.sequicity.tsd_net import cuda_
-from convlab2.dialog_agent import Agent
+from convlab2.util.file_util import cached_path
 
 # DEFAULT_CUDA_DEVICE = -1
 DEFAULT_DIRECTORY = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DEFAULT_CONFIG_FILE = os.path.join(DEFAULT_DIRECTORY, "camrest/configs/camrest.json")
-DEFAULT_ARCHIVE_FILE_URL = "https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/sequicity_camrest_data.zip"
-DEFAULT_MODEL_URL = (
-    "https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/sequicity_camrest.zip"
+DEFAULT_CONFIG_FILE = os.path.join(
+    DEFAULT_DIRECTORY, "camrest/configs/camrest.json"
 )
+DEFAULT_ARCHIVE_FILE_URL = "https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/sequicity_camrest_data.zip"
+DEFAULT_MODEL_URL = "https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/sequicity_camrest.zip"
 
 
 def denormalize(uttr):
@@ -60,7 +63,9 @@ class Sequicity(Agent):
             print("unzip to", os.path.join(DEFAULT_DIRECTORY, "camrest/"))
             archive.extractall(os.path.join(DEFAULT_DIRECTORY, "camrest/"))
             archive.close()
-        model_path = os.path.join(DEFAULT_DIRECTORY, c["tsdf_init"]["model_path"])
+        model_path = os.path.join(
+            DEFAULT_DIRECTORY, c["tsdf_init"]["model_path"]
+        )
         if not os.path.exists(model_path):
             model_dir = os.path.dirname(model_path)
             if not os.path.exists(model_dir):
@@ -98,7 +103,9 @@ class Sequicity(Agent):
             constraints[j] = ent.replace("_", " ")
         degree = self.m.reader.db_search(constraints)
         degree_input_list = self.m.reader._degree_vec_mapping(len(degree))
-        degree_input = cuda_(Variable(torch.Tensor(degree_input_list).unsqueeze(0)))
+        degree_input = cuda_(
+            Variable(torch.Tensor(degree_input_list).unsqueeze(0))
+        )
         return degree, degree_input
 
     def response(self, usr):
@@ -161,7 +168,9 @@ class Sequicity(Agent):
                 z_idx, cfg.max_ts, padding="post", truncating="pre"
             ).transpose((1, 0))
             prev_z_len = np.array([len(_) for _ in z_idx])
-            prev_z_input = cuda_(Variable(torch.from_numpy(prev_z_input_np).long()))
+            prev_z_input = cuda_(
+                Variable(torch.from_numpy(prev_z_input_np).long())
+            )
             self.kw_ret["prev_z_len"] = prev_z_len
             self.kw_ret["prev_z_input"] = prev_z_input
             self.kw_ret["prev_z_input_np"] = prev_z_input_np

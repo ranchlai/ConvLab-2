@@ -1,6 +1,6 @@
 # VHUS on multiwoz
 
-A data driven variational hierarchical seq2seq user simulator where an unobserved latent random variable generates the user turn sequence. 
+A data driven variational hierarchical seq2seq user simulator where an unobserved latent random variable generates the user turn sequence.
 
 - Hierarchical encoder to encode system response, user goal, and dialog history.
 - A variational sampling step before user turn decoder is proposed to generate a slightly different user query.
@@ -29,7 +29,7 @@ Performance:
 | ------------ |
 | 0.31 |
 
-The model can be downloaded from: 
+The model can be downloaded from:
 
 https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/vhus_simulator_multiwoz.zip
 

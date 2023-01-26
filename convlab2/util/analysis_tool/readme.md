@@ -1,5 +1,5 @@
 ### Defination
-define meta-dialog-act (meta-da) as a single act: 
+define meta-dialog-act (meta-da) as a single act:
 
 such as `Request-hotel-area-?`, `Inform-train-destination-...`
 
@@ -7,7 +7,7 @@ define dialog-act (da) as a vector consisting several meta-das:
 
 such as `[meta-da1, meta-da2]`
 
-for clarity, we use `meta-da` as output in the test report 
+for clarity, we use `meta-da` as output in the test report
 
 
 ### NLU Failed Dialog Act
@@ -39,7 +39,7 @@ there is at most one `cycle-failed-da` in a single domain round
 
 ### Bad Inform Dialog Act
 
-let x be a `sys_output_da` 
+let x be a `sys_output_da`
 
 consider every `meta-da u` in `x`, if the `slot of u` doesn't match the `value of u`, we consider it as a `bad-inform-da`
 
@@ -53,10 +53,8 @@ consider every `slot v` in `s`, if there isn't any `u` in any `x` that matches `
 
 ### Inform-Not-Reqt Dialog Act
 
-let x be a `sys_output_da` 
+let x be a `sys_output_da`
 
 let `s =  all the request slots that is in the initial goal`
 
 consider every `meta-da u` in `x`, if the `slot of u` is not in `s`, we consider it as a `inform-not-reqt-da`
-
-

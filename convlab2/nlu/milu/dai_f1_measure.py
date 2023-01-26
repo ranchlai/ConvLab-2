@@ -1,7 +1,8 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 from allennlp.training.metrics.metric import Metric
 
@@ -20,7 +21,9 @@ class DialogActItemF1Measure(Metric):
         self._false_negatives = 0
 
     def __call__(
-        self, predictions: List[Dict[str, Any]], gold_labels: List[Dict[str, Any]]
+        self,
+        predictions: List[Dict[str, Any]],
+        gold_labels: List[Dict[str, Any]],
     ):
         """
         Parameters
@@ -74,8 +77,12 @@ class DialogActItemF1Measure(Metric):
         precision = float(true_positives) / float(
             true_positives + false_positives + 1e-13
         )
-        recall = float(true_positives) / float(true_positives + false_negatives + 1e-13)
-        f1_measure = 2.0 * ((precision * recall) / (precision + recall + 1e-13))
+        recall = float(true_positives) / float(
+            true_positives + false_negatives + 1e-13
+        )
+        f1_measure = 2.0 * (
+            (precision * recall) / (precision + recall + 1e-13)
+        )
         return precision, recall, f1_measure
 
     def reset(self):

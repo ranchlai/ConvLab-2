@@ -1,19 +1,25 @@
+# -*- coding: utf-8 -*-
 import configparser
 import os
-import zipfile
-from copy import deepcopy
-from collections import defaultdict
-from pprint import pprint
-import torch
 import re
+import zipfile
+from collections import defaultdict
+from copy import deepcopy
+from pprint import pprint
 
-from convlab2.util.file_util import cached_path
+import torch
+
+from convlab2.nlg.nlg import NLG
 from convlab2.nlg.sclstm.crosswoz.loader.dataset_woz import SimpleDatasetWoz
 from convlab2.nlg.sclstm.model.lm_deep import LMDeep
-from convlab2.nlg.nlg import NLG
+from convlab2.util.file_util import cached_path
 
-DEFAULT_DIRECTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
-DEFAULT_ARCHIVE_FILE = os.path.join(DEFAULT_DIRECTORY, "nlg_sclstm_crosswoz.zip")
+DEFAULT_DIRECTORY = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "models"
+)
+DEFAULT_ARCHIVE_FILE = os.path.join(
+    DEFAULT_DIRECTORY, "nlg_sclstm_crosswoz.zip"
+)
 
 
 def parse(is_user):
@@ -26,7 +32,8 @@ def parse(is_user):
     if is_user:
         config.read(
             os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), "config/config_usr.cfg"
+                os.path.dirname(os.path.abspath(__file__)),
+                "config/config_usr.cfg",
             )
         )
     else:
@@ -132,7 +139,10 @@ class SCLSTM(NLG):
             if cur_act[0] == "Select":
                 cur_act[2] = "源领域+" + cur_act[3]
             intent = "+".join(cur_act[:-1])
-            if "+".join(cur_act) == "Inform+景点+门票+免费" or str(cur_act[-1]) == "无":
+            if (
+                "+".join(cur_act) == "Inform+景点+门票+免费"
+                or str(cur_act[-1]) == "无"
+            ):
                 intent = "+".join(cur_act)
             intent_list.append(intent)
 
@@ -308,7 +318,9 @@ class SCLSTM(NLG):
         return intent
 
     def generate(self, meta):
-        meta = [[str(x[0]), str(x[1]), str(x[2]), str(x[3]).lower()] for x in meta]
+        meta = [
+            [str(x[0]), str(x[1]), str(x[2]), str(x[3]).lower()] for x in meta
+        ]
         meta = deepcopy(meta)
 
         delex = self.generate_delex(meta)

@@ -4,8 +4,9 @@
 """
 Backend service response service class
 """
-import json
 import copy
+import json
+
 from deploy.ctrl import ModuleCtrl, SessionCtrl
 from deploy.utils import DeployError
 
@@ -25,7 +26,9 @@ class ServerCtrl(object):
             mdl: ModuleCtrl(mdl, self.module_conf[mdl])
             for mdl in self.module_conf.keys()
         }
-        self.sessions = SessionCtrl(expire_sec=self.net_conf["session_time_out"])
+        self.sessions = SessionCtrl(
+            expire_sec=self.net_conf["session_time_out"]
+        )
 
     def on_models(self):
         ret = {}
@@ -34,7 +37,12 @@ class ServerCtrl(object):
             for model_id in self.module_conf[module_name].keys():
                 ret[module_name][model_id] = {
                     key: self.module_conf[module_name][model_id][key]
-                    for key in ["class_path", "data_set", "ini_params", "model_name"]
+                    for key in [
+                        "class_path",
+                        "data_set",
+                        "ini_params",
+                        "model_name",
+                    ]
                 }
                 ret[module_name][model_id]["ini_params"] = json.dumps(
                     ret[module_name][model_id]["ini_params"]
@@ -47,7 +55,9 @@ class ServerCtrl(object):
             for module_name in MODULES:
                 model_id = kwargs.get(module_name, None)
                 if isinstance(model_id, str):
-                    ret[module_name] = self.modules[module_name].add_used_num(model_id)
+                    ret[module_name] = self.modules[module_name].add_used_num(
+                        model_id
+                    )
         except Exception as e:
             for module_name in MODULES:
                 model_id = kwargs.get(module_name, None)
@@ -63,7 +73,9 @@ class ServerCtrl(object):
         ):
             raise DeployError("At least one model needs to be started")
 
-        token = self.sessions.new_session(*[kwargs.get(mn, None) for mn in MODULES])
+        token = self.sessions.new_session(
+            *[kwargs.get(mn, None) for mn in MODULES]
+        )
 
         return {"token": token}
 
@@ -145,15 +157,29 @@ class ServerCtrl(object):
         models = []
         for mod in mods:
             if model_map[mod] is not None:
-                model = self.modules[mod].models[model_map[mod]].get_model(cache[mod])
+                model = (
+                    self.modules[mod]
+                    .models[model_map[mod]]
+                    .get_model(cache[mod])
+                )
             else:
                 model = None
             models.append(model)
         return models
 
-    def _turn(self, last_turn, model_map, history, input_module, data, modified_output):
+    def _turn(
+        self,
+        last_turn,
+        model_map,
+        history,
+        input_module,
+        data,
+        modified_output,
+    ):
         # params
-        modified_output = {mod: modified_output.get(mod, None) for mod in MODULES}
+        modified_output = {
+            mod: modified_output.get(mod, None) for mod in MODULES
+        }
         cur_cache = (
             last_turn["cache"]
             if last_turn is not None
@@ -212,8 +238,12 @@ class ServerCtrl(object):
             "modified_output": modified_output,
             "cache": new_cache,
             "context": {
-                "usr": data if isinstance(data, str) and input_module == "nlu" else "",
-                "sys": model_ret["nlg"] if isinstance(model_ret["nlg"], str) else "",
+                "usr": data
+                if isinstance(data, str) and input_module == "nlu"
+                else "",
+                "sys": model_ret["nlg"]
+                if isinstance(model_ret["nlg"], str)
+                else "",
             },
             "return": model_ret,
         }

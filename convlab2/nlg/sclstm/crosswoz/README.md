@@ -1,6 +1,6 @@
 # SCLSTM NLG on CrossWOZ
 
-Semantically-conditioned LSTM (SC-LSTM) is an NLG model that generates natural linguistically varied responses based on a deep, semantically controlled LSTM architecture. 
+Semantically-conditioned LSTM (SC-LSTM) is an NLG model that generates natural linguistically varied responses based on a deep, semantically controlled LSTM architecture.
 
 - *Sentence planning* maps input semantic symbols (e.g. dialog acts) into an intermediary form representing the utterance.
 - *Surface realization* converts the intermediate structure into the final text.
@@ -66,4 +66,3 @@ We evaluate the BLEU4 of delexicalized utterance. The references of a generated 
   year={2015}
 }
 ```
-

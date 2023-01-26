@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Evaluate NLG models on utterances of Multiwoz test dataset
 Metric: dataset level BLEU-4, slot error rate
@@ -10,7 +11,7 @@ import zipfile
 
 import numpy as np
 import torch
-from nltk.translate.bleu_score import corpus_bleu, SmoothingFunction
+from nltk.translate.bleu_score import SmoothingFunction, corpus_bleu
 
 from convlab2.nlg.template.camrest import TemplateNLG
 

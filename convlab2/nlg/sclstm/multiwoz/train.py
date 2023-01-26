@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import argparse
 import configparser
 import os
@@ -6,13 +7,19 @@ import time
 
 root_dir = os.path.dirname(
     os.path.dirname(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        )
     )
 )
 sys.path.append(root_dir)
 import torch
-from convlab2.nlg.sclstm.multiwoz.loader.dataset_woz import DatasetWoz, SimpleDatasetWoz
+
 from convlab2.nlg.sclstm.model.lm_deep import LMDeep
+from convlab2.nlg.sclstm.multiwoz.loader.dataset_woz import (
+    DatasetWoz,
+    SimpleDatasetWoz,
+)
 
 USE_CUDA = torch.cuda.is_available()
 
@@ -27,7 +34,12 @@ def score(feat, gen, template):
         for line in f:
             if "d-a-s-v:" not in line:
                 continue
-            if "-none" in line or "-?" in line or "-yes" in line or "-no" in line:
+            if (
+                "-none" in line
+                or "-?" in line
+                or "-yes" in line
+                or "-no" in line
+            ):
                 continue
             tok = "-".join(line.strip().split("-")[:-1])
             if tok not in das:
@@ -72,7 +84,8 @@ def get_slot_error(dataset, gens, refs, sv_indexes):
     for batch_idx in range(batch_size):
         for beam_idx in range(beam_size):
             felements = [
-                dataset.cardinality[x + dataset.dfs[2]] for x in sv_indexes[batch_idx]
+                dataset.cardinality[x + dataset.dfs[2]]
+                for x in sv_indexes[batch_idx]
             ]
 
             # get slot error per sample(beam)
@@ -81,7 +94,9 @@ def get_slot_error(dataset, gens, refs, sv_indexes):
             )
 
             c = {}
-            for a, b in zip(["total", "redunt", "miss"], [total, redunt, miss]):
+            for a, b in zip(
+                ["total", "redunt", "miss"], [total, redunt, miss]
+            ):
                 c[a] = b
                 count[a] += b
             countPerGen[batch_idx].append(c)
@@ -89,7 +104,9 @@ def get_slot_error(dataset, gens, refs, sv_indexes):
     return count, countPerGen
 
 
-def evaluate(config, dataset, model, data_type, beam_search, beam_size, batch_size):
+def evaluate(
+    config, dataset, model, data_type, beam_search, beam_size, batch_size
+):
     t = time.time()
     model.eval()
 
@@ -109,7 +126,12 @@ def evaluate(config, dataset, model, data_type, beam_search, beam_size, batch_si
         if data_type == "valid":
             # feed-forward w/i ground truth as input
             decoded_words = model(
-                input_var, dataset, feats_var, gen=False, beam_search=False, beam_size=1
+                input_var,
+                dataset,
+                feats_var,
+                gen=False,
+                beam_search=False,
+                beam_size=1,
             )
 
             # update loss
@@ -118,7 +140,12 @@ def evaluate(config, dataset, model, data_type, beam_search, beam_size, batch_si
 
             # run generation for calculating slot error
             decoded_words = model(
-                input_var, dataset, feats_var, gen=True, beam_search=False, beam_size=1
+                input_var,
+                dataset,
+                feats_var,
+                gen=True,
+                beam_search=False,
+                beam_size=1,
             )
             countBatch, countPerGen = get_slot_error(
                 dataset, decoded_words, refs, sv_indexes
@@ -126,7 +153,9 @@ def evaluate(config, dataset, model, data_type, beam_search, beam_size, batch_si
 
         else:  # test
             print(
-                "decode batch {} out of {}".format(i, dataset.n_batch[data_type]),
+                "decode batch {} out of {}".format(
+                    i, dataset.n_batch[data_type]
+                ),
                 file=sys.stderr,
             )
             decoded_words = model(
@@ -153,7 +182,9 @@ def evaluate(config, dataset, model, data_type, beam_search, beam_size, batch_si
                             beam_idx, c["redunt"], c["miss"], c["total"], s
                         )
                     )
-                print("-----------------------------------------------------------")
+                print(
+                    "-----------------------------------------------------------"
+                )
 
         # accumulate slot error across batches
         for _type in countAll:
@@ -215,9 +246,13 @@ def train_epoch(config, dataset, model):
 
     total_loss /= dataset.n_batch["train"]
 
-    print("Train Loss: {:.3f} | Time: {:.1f}".format(total_loss, time.time() - t))
     print(
-        "Train Loss: {:.3f} | Time: {:.1f}".format(total_loss, time.time() - t),
+        "Train Loss: {:.3f} | Time: {:.1f}".format(total_loss, time.time() - t)
+    )
+    print(
+        "Train Loss: {:.3f} | Time: {:.1f}".format(
+            total_loss, time.time() - t
+        ),
         file=sys.stderr,
     )
 
@@ -242,7 +277,9 @@ def read(config, args, mode):
     beam_size = args.beam_size
 
     # get feat size
-    d_size = dataset.do_size + dataset.da_size + dataset.sv_size  # len of 1-hot feat
+    d_size = (
+        dataset.do_size + dataset.da_size + dataset.sv_size
+    )  # len of 1-hot feat
     vocab_size = len(dataset.word2index)
 
     model_path = args.model_path
@@ -302,13 +339,18 @@ def train(config, args):
         print("Epoch", epoch, "(n_layer {})".format(n_layer), file=sys.stderr)
         train_epoch(config, dataset, model)
 
-        loss = evaluate(config, dataset, model, "valid", False, 1, dataset.batch_size)
+        loss = evaluate(
+            config, dataset, model, "valid", False, 1, dataset.batch_size
+        )
 
         if loss < best_loss:
             earlyStop = 0
             # save model
             print("Best loss: {:.3f}, AND Save model!".format(loss))
-            print("Best loss: {:.3f}, AND Save model!".format(loss), file=sys.stderr)
+            print(
+                "Best loss: {:.3f}, AND Save model!".format(loss),
+                file=sys.stderr,
+            )
             torch.save(model.state_dict(), model_path)
             best_loss = loss
         else:
@@ -332,7 +374,13 @@ def test(config, args):
 
     # Evaluate model
     loss = evaluate(
-        config, dataset, model, "test", beam_search, beam_size, dataset.batch_size
+        config,
+        dataset,
+        model,
+        "test",
+        beam_search,
+        beam_size,
+        dataset.batch_size,
     )
 
 
@@ -347,7 +395,9 @@ def interact(config, args):
     beam_size = args.beam_size
 
     # get feat size
-    d_size = dataset.do_size + dataset.da_size + dataset.sv_size  # len of 1-hot feat
+    d_size = (
+        dataset.do_size + dataset.da_size + dataset.sv_size
+    )  # len of 1-hot feat
     vocab_size = len(dataset.word2index)
 
     model = LMDeep(
@@ -422,7 +472,8 @@ def interact(config, args):
                     key = da + "-" + slot_type.capitalize()
                     for pair in example[da]:
                         if (pair[0].lower() == slot_type) and (
-                            (key not in counter) or (counter[key] == int(pair[1]) - 1)
+                            (key not in counter)
+                            or (counter[key] == int(pair[1]) - 1)
                         ):
                             sen = sen.replace(word, pair[2], 1)
                             counter[key] = int(pair[1])
@@ -449,11 +500,15 @@ def str2bool(v):
 
 def parse():
     parser = argparse.ArgumentParser(description="Train dialogue generator")
-    parser.add_argument("--mode", type=str, default="interact", help="train or test")
+    parser.add_argument(
+        "--mode", type=str, default="interact", help="train or test"
+    )
     parser.add_argument(
         "--model_path", type=str, default="sclstm.pt", help="saved model path"
     )
-    parser.add_argument("--n_layer", type=int, default=1, help="# of layers in LSTM")
+    parser.add_argument(
+        "--n_layer", type=int, default=1, help="# of layers in LSTM"
+    )
     parser.add_argument(
         "--percent", type=float, default=1, help="percentage of training data"
     )
@@ -461,14 +516,24 @@ def parse():
         "--beam_search", type=str2bool, default=False, help="beam_search"
     )
     parser.add_argument(
-        "--attn", type=str2bool, default=True, help="whether to use attention or not"
+        "--attn",
+        type=str2bool,
+        default=True,
+        help="whether to use attention or not",
     )
     parser.add_argument(
-        "--beam_size", type=int, default=10, help="number of generated sentences"
+        "--beam_size",
+        type=int,
+        default=10,
+        help="number of generated sentences",
     )
     parser.add_argument("--bs", type=int, default=256, help="batch size")
-    parser.add_argument("--lr", type=float, default=0.0025, help="learning rate")
-    parser.add_argument("--user", type=str2bool, default=False, help="use user data")
+    parser.add_argument(
+        "--lr", type=float, default=0.0025, help="learning rate"
+    )
+    parser.add_argument(
+        "--user", type=str2bool, default=False, help="use user data"
+    )
     args = parser.parse_args()
 
     config = configparser.ConfigParser()

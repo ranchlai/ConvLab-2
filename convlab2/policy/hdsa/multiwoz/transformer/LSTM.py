@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
 from __future__ import division, print_function, unicode_literals
 
+import copy
 import json
 import math
 import operator
@@ -12,8 +14,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import optim
-import copy
+
 from . import Constants
+
 
 # Shawn beam search decoding
 class BeamSearchNode(object):
@@ -50,15 +53,21 @@ def init_gru(gru, gain=1):
 
 def whatCellType(input_size, hidden_size, cell_type, dropout_rate):
     if cell_type == "rnn":
-        cell = nn.RNN(input_size, hidden_size, dropout=dropout_rate, batch_first=False)
+        cell = nn.RNN(
+            input_size, hidden_size, dropout=dropout_rate, batch_first=False
+        )
         init_gru(cell)
         return cell
     elif cell_type == "gru":
-        cell = nn.GRU(input_size, hidden_size, dropout=dropout_rate, batch_first=False)
+        cell = nn.GRU(
+            input_size, hidden_size, dropout=dropout_rate, batch_first=False
+        )
         init_gru(cell)
         return cell
     elif cell_type == "lstm":
-        cell = nn.LSTM(input_size, hidden_size, dropout=dropout_rate, batch_first=False)
+        cell = nn.LSTM(
+            input_size, hidden_size, dropout=dropout_rate, batch_first=False
+        )
         init_lstm(cell)
         return cell
     elif cell_type == "bigru":
@@ -106,14 +115,20 @@ class Attn(nn.Module):
 
         H = hidden.repeat(max_len, 1, 1).transpose(0, 1)
         encoder_outputs = encoder_outputs.transpose(0, 1)  # [T,B,H] -> [B,T,H]
-        attn_energies = self.score(H, encoder_outputs)  # compute attention score
-        return F.softmax(attn_energies, dim=1).unsqueeze(1)  # normalize with softmax
+        attn_energies = self.score(
+            H, encoder_outputs
+        )  # compute attention score
+        return F.softmax(attn_energies, dim=1).unsqueeze(
+            1
+        )  # normalize with softmax
 
     def score(self, hidden, encoder_outputs):
         cat = torch.cat([hidden, encoder_outputs], 2)
         energy = torch.tanh(self.attn(cat))  # [B*T*2H]->[B*T*H]
         energy = energy.transpose(2, 1)  # [B*H*T]
-        v = self.v.repeat(encoder_outputs.data.shape[0], 1).unsqueeze(1)  # [B*1*H]
+        v = self.v.repeat(encoder_outputs.data.shape[0], 1).unsqueeze(
+            1
+        )  # [B*1*H]
         energy = torch.bmm(v, energy)  # [B*1*T]
         return energy.squeeze(1)  # [B*T]
 
@@ -150,8 +165,12 @@ class SeqAttnDecoderRNN(nn.Module):
         )
         self.out = nn.Linear(hidden_size, output_size)
 
-        self.score = nn.Linear(self.hidden_size + self.hidden_size, self.hidden_size)
-        self.attn_combine = nn.Linear(embedding_size + hidden_size, embedding_size)
+        self.score = nn.Linear(
+            self.hidden_size + self.hidden_size, self.hidden_size
+        )
+        self.attn_combine = nn.Linear(
+            embedding_size + hidden_size, embedding_size
+        )
 
         # attention
         self.method = "concat"
@@ -173,7 +192,9 @@ class SeqAttnDecoderRNN(nn.Module):
         max_len = encoder_outputs.size(1)
         h_t = h_t.transpose(0, 1)  # [1,B,D] -> [B,1,D]
         h_t = h_t.repeat(1, max_len, 1)  # [B,1,D]  -> [B,T,D]
-        energy = self.attn(torch.cat((h_t, encoder_outputs), 2))  # [B,T,2D] -> [B,T,D]
+        energy = self.attn(
+            torch.cat((h_t, encoder_outputs), 2)
+        )  # [B,T,2D] -> [B,T,D]
         energy = torch.tanh(energy)
         energy = energy.transpose(2, 1)  # [B,H,T]
         v = self.v.repeat(encoder_outputs.size(0), 1).unsqueeze(1)  # [B,1,H]
@@ -263,7 +284,9 @@ class LSTMDecoder(nn.Module):
             else:
                 # Without teacher forcing: use its own predictions as the next input
                 topv, topi = decoder_output.topk(1)
-                decoder_input = topi.squeeze().detach()  # detach from history as input
+                decoder_input = (
+                    topi.squeeze().detach()
+                )  # detach from history as input
 
             proba[:, t, :] = decoder_output
 
@@ -279,17 +302,25 @@ class LSTMDecoder(nn.Module):
             batch_size = src_enc.size(0)
             decoder_hiddens = src_enc[:, 0, :]
             for idx in range(batch_size):
-                decoder_hidden = decoder_hiddens[idx, :].unsqueeze(0).unsqueeze(1)
+                decoder_hidden = (
+                    decoder_hiddens[idx, :].unsqueeze(0).unsqueeze(1)
+                )
                 # encoder_output = src_enc[idx, :, :]
 
                 # Beam start
                 self.topk = 1
                 endnodes = []  # stored end nodes
-                number_required = min((self.topk + 1), self.topk - len(endnodes))
-                decoder_input = torch.LongTensor([[Constants.SOS]]).to(src_enc.device)
+                number_required = min(
+                    (self.topk + 1), self.topk - len(endnodes)
+                )
+                decoder_input = torch.LongTensor([[Constants.SOS]]).to(
+                    src_enc.device
+                )
 
                 # starting node hidden vector, prevNode, wordid, logp, leng,
-                node = BeamSearchNode(decoder_hidden, None, decoder_input, 0, 1)
+                node = BeamSearchNode(
+                    decoder_hidden, None, decoder_input, 0, 1
+                )
                 nodes = PriorityQueue()  # start the queue
                 nodes.put((-node.eval(None, None, None, None), node))
 
@@ -328,7 +359,11 @@ class LSTMDecoder(nn.Module):
                         log_p = log_prob[0][new_k].item()
 
                         node = BeamSearchNode(
-                            decoder_hidden, n, decoded_t, n.logp + log_p, n.leng + 1
+                            decoder_hidden,
+                            n,
+                            decoded_t,
+                            n.logp + log_p,
+                            n.leng + 1,
                         )
                         score = -node.eval(None, None, None, None)
                         nextnodes.append((score, node))

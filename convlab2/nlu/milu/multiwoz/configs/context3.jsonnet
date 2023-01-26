@@ -64,7 +64,7 @@
       "type": "bilinear",
       "vector_dim": 400,
       "matrix_dim": 400
-    },    
+    },
     "context_for_intent": true,
     "context_for_tag": false,
     "attention_for_intent": false,
@@ -93,7 +93,7 @@
     "num_epochs": 40,
     "grad_norm": 5.0,
     "patience": 75,
-    "cuda_device": 0 
+    "cuda_device": 0
   },
   "evaluate_on_test": true
 }

@@ -2,17 +2,19 @@
 """
 @author: truthless
 """
-import os
-import logging
 import json
+import logging
+import os
+
 import numpy as np
 import torch
 import torch.nn as nn
-from torch import optim
 import torch.utils.data as data
-from convlab2.util.train_util import to_device
-from convlab2.policy.vector.dataset import ActStateDataset
+from torch import optim
+
 from convlab2.policy.mle.multiwoz.loader import ActMLEPolicyDataLoaderMultiWoz
+from convlab2.policy.vector.dataset import ActStateDataset
+from convlab2.util.train_util import to_device
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -20,7 +22,10 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class RewardEstimator(object):
     def __init__(self, vector, pretrain=False):
         with open(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json"), "r"
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "config.json"
+            ),
+            "r",
         ) as f:
             cfg = json.load(f)
         self.irl = AIRL(
@@ -43,8 +48,12 @@ class RewardEstimator(object):
         self.data_train = manager.create_dataset_irl("train", cfg["batchsz"])
         self.irl_iter = iter(self.data_train)
         if pretrain:
-            self.data_train = manager.create_dataset_irl("train", cfg["batchsz"])
-            self.data_valid = manager.create_dataset_irl("valid", cfg["batchsz"])
+            self.data_train = manager.create_dataset_irl(
+                "train", cfg["batchsz"]
+            )
+            self.data_valid = manager.create_dataset_irl(
+                "valid", cfg["batchsz"]
+            )
             self.data_test = manager.create_dataset_irl("test", cfg["batchsz"])
             self.irl_iter = iter(self.data_train)
             self.irl_iter_valid = iter(self.data_valid)
@@ -72,7 +81,9 @@ class RewardEstimator(object):
         self.irl.train()
         input_s = torch.from_numpy(np.stack(batch.state)).to(device=DEVICE)
         input_a = torch.from_numpy(np.stack(batch.action)).to(device=DEVICE)
-        input_next_s = torch.from_numpy(np.stack(batch.next_state)).to(device=DEVICE)
+        input_next_s = torch.from_numpy(np.stack(batch.next_state)).to(
+            device=DEVICE
+        )
         batchsz = input_s.size(0)
 
         real_loss, gen_loss = 0.0, 0.0
@@ -97,7 +108,9 @@ class RewardEstimator(object):
             self.irl_optim.step()
 
             for p in self.irl_params:
-                p.data.clamp_(-self.weight_cliping_limit, self.weight_cliping_limit)
+                p.data.clamp_(
+                    -self.weight_cliping_limit, self.weight_cliping_limit
+                )
 
         real_loss /= turns
         gen_loss /= turns
@@ -113,7 +126,9 @@ class RewardEstimator(object):
     def test_irl(self, batch, epoch, best):
         input_s = torch.from_numpy(np.stack(batch.state)).to(device=DEVICE)
         input_a = torch.from_numpy(np.stack(batch.action)).to(device=DEVICE)
-        input_next_s = torch.from_numpy(np.stack(batch.next_state)).to(device=DEVICE)
+        input_next_s = torch.from_numpy(np.stack(batch.next_state)).to(
+            device=DEVICE
+        )
         batchsz = input_s.size(0)
 
         real_loss, gen_loss = 0.0, 0.0
@@ -196,7 +211,9 @@ class RewardEstimator(object):
             self.irl_optim.step()
 
             for p in self.irl_params:
-                p.data.clamp_(-self.weight_cliping_limit, self.weight_cliping_limit)
+                p.data.clamp_(
+                    -self.weight_cliping_limit, self.weight_cliping_limit
+                )
 
         real_loss /= turns
         gen_loss /= turns
@@ -214,7 +231,8 @@ class RewardEstimator(object):
             os.makedirs(directory)
 
         torch.save(
-            self.irl.state_dict(), directory + "/" + str(epoch) + "_estimator.mdl"
+            self.irl.state_dict(),
+            directory + "/" + str(epoch) + "_estimator.mdl",
         )
         logging.info(
             "<<reward estimator>> epoch {}: saved network to mdl".format(epoch)
@@ -225,7 +243,9 @@ class RewardEstimator(object):
         if os.path.exists(irl_mdl):
             self.irl.load_state_dict(torch.load(irl_mdl, map_location=DEVICE))
             logging.info(
-                "<<reward estimator>> loaded checkpoint from file: {}".format(irl_mdl)
+                "<<reward estimator>> loaded checkpoint from file: {}".format(
+                    irl_mdl
+                )
             )
 
     def estimate(self, s, a, next_s, log_pi):
@@ -233,8 +253,12 @@ class RewardEstimator(object):
         infer the reward of state action pair with the estimator
         """
         weight = self.irl(s, a.float(), next_s)
-        logging.debug("<<reward estimator>> weight {}".format(weight.mean().item()))
-        logging.debug("<<reward estimator>> log pi {}".format(log_pi.mean().item()))
+        logging.debug(
+            "<<reward estimator>> weight {}".format(weight.mean().item())
+        )
+        logging.debug(
+            "<<reward estimator>> log pi {}".format(log_pi.mean().item())
+        )
         # see AIRL paper
         # r = f(s, a, s') - log_p(a|s)
         reward = (weight - log_pi).squeeze(-1)
@@ -253,7 +277,9 @@ class AIRL(nn.Module):
         self.g = nn.Sequential(
             nn.Linear(s_dim + a_dim, h_dim), nn.ReLU(), nn.Linear(h_dim, 1)
         )
-        self.h = nn.Sequential(nn.Linear(s_dim, h_dim), nn.ReLU(), nn.Linear(h_dim, 1))
+        self.h = nn.Sequential(
+            nn.Linear(s_dim, h_dim), nn.ReLU(), nn.Linear(h_dim, 1)
+        )
 
     def forward(self, s, a, next_s):
         """
@@ -263,7 +289,9 @@ class AIRL(nn.Module):
         :return:  [b, 1]
         """
         weights = (
-            self.g(torch.cat([s, a], -1)) + self.gamma * self.h(next_s) - self.h(s)
+            self.g(torch.cat([s, a], -1))
+            + self.gamma * self.h(next_s)
+            - self.h(s)
         )
         return weights
 

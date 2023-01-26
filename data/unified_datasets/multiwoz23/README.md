@@ -2,9 +2,9 @@
 
 ## Features
 
-- Annotations: dialogue act, character-level span for non-categorical slots. state and state updates.   
+- Annotations: dialogue act, character-level span for non-categorical slots. state and state updates.
 
-Statistics: 
+Statistics:
 
 |       | \# dialogues | \# utterances | avg. turns | avg. tokens | \# domains |
 | ----- | ------------ | ------------- | ---------- | ----------- | ---------- |
@@ -28,6 +28,4 @@ state values match rate: 89.185
 
 - from [multiwoz-coref](https://github.com/lexmen318/MultiWOZ-coref) repo.
 - slot description by multiwoz2.2
-- some hand-written descriptions. 
-
-
+- some hand-written descriptions.

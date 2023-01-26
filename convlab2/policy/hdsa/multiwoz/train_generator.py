@@ -1,27 +1,35 @@
+# -*- coding: utf-8 -*-
+import argparse
 import json
-import torch
-import random
-import numpy
 import logging
 import os
+import random
 import sys
-import argparse
 import time
-from torch.autograd import Variable
-from convlab2.policy.hdsa.multiwoz.transformer.Transformer import (
-    Transformer,
-    TransformerDecoder,
-    TableSemanticDecoder,
-)
-from torch.optim.lr_scheduler import MultiStepLR
-import convlab2.policy.hdsa.multiwoz.transformer.Constants as Constants
+from collections import OrderedDict
 from itertools import chain
+
+import numpy
+import torch
+from torch.autograd import Variable
+from torch.optim.lr_scheduler import MultiStepLR
+from torch.utils.data import (
+    DataLoader,
+    RandomSampler,
+    SequentialSampler,
+    TensorDataset,
+)
+
+import convlab2.policy.hdsa.multiwoz.transformer.Constants as Constants
 from convlab2.policy.hdsa.multiwoz.MultiWOZ import get_batch
+from convlab2.policy.hdsa.multiwoz.tools import *
 from convlab2.policy.hdsa.multiwoz.transformer.LSTM import LSTMDecoder
 from convlab2.policy.hdsa.multiwoz.transformer.Semantic_LSTM import SCLSTM
-from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
-from convlab2.policy.hdsa.multiwoz.tools import *
-from collections import OrderedDict
+from convlab2.policy.hdsa.multiwoz.transformer.Transformer import (
+    TableSemanticDecoder,
+    Transformer,
+    TransformerDecoder,
+)
 
 # from evaluator import evaluateModel
 
@@ -68,7 +76,10 @@ def parse_opt():
         "--beam_size", type=int, default=2, help="the embedding dimension"
     )
     parser.add_argument(
-        "--max_seq_length", type=int, default=100, help="the embedding dimension"
+        "--max_seq_length",
+        type=int,
+        default=100,
+        help="the embedding dimension",
     )
     parser.add_argument(
         "--layer_num", type=int, default=3, help="the embedding dimension"
@@ -77,10 +88,17 @@ def parse_opt():
         "--evaluate_every", type=int, default=5, help="the embedding dimension"
     )
     parser.add_argument(
-        "--one_hot", default=False, action="store_true", help="whether to use one hot"
+        "--one_hot",
+        default=False,
+        action="store_true",
+        help="whether to use one hot",
     )
-    parser.add_argument("--th", type=float, default=0.4, help="the embedding dimension")
-    parser.add_argument("--head", type=int, default=4, help="the embedding dimension")
+    parser.add_argument(
+        "--th", type=float, default=0.4, help="the embedding dimension"
+    )
+    parser.add_argument(
+        "--head", type=int, default=4, help="the embedding dimension"
+    )
     parser.add_argument(
         "--output_dir",
         default="checkpoints/generator/",
@@ -163,7 +181,9 @@ elif "test" in args.option or "postprocess" in args.option:
             open("{}/test_reference_nondelex.json".format(args.data_dir))
         )
     else:
-        gt_turns = json.load(open("{}/test_reference.json".format(args.data_dir)))
+        gt_turns = json.load(
+            open("{}/test_reference.json".format(args.data_dir))
+        )
 
 eval_data = TensorDataset(*val_examples)
 eval_sampler = SequentialSampler(eval_data)
@@ -218,7 +238,9 @@ if args.option == "train":
     decoder.train()
     if args.resume:
         decoder.load_state_dict(torch.load(checkpoint_file))
-        logger.info("Reloaing the encoder and decoder from {}".format(checkpoint_file))
+        logger.info(
+            "Reloaing the encoder and decoder from {}".format(checkpoint_file)
+        )
 
     logger.info("Start Training with {} batches".format(len(train_dataloader)))
 
@@ -227,7 +249,9 @@ if args.option == "train":
         betas=(0.9, 0.98),
         eps=1e-09,
     )
-    scheduler = MultiStepLR(optimizer, milestones=[50, 100, 150, 200], gamma=0.5)
+    scheduler = MultiStepLR(
+        optimizer, milestones=[50, 100, 150, 200], gamma=0.5
+    )
 
     best_BLEU = 0
     for epoch in range(args.epoch):
@@ -250,10 +274,14 @@ if args.option == "train":
             optimizer.zero_grad()
 
             if args.one_hot:
-                logits = decoder(tgt_seq=rep_in, src_seq=input_ids, act_vecs=act_vecs)
+                logits = decoder(
+                    tgt_seq=rep_in, src_seq=input_ids, act_vecs=act_vecs
+                )
             else:
                 logits = decoder(
-                    tgt_seq=rep_in, src_seq=input_ids, act_vecs=hierachical_act_vecs
+                    tgt_seq=rep_in,
+                    src_seq=input_ids,
+                    act_vecs=hierachical_act_vecs,
                 )
 
             loss = ce_loss_func(
@@ -268,11 +296,17 @@ if args.option == "train":
 
             if step % 100 == 0:
                 logger.info(
-                    "epoch {} step {} training loss {}".format(epoch, step, loss.item())
+                    "epoch {} step {} training loss {}".format(
+                        epoch, step, loss.item()
+                    )
                 )
 
         scheduler.step()
-        if loss.item() < 3.0 and epoch > 0 and epoch % args.evaluate_every == 0:
+        if (
+            loss.item() < 3.0
+            and epoch > 0
+            and epoch % args.evaluate_every == 0
+        ):
             logger.info("start evaluating BLEU on validation set")
             decoder.eval()
             # Start Evaluating after each epoch

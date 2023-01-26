@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
@@ -140,7 +141,8 @@ class SequicityBot(object):
 
     def act(self):
         resp = requests.post(
-            "http://localhost:10001", json={"input": self.input, "state": self.state}
+            "http://localhost:10001",
+            json={"input": self.input, "state": self.state},
         )
         if resp.status_code != 200:
             raise Exception("POST /tasks/ {}".format(resp.status_code))
@@ -318,11 +320,16 @@ class MultiWozEvalWorld(MTurkTaskWorld):
                         self.goal[domain]["info"][slot].lower() in inp
                         and slot in self.state[domain]["info"]
                     ):
-                        print("check out info ", self.state[domain]["info"][slot])
+                        print(
+                            "check out info ", self.state[domain]["info"][slot]
+                        )
                         del self.state[domain]["info"][slot]
             if "reqt" in self.goal[domain]:
                 for slot in self.goal[domain]["reqt"]:
-                    if slot.lower() in inp and slot in self.state[domain]["reqt"]:
+                    if (
+                        slot.lower() in inp
+                        and slot in self.state[domain]["reqt"]
+                    ):
                         print("check out reqt ", slot)
                         self.state[domain]["reqt"].remove(slot)
                     elif (
@@ -373,7 +380,9 @@ class MultiWozEvalWorld(MTurkTaskWorld):
                         self.goal[domain]["book"][slot].lower() in inp
                         and slot in self.state[domain]["book"]
                     ):
-                        print("check out book ", self.state[domain]["book"][slot])
+                        print(
+                            "check out book ", self.state[domain]["book"][slot]
+                        )
                         del self.state[domain]["book"][slot]
 
     def _get_num_items(self):
@@ -439,7 +448,10 @@ class MultiWozEvalWorld(MTurkTaskWorld):
             """If turker said fail and tried hard, end the chat"""
             if acts[idx]["text"].strip().lower() == "fail":
                 self.fail_attempts.append(self.turn_idx)
-                if self.turn_idx >= len(self.goal_message) + self.num_extra_trial:
+                if (
+                    self.turn_idx
+                    >= len(self.goal_message) + self.num_extra_trial
+                ):
                     self.success = False
                     self.chat_done = True
                 else:
@@ -467,18 +479,30 @@ class MultiWozEvalWorld(MTurkTaskWorld):
                             self.final_goal[domain]["reqt"] = dict()
                             for slot in self.goal[domain]["reqt"]:
                                 control_msg["text"] = (
-                                    REQT_MSG + "<b>" + domain + "-" + slot + "</b>"
+                                    REQT_MSG
+                                    + "<b>"
+                                    + domain
+                                    + "-"
+                                    + slot
+                                    + "</b>"
                                 )
                                 agent.observe(validate(control_msg))
-                                acts[idx] = agent.act(timeout=self.max_resp_time)
+                                acts[idx] = agent.act(
+                                    timeout=self.max_resp_time
+                                )
                                 while acts[idx]["text"] == "":
                                     control_msg["text"] = "Please try again."
                                     agent.observe(validate(control_msg))
-                                    acts[idx] = agent.act(timeout=self.max_resp_time)
-                                if "text" in acts[idx] and acts[idx]["text"] != "":
-                                    self.final_goal[domain]["reqt"][slot] = acts[idx][
-                                        "text"
-                                    ]
+                                    acts[idx] = agent.act(
+                                        timeout=self.max_resp_time
+                                    )
+                                if (
+                                    "text" in acts[idx]
+                                    and acts[idx]["text"] != ""
+                                ):
+                                    self.final_goal[domain]["reqt"][
+                                        slot
+                                    ] = acts[idx]["text"]
 
                 # Language Understanding Check
                 control_msg["text"] = UNDERSTANDING_MSG
@@ -658,7 +682,9 @@ class MultiWozEvalWorld(MTurkTaskWorld):
             json.dump(result, f, indent=2)
             print(
                 self.world_tag,
-                ": Data successfully saved at {}.".format(os.path.abspath(filename)),
+                ": Data successfully saved at {}.".format(
+                    os.path.abspath(filename)
+                ),
             )
             # check = json.load(open(filename, 'r'))
             # pprint(check)
@@ -713,7 +739,9 @@ class MultiWozEvalWorld(MTurkTaskWorld):
         return False
 
     def reset_random(self):
-        self.n_turn = np.random.randint(self.range_turn[0], self.range_turn[1]) + 1
+        self.n_turn = (
+            np.random.randint(self.range_turn[0], self.range_turn[1]) + 1
+        )
 
     def check_disconnects(self, act):
         if (

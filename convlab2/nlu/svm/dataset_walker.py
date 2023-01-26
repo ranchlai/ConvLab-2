@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ###############################################################################
 # PyDial: Multi-domain Statistical Spoken Dialogue System Software
 ###############################################################################
@@ -50,7 +51,8 @@ class dataset_walker(object):
                 labels_filename = os.path.join(session_dirname, "label.json")
                 if not os.path.exists(labels_filename):
                     raise RuntimeError(
-                        "Cant score : cant open labels file %s" % (labels_filename)
+                        "Cant score : cant open labels file %s"
+                        % (labels_filename)
                     )
             else:
                 labels_filename = None

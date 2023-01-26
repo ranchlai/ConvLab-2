@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sys
 
 import torch
@@ -25,7 +26,9 @@ class LMDeep(nn.Module):
         self.dec_type = dec_type
         self.hidden_size = hidden_size
         print("Using deep version with {} layer".format(n_layer))
-        print("Using deep version with {} layer".format(n_layer), file=sys.stderr)
+        print(
+            "Using deep version with {} layer".format(n_layer), file=sys.stderr
+        )
         self.USE_CUDA = use_cuda
         self.dec = DecoderDeep(
             dec_type,
@@ -43,7 +46,13 @@ class LMDeep(nn.Module):
         self.set_solver(lr)
 
     def forward(
-        self, input_var, dataset, feats_var, gen=False, beam_search=False, beam_size=1
+        self,
+        input_var,
+        dataset,
+        feats_var,
+        gen=False,
+        beam_search=False,
+        beam_size=1,
     ):
         batch_size = dataset.batch_size
         if self.dec_type == "sclstm":

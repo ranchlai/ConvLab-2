@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 # # Prepare
 
@@ -82,7 +82,9 @@ def value_translate(domain, slot, value):
                 elif len(value.split()) > 1:
                     # 空格分割
                     ls = value.split()
-                    trans_ls = [vocab_dict["value_set"][domain][slot][x] for x in ls]
+                    trans_ls = [
+                        vocab_dict["value_set"][domain][slot][x] for x in ls
+                    ]
                     trans_value = ",".join(trans_ls)
                 else:
                     trans_value = vocab_dict["value_set"][domain][slot][
@@ -92,7 +94,8 @@ def value_translate(domain, slot, value):
                 # 空格分割
                 ls = value.split()
                 trans_ls = [
-                    vocab_dict["value_set"][domain][slot][x.strip().lower()] for x in ls
+                    vocab_dict["value_set"][domain][slot][x.strip().lower()]
+                    for x in ls
                 ]
                 trans_value = ",".join(trans_ls)
             elif slot == "selectedResults" and domain in ["出租", "地铁"]:
@@ -101,9 +104,13 @@ def value_translate(domain, slot, value):
                     ls = value[4:-1].split(" - ")
                     trans_value = (
                         "Taxi ("
-                        + vocab_dict["value_set"][domain][slot][ls[0].strip().lower()]
+                        + vocab_dict["value_set"][domain][slot][
+                            ls[0].strip().lower()
+                        ]
                         + " - "
-                        + vocab_dict["value_set"][domain][slot][ls[1].strip().lower()]
+                        + vocab_dict["value_set"][domain][slot][
+                            ls[1].strip().lower()
+                        ]
                         + ")"
                     )
                 # 地铁："(起点) /(终点) xx"
@@ -115,12 +122,16 @@ def value_translate(domain, slot, value):
                     if "起点" in value:
                         trans_value = (
                             "(Starting point) "
-                            + vocab_dict["value_set"][domain][slot][v.strip().lower()]
+                            + vocab_dict["value_set"][domain][slot][
+                                v.strip().lower()
+                            ]
                         )
                     elif "终点" in value:
                         trans_value = (
                             "(Termination) "
-                            + vocab_dict["value_set"][domain][slot][v.strip().lower()]
+                            + vocab_dict["value_set"][domain][slot][
+                                v.strip().lower()
+                            ]
                         )
             else:
                 trans_value = vocab_dict["value_set"][domain][slot][

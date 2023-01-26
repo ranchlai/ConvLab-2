@@ -29,9 +29,9 @@ $ PYTHONPATH=../../.. python train.py camrest/configs/camrest_[mode].cfg
 
 Please refer to `svm/config.md` for how to write config file (`*.cfg`)
 
-The model will be saved on `model/svm_camrest_[mode].pickle`. Also, it will be zipped as `model/svm_camrest_[mode].zip`. 
+The model will be saved on `model/svm_camrest_[mode].pickle`. Also, it will be zipped as `model/svm_camrest_[mode].zip`.
 
-Trained models can be download on: 
+Trained models can be download on:
 
 - Trained on all data: [mode=all](https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/svm_camrest_all.zip)
 - Trained on user utterances only: [mode=usr](https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/svm_camrest_usr.zip)
@@ -102,4 +102,3 @@ We evaluate the precision/recall/f1 of predicted dialog act.
        month={June}
 }
 ```
-

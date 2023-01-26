@@ -30,7 +30,7 @@ Performance:
 | ------------ |
 | 0.74 |
 
-The model can be downloaded from: 
+The model can be downloaded from:
 
 https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/ppo_policy_multiwoz.zip
 

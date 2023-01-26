@@ -1,16 +1,17 @@
+# -*- coding: utf-8 -*-
+import math
+import time
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.nn.init as init
 from torch.autograd import Variable
 from torch.nn.utils.rnn import pack_padded_sequence as pack
 from torch.nn.utils.rnn import pad_packed_sequence as unpack
-from convlab2.dst.comer.multiwoz import dict
-from convlab2.dst.comer.multiwoz import models
-import time
-import numpy as np
-import torch.nn.init as init
 
-import math
+from convlab2.dst.comer.multiwoz import dict, models
 
 
 def gelu(x):
@@ -143,13 +144,17 @@ class rnn_decoder(nn.Module):
             else:
                 init.constant_(param.data, 0)
         self.score_fn = score_fn
-        self.slot_linear = nn.Linear(config.decoder_hidden_size, config.emb_size)
+        self.slot_linear = nn.Linear(
+            config.decoder_hidden_size, config.emb_size
+        )
         init.kaiming_normal_(self.slot_linear.weight.data)
         init.constant_(self.slot_linear.bias.data, 0)
 
         activation = None
 
-        self.attention = models.global_attention(config.decoder_hidden_size, activation)
+        self.attention = models.global_attention(
+            config.decoder_hidden_size, activation
+        )
         # self.user_attention = models.global_attention(config.decoder_hidden_size, activation)
         # self.sys_attention = models.global_attention(config.decoder_hidden_size, activation)
         self.hidden_size = config.decoder_hidden_size
@@ -181,7 +186,15 @@ class rnn_decoder(nn.Module):
         self.dropout = nn.Dropout(0.5)  # config.dropout)
 
     def forward(
-        self, tgt, init_state, ifslot, contexts, criterion, story, lengths, slot=None
+        self,
+        tgt,
+        init_state,
+        ifslot,
+        contexts,
+        criterion,
+        story,
+        lengths,
+        slot=None,
     ):
         # context - a tuple of outputs from multiple encoders
         # sys:2 user:1 belief:0
@@ -221,7 +234,9 @@ class rnn_decoder(nn.Module):
             output = self.re4(self.linear4(output))
             output = self.dropout(output)
             outputs += [output]
-            score = self.compute_score(output, output0, contexts, story, lengths)
+            score = self.compute_score(
+                output, output0, contexts, story, lengths
+            )
             scores.append(score)
         outputs = torch.stack(outputs)  # S,B,H
         scores = torch.cat(scores)  # S*B,H
@@ -243,7 +258,9 @@ class rnn_decoder(nn.Module):
         return scores
 
     # sample all steps - by running sample_one
-    def sample(self, input, init_state, ifslot, contexts, story, lengths, slot=None):
+    def sample(
+        self, input, init_state, ifslot, contexts, story, lengths, slot=None
+    ):
         inputs, outputs, sample_ids, state = [], [], [], init_state
         attn1s, attn2s, attn3s = [], [], []
         scores = []
@@ -286,7 +303,9 @@ class rnn_decoder(nn.Module):
         return sample_ids, (outputs, attn1s, attn2s, attn3s)
 
     # only sample one time step
-    def sample_one(self, input, state, contexts, ifslot, story, lengths, slot=None):
+    def sample_one(
+        self, input, state, contexts, ifslot, story, lengths, slot=None
+    ):
         emb = self.slot_embedding(input)  # B,H
 
         output0, state = self.rnn(emb, state)
@@ -303,7 +322,9 @@ class rnn_decoder(nn.Module):
         outputt3 = outputt2 + output3
 
         output = self.re1(
-            self.linear_out(torch.cat([outputt, outputt1, outputt2, outputt3], 1))
+            self.linear_out(
+                torch.cat([outputt, outputt1, outputt2, outputt3], 1)
+            )
         )
 
         output = self.re2(self.linear_slot(output))

@@ -44,7 +44,7 @@ sub add_to_ref {
     my $s=0;
     if ($file =~ /.gz$/) {
 	open(REF,"gzip -dc $file|") or die "Can't read $file";
-    } else { 
+    } else {
 	open(REF,$file) or die "Can't read $file";
     }
     while(<REF>) {

@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
 import json
 import os
 import random
 import zipfile
+
 from convlab2.util.file_util import cached_path
 
 

@@ -9,18 +9,19 @@ How to run:
     Deploy start:
         `gunicorn -b 0.0.0.0:8888 deploy.run:app --threads 4`
 """
+import json
 import os
 import sys
-import json
-from flask import Flask, request, render_template
+
+from flask import Flask, render_template, request
 
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
 )
 
 from deploy.config import get_config
-from deploy.utils import DeployError
 from deploy.server import ServerCtrl
+from deploy.utils import DeployError
 
 # load config file
 dep_conf = get_config()

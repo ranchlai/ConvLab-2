@@ -52,7 +52,9 @@ class AttractionGenerator:
         # generate method
         if exist_goal:
             goal["生成方式"] = "id={}的周边{}".format(exist_goal["id"], "景点")
-            goal["约束条件"].append(["名称", "出现在id={}的周边{}里".format(exist_goal["id"], "景点")])
+            goal["约束条件"].append(
+                ["名称", "出现在id={}的周边{}里".format(exist_goal["id"], "景点")]
+            )
             name_flag = True
         else:
             goal["生成方式"] = "单领域生成"
@@ -63,7 +65,9 @@ class AttractionGenerator:
         # if constraint == name ?
         if not exist_goal and random.random() < self.constraints2prob["名称"]:
             v = self.constraints2weight["名称"]
-            goal["约束条件"] = [["名称", random.choices(list(v.keys()), list(v.values()))[0]]]
+            goal["约束条件"] = [
+                ["名称", random.choices(list(v.keys()), list(v.values()))[0]]
+            ]
             name_flag = True
         else:
             rest_constraints = list(self.constraints2prob.keys())

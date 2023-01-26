@@ -1,10 +1,13 @@
-import os
+# -*- coding: utf-8 -*-
 import json
+import os
+
 import numpy as np
+
 from convlab2.policy.vec import Vector
-from convlab2.util.crosswoz.state import default_state
-from convlab2.util.crosswoz.lexicalize import delexicalize_da, lexicalize_da
 from convlab2.util.crosswoz.dbquery import Database
+from convlab2.util.crosswoz.lexicalize import delexicalize_da, lexicalize_da
+from convlab2.util.crosswoz.state import default_state
 
 
 class CrossWozVector(Vector):
@@ -69,7 +72,9 @@ class CrossWozVector(Vector):
                     belief_state_vec[i] = 1.0
                 i += 1
 
-        self.db_res = self.database.query(state["belief_state"], state["cur_domain"])
+        self.db_res = self.database.query(
+            state["belief_state"], state["cur_domain"]
+        )
         db_res_num = len(self.db_res)
         db_res_vec = np.zeros(4)
         if db_res_num == 0:

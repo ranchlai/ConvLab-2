@@ -1,16 +1,17 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, division, print_function
 
+import copy
 import csv
+import json
+import logging
 import os
 import time
-import json
+
 import numpy as np
 import torch
-import logging
+
 from convlab2.policy.hdsa.multiwoz.transformer import Constants
-import copy
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +60,9 @@ def get_batch(data_dir, option, tokenizer, max_seq_length):
             else:
                 # segment_ids = [0] * (len(hist) + 1) + [1] * len(tokens)
                 segment_ids = (
-                    hist_segment + [Constants.PAD] + [segment_user] * len(tokens)
+                    hist_segment
+                    + [Constants.PAD]
+                    + [segment_user] * len(tokens)
                 )
                 tokens = hist + [Constants.SEP_WORD] + tokens
                 if len(tokens) > max_seq_length - 2:
@@ -79,7 +82,9 @@ def get_batch(data_dir, option, tokenizer, max_seq_length):
             )
 
             if len(resp) > Constants.RESP_MAX_LEN:
-                resp = resp[: Constants.RESP_MAX_LEN - 1] + [Constants.EOS_WORD]
+                resp = resp[: Constants.RESP_MAX_LEN - 1] + [
+                    Constants.EOS_WORD
+                ]
             else:
                 resp = resp + [Constants.PAD_WORD] * (
                     Constants.RESP_MAX_LEN - len(resp)
@@ -92,7 +97,9 @@ def get_batch(data_dir, option, tokenizer, max_seq_length):
             if turn["BS"] != "None":
                 for domain in turn["BS"]:
                     for key, value in turn["BS"][domain]:
-                        bs[Constants.belief_state.index(domain + "-" + key)] = 1
+                        bs[
+                            Constants.belief_state.index(domain + "-" + key)
+                        ] = 1
 
             if turn["KB"] == 0:
                 query_results = [1, 0, 0, 0]
@@ -102,13 +109,13 @@ def get_batch(data_dir, option, tokenizer, max_seq_length):
                 query_results = [0, 0, 1, 0]
             elif turn["KB"] >= 4:
                 query_results = [0, 0, 0, 1]
-            """          
+            """
             if turn_num == 0:
                 query_results += [1, 0, 0, 0]
             elif turn_num == 1:
                 query_results += [0, 1, 0, 0]
             elif turn_num == 2:
-                query_results += [0, 0, 1, 0]         
+                query_results += [0, 0, 1, 0]
             elif turn_num >= 3:
                 query_results += [0, 0, 0, 1]
             """
@@ -162,7 +169,8 @@ def get_batch(data_dir, option, tokenizer, max_seq_length):
                         hierarchical_act_vecs[Constants.domains.index(d)] = 1
                         # for _ in Constants.function_imapping[w]:
                         hierarchical_act_vecs[
-                            len(Constants.domains) + Constants.functions.index(f)
+                            len(Constants.domains)
+                            + Constants.functions.index(f)
                         ] = 1
                         # for _ in Constants.arguments_imapping[w]:
                         hierarchical_act_vecs[
@@ -202,19 +210,27 @@ def get_batch(data_dir, option, tokenizer, max_seq_length):
                 logger.info("*** Example ***")
                 logger.info("guid: %s" % (str(num)))
                 logger.info("tokens: %s" % " ".join([str(x) for x in tokens]))
-                logger.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
-                logger.info("input_mask: %s" % " ".join([str(x) for x in input_mask]))
                 logger.info(
-                    "segment_ids: %s" % " ".join([str(x) for x in padded_segment_ids])
+                    "input_ids: %s" % " ".join([str(x) for x in input_ids])
+                )
+                logger.info(
+                    "input_mask: %s" % " ".join([str(x) for x in input_mask])
+                )
+                logger.info(
+                    "segment_ids: %s"
+                    % " ".join([str(x) for x in padded_segment_ids])
                 )
                 logger.info(
                     "action_vecs: %s"
                     % " ".join([str(x) for x in hierarchical_act_vecs])
                 )
                 logger.info(
-                    "query results: %s" % " ".join([str(x) for x in query_results])
+                    "query results: %s"
+                    % " ".join([str(x) for x in query_results])
                 )
-                logger.info("belief states: %s" % " ".join([str(x) for x in bs]))
+                logger.info(
+                    "belief states: %s" % " ".join([str(x) for x in bs])
+                )
                 logger.info(
                     "system response: %s"
                     % " ".join([str(x) for x in resp if x != "[PAD]"])
@@ -226,7 +242,9 @@ def get_batch(data_dir, option, tokenizer, max_seq_length):
             if turn_num == 0:
                 hist = tokens[1:-1] + [Constants.SEP_WORD] + sys
                 hist_segment = (
-                    segment_ids[1:-1] + [Constants.PAD] + [segment_sys] * len(sys)
+                    segment_ids[1:-1]
+                    + [Constants.PAD]
+                    + [segment_sys] * len(sys)
                 )
             else:
                 hist = (
@@ -248,10 +266,14 @@ def get_batch(data_dir, option, tokenizer, max_seq_length):
     all_input_mask = torch.tensor([f[1] for f in examples], dtype=torch.long)
     all_segment_ids = torch.tensor([f[2] for f in examples], dtype=torch.long)
     all_act_vecs = torch.tensor([f[3] for f in examples], dtype=torch.float32)
-    all_query_results = torch.tensor([f[4] for f in examples], dtype=torch.float32)
+    all_query_results = torch.tensor(
+        [f[4] for f in examples], dtype=torch.float32
+    )
     all_response_in = torch.tensor([f[5] for f in examples], dtype=torch.long)
     all_response_out = torch.tensor([f[6] for f in examples], dtype=torch.long)
-    all_belief_state = torch.tensor([f[7] for f in examples], dtype=torch.float32)
+    all_belief_state = torch.tensor(
+        [f[7] for f in examples], dtype=torch.float32
+    )
     all_hierarchical_act_vecs = torch.tensor(
         [f[8] for f in examples], dtype=torch.float32
     )

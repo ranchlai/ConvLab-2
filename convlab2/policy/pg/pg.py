@@ -1,20 +1,24 @@
 # -*- coding: utf-8 -*-
-import torch
-from torch import optim
-import numpy as np
+import json
 import logging
 import os
-import json
+import sys
+import zipfile
+
+import numpy as np
+import torch
+from torch import optim
+
 from convlab2.policy.policy import Policy
 from convlab2.policy.rlmodule import MultiDiscretePolicy
-from convlab2.util.train_util import init_logging_handler
 from convlab2.policy.vector.vector_multiwoz import MultiWozVector
 from convlab2.util.file_util import cached_path
-import zipfile
-import sys
+from convlab2.util.train_util import init_logging_handler
 
 root_dir = os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
 )
 sys.path.append(root_dir)
 
@@ -24,7 +28,10 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class PG(Policy):
     def __init__(self, is_train=False, dataset="Multiwoz"):
         with open(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json"), "r"
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "config.json"
+            ),
+            "r",
         ) as f:
             cfg = json.load(f)
         self.save_dir = os.path.join(
@@ -40,7 +47,9 @@ class PG(Policy):
 
         if dataset == "Multiwoz":
             voc_file = os.path.join(root_dir, "data/multiwoz/sys_da_voc.txt")
-            voc_opp_file = os.path.join(root_dir, "data/multiwoz/usr_da_voc.txt")
+            voc_opp_file = os.path.join(
+                root_dir, "data/multiwoz/usr_da_voc.txt"
+            )
             self.vector = MultiWozVector(voc_file, voc_opp_file)
             self.policy = MultiDiscretePolicy(
                 self.vector.state_dim, cfg["h_dim"], self.vector.da_dim
@@ -48,7 +57,9 @@ class PG(Policy):
 
         # self.policy = MultiDiscretePolicy(self.vector.state_dim, cfg['h_dim'], self.vector.da_dim).to(device=DEVICE)
         if is_train:
-            self.policy_optim = optim.RMSprop(self.policy.parameters(), lr=cfg["lr"])
+            self.policy_optim = optim.RMSprop(
+                self.policy.parameters(), lr=cfg["lr"]
+            )
 
     def predict(self, state):
         """
@@ -59,7 +70,9 @@ class PG(Policy):
             action : System act, with the form of (act_type, {slot_name_1: value_1, slot_name_2, value_2, ...})
         """
         s_vec = torch.Tensor(self.vector.state_vectorize(state))
-        a = self.policy.select_action(s_vec.to(device=DEVICE), self.is_train).cpu()
+        a = self.policy.select_action(
+            s_vec.to(device=DEVICE), self.is_train
+        ).cpu()
         action = self.vector.action_devectorize(a.numpy())
         state["system_action"] = action
 
@@ -158,10 +171,13 @@ class PG(Policy):
             os.makedirs(directory)
 
         torch.save(
-            self.policy.state_dict(), directory + "/" + str(epoch) + "_pg.pol.mdl"
+            self.policy.state_dict(),
+            directory + "/" + str(epoch) + "_pg.pol.mdl",
         )
 
-        logging.info("<<dialog policy>> epoch {}: saved network to mdl".format(epoch))
+        logging.info(
+            "<<dialog policy>> epoch {}: saved network to mdl".format(epoch)
+        )
 
     def load(self, filename):
         policy_mdl_candidates = [
@@ -170,15 +186,19 @@ class PG(Policy):
             filename + "_pg.pol.mdl",
             os.path.join(os.path.dirname(os.path.abspath(__file__)), filename),
             os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), filename + ".pol.mdl"
+                os.path.dirname(os.path.abspath(__file__)),
+                filename + ".pol.mdl",
             ),
             os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), filename + "_pg.pol.mdl"
+                os.path.dirname(os.path.abspath(__file__)),
+                filename + "_pg.pol.mdl",
             ),
         ]
         for policy_mdl in policy_mdl_candidates:
             if os.path.exists(policy_mdl):
-                self.policy.load_state_dict(torch.load(policy_mdl, map_location=DEVICE))
+                self.policy.load_state_dict(
+                    torch.load(policy_mdl, map_location=DEVICE)
+                )
                 logging.info(
                     "<<dialog policy>> loaded checkpoint from file: {}".format(
                         policy_mdl
@@ -191,7 +211,9 @@ class PG(Policy):
             if not model_file:
                 raise Exception("No model for PG Policy is specified!")
             archive_file = cached_path(model_file)
-        model_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "save")
+        model_dir = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "save"
+        )
         if not os.path.exists(model_dir):
             os.mkdir(model_dir)
         if not os.path.exists(os.path.join(model_dir, "best_pg.pol.mdl")):
@@ -199,12 +221,17 @@ class PG(Policy):
             archive.extractall(model_dir)
 
         policy_mdl = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), filename + "_pg.pol.mdl"
+            os.path.dirname(os.path.abspath(__file__)),
+            filename + "_pg.pol.mdl",
         )
         if os.path.exists(policy_mdl):
-            self.policy.load_state_dict(torch.load(policy_mdl, map_location=DEVICE))
+            self.policy.load_state_dict(
+                torch.load(policy_mdl, map_location=DEVICE)
+            )
             logging.info(
-                "<<dialog policy>> loaded checkpoint from file: {}".format(policy_mdl)
+                "<<dialog policy>> loaded checkpoint from file: {}".format(
+                    policy_mdl
+                )
             )
 
     @classmethod
@@ -214,7 +241,10 @@ class PG(Policy):
         model_file="https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/pg_policy_multiwoz.zip",
     ):
         with open(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json"), "r"
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "config.json"
+            ),
+            "r",
         ) as f:
             cfg = json.load(f)
         model = cls()

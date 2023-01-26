@@ -1,5 +1,13 @@
-import json, random, os
-from convlab2.e2e.damd.multiwoz.ontology import all_domains, db_domains, booking_slots
+# -*- coding: utf-8 -*-
+import json
+import os
+import random
+
+from convlab2.e2e.damd.multiwoz.ontology import (
+    all_domains,
+    booking_slots,
+    db_domains,
+)
 
 
 class MultiWozDB(object):
@@ -107,7 +115,9 @@ class MultiWozDB(object):
 
         return report
 
-    def queryJsons(self, domain, constraints, exactly_match=True, return_name=False):
+    def queryJsons(
+        self, domain, constraints, exactly_match=True, return_name=False
+    ):
         """Returns the list of entities for a given domain
         based on the annotation of the belief state
         constraints: dict e.g. {'pricerange': 'cheap', 'area': 'west'}
@@ -116,8 +126,12 @@ class MultiWozDB(object):
         if domain == "taxi":
             return [
                 {
-                    "taxi_colors": random.choice(self.dbs[domain]["taxi_colors"]),
-                    "taxi_types": random.choice(self.dbs[domain]["taxi_types"]),
+                    "taxi_colors": random.choice(
+                        self.dbs[domain]["taxi_colors"]
+                    ),
+                    "taxi_types": random.choice(
+                        self.dbs[domain]["taxi_types"]
+                    ),
                     "taxi_phone": [random.randint(1, 9) for _ in range(10)],
                 }
             ]
@@ -126,7 +140,9 @@ class MultiWozDB(object):
         if domain == "hospital":
             if constraints.get("department"):
                 for entry in self.dbs["hospital"]:
-                    if entry.get("department") == constraints.get("department"):
+                    if entry.get("department") == constraints.get(
+                        "department"
+                    ):
                         return [entry]
             else:
                 return []

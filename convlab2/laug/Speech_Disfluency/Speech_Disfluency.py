@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 import json
-import random
-from fuzzywuzzy import fuzz
-from convlab2.laug.Speech_Disfluency.inference import IP_model
 import os
+import random
+
+from fuzzywuzzy import fuzz
+
+from convlab2.laug.Speech_Disfluency.inference import IP_model
 
 current_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -50,7 +52,9 @@ class Speech_Disfluency:
     def __init__(self, dataset="multiwoz", edit_frequency=0.3):
         self.resources = json.load(
             open(
-                os.path.join(current_path, "resources/resources_" + dataset + ".json"),
+                os.path.join(
+                    current_path, "resources/resources_" + dataset + ".json"
+                ),
                 "r",
             )
         )
@@ -79,7 +83,9 @@ class Speech_Disfluency:
             if random_01(edit_possibility) == 0:
                 continue
             value = span[2]
-            start = sentence.count(" ", 0, sentence.find(" " + value + " ")) - 1
+            start = (
+                sentence.count(" ", 0, sentence.find(" " + value + " ")) - 1
+            )
 
             max_ratio, max_entity = 0, ""
             for e in self.resources["knowledge_base"]["entity"]:
@@ -92,7 +98,9 @@ class Speech_Disfluency:
                 if max_entity in self.resources["knowledge_base"]["entity"]:
                     candidate = self.resources["knowledge_base"]["category"][
                         random_pick_from_list(
-                            self.resources["knowledge_base"]["entity"][max_entity]
+                            self.resources["knowledge_base"]["entity"][
+                                max_entity
+                            ]
                         )
                     ][0:]
                 if span in candidate:
@@ -111,7 +119,9 @@ class Speech_Disfluency:
         for i in range(len(IP_tags)):
             if IP_tags[i] == 2:
                 word_list[i] = (
-                    word_list[i] + random_pick_from_list([" ", " , "]) + word_list[i]
+                    word_list[i]
+                    + random_pick_from_list([" ", " , "])
+                    + word_list[i]
                 )
         return word_list
 
@@ -119,7 +129,9 @@ class Speech_Disfluency:
         for i in range(len(IP_tags)):
             if IP_tags[i] == 1:
                 word_list[i] = (
-                    random_pick_from_distribution(self.resources["filler_terms"])
+                    random_pick_from_distribution(
+                        self.resources["filler_terms"]
+                    )
                     + " "
                     + word_list[i]
                 )
@@ -142,7 +154,10 @@ class Speech_Disfluency:
             lenth = len(value.split())
             spans[i][3] = start
             spans[i][4] = start + lenth - 1
-            if " ".join(sentence.split()[spans[i][3] : spans[i][4] + 1]) != spans[i][2]:
+            if (
+                " ".join(sentence.split()[spans[i][3] : spans[i][4] + 1])
+                != spans[i][2]
+            ):
                 checked = 0
         return spans, checked
 

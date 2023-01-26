@@ -1,6 +1,7 @@
+# -*- coding: utf-8 -*-
+import numpy as np
 import torch as th
 import torch.nn as nn
-import numpy as np
 from torch.nn.modules.module import _addindent
 
 

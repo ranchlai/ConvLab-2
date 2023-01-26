@@ -1,10 +1,11 @@
-from convlab2.util.analysis_tool.analyzer import Analyzer
+# -*- coding: utf-8 -*-
+from convlab2.dialog_agent import PipelineAgent
+from convlab2.dst.rule.multiwoz import RuleDST
+from convlab2.nlg.template.multiwoz import TemplateNLG
 from convlab2.nlu.jointBERT.multiwoz import BERTNLU
 from convlab2.nlu.svm.multiwoz import SVMNLU
-from convlab2.dst.rule.multiwoz import RuleDST
 from convlab2.policy.rule.multiwoz import RulePolicy
-from convlab2.nlg.template.multiwoz import TemplateNLG
-from convlab2.dialog_agent import PipelineAgent
+from convlab2.util.analysis_tool.analyzer import Analyzer
 
 
 def build_user_agent_bertnlu():
@@ -12,7 +13,9 @@ def build_user_agent_bertnlu():
     user_dst = None
     user_policy = RulePolicy(character="usr")
     user_nlg = TemplateNLG(is_user=True)
-    user_agent = PipelineAgent(user_nlu, user_dst, user_policy, user_nlg, "user")
+    user_agent = PipelineAgent(
+        user_nlu, user_dst, user_policy, user_nlg, "user"
+    )
     return user_agent
 
 

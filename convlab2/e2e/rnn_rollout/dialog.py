@@ -1,17 +1,18 @@
+# -*- coding: utf-8 -*-
 # Copyright 2017-present, Facebook, Inc.
 # All rights reserved.
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import sys
 import pdb
+import sys
 
 import numpy as np
 
-from convlab2.e2e.rnn_rollout.metric import MetricsContainer
-import data
 import convlab2.e2e.rnn_rollout.domain as domain
+import data
+from convlab2.e2e.rnn_rollout.metric import MetricsContainer
 
 
 class DialogLogger(object):
@@ -105,7 +106,9 @@ class DialogSelfTrainLogger(DialogLogger):
                 for other_name in self.name2example:
                     if name != other_name:
                         self.name2example[name] += " " + self.name2choice[name]
-                        self.name2example[name] += " " + self.name2choice[other_name]
+                        self.name2example[name] += (
+                            " " + self.name2choice[other_name]
+                        )
                         self._dump(self.name2example[name])
 
     def dump_reward(self, name, agree, reward):
@@ -148,7 +151,9 @@ class Dialog(object):
         return len(out) == 1 and (out[0] in ["<selection>", "<no_agreement>"])
 
     def show_metrics(self):
-        return " ".join(["%s=%s" % (k, v) for k, v in self.metrics.dict().items()])
+        return " ".join(
+            ["%s=%s" % (k, v) for k, v in self.metrics.dict().items()]
+        )
 
     def run(self, ctxs, logger, max_words=5000):
         assert len(self.agents) == len(ctxs)
@@ -243,7 +248,9 @@ class Dialog(object):
         self.metrics.record("comb_rew", np.sum(rewards) if agree else 0)
         for agent, reward in zip(self.agents, rewards):
             self.metrics.record("%s_rew" % agent.name, reward if agree else 0)
-            self.metrics.record("%s_moving_rew" % agent.name, reward if agree else 0)
+            self.metrics.record(
+                "%s_moving_rew" % agent.name, reward if agree else 0
+            )
 
         logger.dump("-" * 80)
         logger.dump(self.show_metrics())

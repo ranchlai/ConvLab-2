@@ -1,16 +1,23 @@
+# -*- coding: utf-8 -*-
+import numpy as np
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
-import numpy as np
-from convlab2.policy.larl.multiwoz.latent_dialog.enc2dec.base_modules import BaseRNN
-from convlab2.policy.larl.multiwoz.latent_dialog.utils import cast_type, LONG, FLOAT
+
 from convlab2.policy.larl.multiwoz.latent_dialog.corpora import (
     DECODING_MASKED_TOKENS,
     EOS,
 )
-
+from convlab2.policy.larl.multiwoz.latent_dialog.enc2dec.base_modules import (
+    BaseRNN,
+)
+from convlab2.policy.larl.multiwoz.latent_dialog.utils import (
+    FLOAT,
+    LONG,
+    cast_type,
+)
 
 TEACH_FORCE = "teacher_forcing"
 TEACH_GEN = "teacher_gen"
@@ -25,7 +32,9 @@ class Attention(nn.Module):
         self.ctx_cell_size = ctx_cell_size
         self.attn_mode = attn_mode
         if project:
-            self.linear_out = nn.Linear(dec_cell_size + ctx_cell_size, dec_cell_size)
+            self.linear_out = nn.Linear(
+                dec_cell_size + ctx_cell_size, dec_cell_size
+            )
         else:
             self.linear_out = None
 
@@ -56,7 +65,9 @@ class Attention(nn.Module):
             # (batch_size, max_ctx_len, dec_cell_size)
             mapped_attn = self.attn_w(context)
             # (batch_size, output_seq_len, max_ctx_len, dec_cell_size)
-            tiled_output = mapped_output.unsqueeze(2).repeat(1, 1, max_ctx_len, 1)
+            tiled_output = mapped_output.unsqueeze(2).repeat(
+                1, 1, max_ctx_len, 1
+            )
             # (batch_size, 1, max_ctx_len, dec_cell_size)
             tiled_attn = mapped_attn.unsqueeze(1)
             # (batch_size, output_seq_len, max_ctx_len, dec_cell_size)
@@ -183,7 +194,9 @@ class DecoderRNN(BaseRNN):
             with th.no_grad():
                 bos_var = Variable(th.LongTensor([self.sys_id]))
             bos_var = cast_type(bos_var, LONG, self.use_gpu)
-            decoder_input = bos_var.expand(batch_size * beam_size, 1)  # (batch_size, 1)
+            decoder_input = bos_var.expand(
+                batch_size * beam_size, 1
+            )  # (batch_size, 1)
 
         if mode == GEN and gen_type == "beam":
             # TODO if beam search, repeat the initial states of the RNN
@@ -199,7 +212,9 @@ class DecoderRNN(BaseRNN):
 
         def decode(step, cum_sum, step_output, step_attn):
             prob_outputs.append(step_output)
-            step_output_slice = step_output.squeeze(1)  # (batch_size, vocab_size)
+            step_output_slice = step_output.squeeze(
+                1
+            )  # (batch_size, vocab_size)
             if self.use_attn:
                 ret_dict[DecoderRNN.KEY_ATTN_SCORE].append(step_attn)
 
@@ -239,10 +254,19 @@ class DecoderRNN(BaseRNN):
                 #   decoder_output: (batch_size, 1, vocab_size)
                 #   decoder_hidden_state: tuple: (h, c)
                 #   step_attn: (batch_size, 1, max_ctx_len)
-                decoder_output, decoder_hidden_state, step_attn = self.forward_step(
-                    decoder_input, decoder_hidden_state, attn_context, goal_hid=goal_hid
+                (
+                    decoder_output,
+                    decoder_hidden_state,
+                    step_attn,
+                ) = self.forward_step(
+                    decoder_input,
+                    decoder_hidden_state,
+                    attn_context,
+                    goal_hid=goal_hid,
                 )
-                cum_sum, symbols = decode(step, cum_sum, decoder_output, step_attn)
+                cum_sum, symbols = decode(
+                    step, cum_sum, decoder_output, step_attn
+                )
                 decoder_input = symbols
 
             # (batch_size, max_dec_len, vocab_size)
@@ -313,7 +337,9 @@ class DecoderRNN(BaseRNN):
             goal_hid = goal_hid.view(
                 goal_hid.size(0), 1, goal_hid.size(1)
             )  # (1, 1, goal_nhid)
-            goal_rep = goal_hid.repeat(1, output_seq_len, 1)  # (1, 1, goal_nhid)
+            goal_rep = goal_hid.repeat(
+                1, output_seq_len, 1
+            )  # (1, 1, goal_nhid)
             # (1, 1, embedding_dim+goal_nhid)
             embedded = th.cat([embedded, goal_rep], dim=2)
 
@@ -335,7 +361,9 @@ class DecoderRNN(BaseRNN):
 
         # (1*1, vocab_size)
         logits = self.project(output.view(-1, self.dec_cell_size))
-        prediction = logits.view(batch_size, output_seq_len, -1)  # (1, 1, vocab_size)
+        prediction = logits.view(
+            batch_size, output_seq_len, -1
+        )  # (1, 1, vocab_size)
         # prediction = self.log_softmax(logits, dim=logits.dim()-1).view(batch_size, output_seq_len, -1) # (batch_size, output_seq_len, vocab_size)
         return prediction, hidden_s
 
@@ -457,7 +485,9 @@ class DecoderRNN(BaseRNN):
             prob = F.softmax(dec_output / temp, dim=1)
             # (batch_size, vocab_size, )
             logprob = F.log_softmax(dec_output, dim=1)
-            symbol = prob.multinomial(num_samples=1).detach()  # (batch_size, 1)
+            symbol = prob.multinomial(
+                num_samples=1
+            ).detach()  # (batch_size, 1)
             # _, symbol = prob.topk(1) # (1, )
             _, tmp_symbol = prob.topk(1)  # (1, )
             # print('multinomial symbol = {}, prob = {}'.format(symbol, prob[symbol.item()]))
@@ -485,7 +515,9 @@ class DecoderRNN(BaseRNN):
                 break
 
         assert len(logprob_outputs) == len(symbol_outputs)
-        symbol_outputs = th.cat(symbol_outputs, dim=1).cpu().data.numpy().tolist()
+        symbol_outputs = (
+            th.cat(symbol_outputs, dim=1).cpu().data.numpy().tolist()
+        )
         logprob_outputs = th.cat(logprob_outputs, dim=1)
         logprob_list = []
         symbol_list = []

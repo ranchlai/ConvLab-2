@@ -1,4 +1,5 @@
-from .types import TokenListType, SentenceType
+# -*- coding: utf-8 -*-
+from .types import SentenceType, TokenListType
 
 
 def tokenize(sentence: str) -> TokenListType:

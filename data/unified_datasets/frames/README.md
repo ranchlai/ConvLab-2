@@ -4,7 +4,7 @@
 
 - Annotations: dialogue act, character-level span for non-categorical slots.
 
-Statistics: 
+Statistics:
 
 |       | \# dialogues | \# utterances | avg. turns | avg. tokens | \# domains |
 | ----- | ------------ | ------------- | ---------- | ----------- | ---------- |

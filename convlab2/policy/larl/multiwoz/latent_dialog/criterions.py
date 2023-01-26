@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
+import numpy as np
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.modules.loss import _Loss
-import numpy as np
+
 from convlab2.policy.larl.multiwoz.latent_dialog import domain
 from convlab2.policy.larl.multiwoz.latent_dialog.utils import LONG
 
@@ -28,7 +30,9 @@ class NLLEntropy(_Loss):
             )
             loss = loss / batch_size
         elif self.avg_type == "real_word":
-            loss = F.nll_loss(pred, target, ignore_index=self.padding_idx, reduce=False)
+            loss = F.nll_loss(
+                pred, target, ignore_index=self.padding_idx, reduce=False
+            )
             loss = loss.view(-1, net_output.size(1))
             loss = th.sum(loss, dim=1)
             word_cnt = th.sum(th.sign(labels), dim=1).float()
@@ -67,7 +71,11 @@ class NLLEntropy4CLF(_Loss):
 
 class CombinedNLLEntropy4CLF(_Loss):
     def __init__(
-        self, dictionary, corpus, np2var, bad_tokens=["<disconnect>", "<disagree>"]
+        self,
+        dictionary,
+        corpus,
+        np2var,
+        bad_tokens=["<disconnect>", "<disagree>"],
     ):
         super(CombinedNLLEntropy4CLF, self).__init__()
         self.dictionary = dictionary
@@ -87,7 +95,9 @@ class CombinedNLLEntropy4CLF(_Loss):
             goal = goals_id[bth]  # list, id, len=goal_len
             goal_str = self.corpus.id2goal(goal)  # list, str, len=goal_len
             outcome = outcomes_id[bth]  # list, id, len=outcome_len
-            outcome_str = self.corpus.id2outcome(outcome)  # list, str, len=outcome_len
+            outcome_str = self.corpus.id2outcome(
+                outcome
+            )  # list, str, len=outcome_len
 
             if outcome_str[0] in self.bad_tokens:
                 continue
@@ -101,7 +111,9 @@ class CombinedNLLEntropy4CLF(_Loss):
             for i in range(self.domain.selection_length()):
                 idxs = np.array([self.dictionary[c[i]] for c in choices])
                 idxs_var = self.np2var(idxs, LONG)  # (option_amount, )
-                choices_logits.append(th.gather(sel_outs[i], 0, idxs_var).unsqueeze(1))
+                choices_logits.append(
+                    th.gather(sel_outs[i], 0, idxs_var).unsqueeze(1)
+                )
 
             choice_logit = th.sum(
                 th.cat(choices_logits, 1), 1, keepdim=False

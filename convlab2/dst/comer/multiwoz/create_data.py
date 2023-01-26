@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 #! python3
 import copy
+import difflib
 import json
 import os
-import sys
 import re
 import shutil
+import sys
 import urllib
-from urllib.request import urlopen
 from collections import OrderedDict
 from io import BytesIO
+from urllib.request import urlopen
 from zipfile import ZipFile
-import difflib
+
 import numpy as np
 
 from convlab2.util.multiwoz.state import default_state
@@ -31,7 +32,8 @@ MAX_LENGTH = 50
 IGNORE_KEYS_IN_GOAL = ["eod", "topic", "messageLen", "message"]
 
 fin = open(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "mapping.pair"), "r"
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "mapping.pair"),
+    "r",
 )
 replacements = []
 for line in fin.readlines():
@@ -164,31 +166,31 @@ def fixDelex(filename, data, data2, idx, idx_acts):
         for k, act in turn.items():
             if "Attraction" in k:
                 if "restaurant_" in data["log"][idx]["text"]:
-                    data["log"][idx]["text"] = data["log"][idx]["text"].replace(
-                        "restaurant", "attraction"
-                    )
+                    data["log"][idx]["text"] = data["log"][idx][
+                        "text"
+                    ].replace("restaurant", "attraction")
                 if "hotel_" in data["log"][idx]["text"]:
-                    data["log"][idx]["text"] = data["log"][idx]["text"].replace(
-                        "hotel", "attraction"
-                    )
+                    data["log"][idx]["text"] = data["log"][idx][
+                        "text"
+                    ].replace("hotel", "attraction")
             if "Hotel" in k:
                 if "attraction_" in data["log"][idx]["text"]:
-                    data["log"][idx]["text"] = data["log"][idx]["text"].replace(
-                        "attraction", "hotel"
-                    )
+                    data["log"][idx]["text"] = data["log"][idx][
+                        "text"
+                    ].replace("attraction", "hotel")
                 if "restaurant_" in data["log"][idx]["text"]:
-                    data["log"][idx]["text"] = data["log"][idx]["text"].replace(
-                        "restaurant", "hotel"
-                    )
+                    data["log"][idx]["text"] = data["log"][idx][
+                        "text"
+                    ].replace("restaurant", "hotel")
             if "Restaurant" in k:
                 if "attraction_" in data["log"][idx]["text"]:
-                    data["log"][idx]["text"] = data["log"][idx]["text"].replace(
-                        "attraction", "restaurant"
-                    )
+                    data["log"][idx]["text"] = data["log"][idx][
+                        "text"
+                    ].replace("attraction", "restaurant")
                 if "hotel_" in data["log"][idx]["text"]:
-                    data["log"][idx]["text"] = data["log"][idx]["text"].replace(
-                        "hotel", "restaurant"
-                    )
+                    data["log"][idx]["text"] = data["log"][idx][
+                        "text"
+                    ].replace("hotel", "restaurant")
 
     return data
 
@@ -251,7 +253,8 @@ def get_summary_bstate(bstate, get_domain=False):
                         [
                             "{}-book {}".format(domain, slot.strip().lower()),
                             normalize(
-                                bstate[domain]["book"][slot].strip().lower(), False
+                                bstate[domain]["book"][slot].strip().lower(),
+                                False,
                             ),
                         ]
                     )  # (["book", domain, slot, bstate[domain]['book'][slot]])
@@ -282,7 +285,9 @@ def get_summary_bstate(bstate, get_domain=False):
                 summary_bvalue.append(
                     [
                         "{}-{}".format(domain, slot.strip().lower()),
-                        normalize(bstate[domain]["semi"][slot].strip().lower(), False),
+                        normalize(
+                            bstate[domain]["semi"][slot].strip().lower(), False
+                        ),
                     ]
                 )  # (["semi", domain, slot, bstate[domain]['semi'][slot]])
             if slot_enc != [0, 0, 0]:
@@ -313,7 +318,9 @@ def analyze_dialogue(dialogue, maxlen):
         print("odd # of turns")
         return None  # odd number of turns, wrong dialogue
     d_pp = {}
-    d_pp["goal"] = d["goal"] if "goal" in d else None  # for now we just copy the goal
+    d_pp["goal"] = (
+        d["goal"] if "goal" in d else None
+    )  # for now we just copy the goal
     usr_turns = []
     sys_turns = []
     # last_bvs = []
@@ -353,7 +360,8 @@ def get_dial(dialogue):
     usr = [t["text"] for t in d_orig["usr_log"]]
     sys = [t["text"] for t in d_orig["sys_log"]]
     sys_a = [
-        t["dialogue_acts"] if "dialogue_acts" in t else [] for t in d_orig["sys_log"]
+        t["dialogue_acts"] if "dialogue_acts" in t else []
+        for t in d_orig["sys_log"]
     ]
     bvs = [t["belief_value_summary"] for t in d_orig["sys_log"]]
     domain = [t["domain"] for t in d_orig["usr_log"]]
@@ -384,15 +392,23 @@ def loadData():
         zip_ref.extractall("data/multi-woz")
         zip_ref.close()
         shutil.copy("data/multi-woz/MULTIWOZ2 2/data.json", "data/multi-woz/")
-        shutil.copy("data/multi-woz/MULTIWOZ2 2/valListFile.json", "data/multi-woz/")
-        shutil.copy("data/multi-woz/MULTIWOZ2 2/testListFile.json", "data/multi-woz/")
-        shutil.copy("data/multi-woz/MULTIWOZ2 2/dialogue_acts.json", "data/multi-woz/")
+        shutil.copy(
+            "data/multi-woz/MULTIWOZ2 2/valListFile.json", "data/multi-woz/"
+        )
+        shutil.copy(
+            "data/multi-woz/MULTIWOZ2 2/testListFile.json", "data/multi-woz/"
+        )
+        shutil.copy(
+            "data/multi-woz/MULTIWOZ2 2/dialogue_acts.json", "data/multi-woz/"
+        )
 
 
 def getDomain(idx, log, domains, last_domain):
     if idx == 1:
         active_domains = get_summary_bstate(log[idx]["metadata"], True)
-        crnt_doms = active_domains[0] if len(active_domains) != 0 else domains[0]
+        crnt_doms = (
+            active_domains[0] if len(active_domains) != 0 else domains[0]
+        )
         return crnt_doms
     else:
         ds_diff = get_ds_diff(log[idx - 2]["metadata"], log[idx]["metadata"])
@@ -402,7 +418,9 @@ def getDomain(idx, log, domains, last_domain):
             crnt_doms = ds_diff.keys()
         # print("crnt_doms type : ", type(crnt_doms))
         crnt_doms = list(crnt_doms)
-        return crnt_doms[0]  # How about multiple domains in one sentence senario ?
+        return crnt_doms[
+            0
+        ]  # How about multiple domains in one sentence senario ?
 
 
 def get_ds_diff(prev_d, crnt_d):
@@ -512,7 +530,9 @@ def createData():
 
             if idx % 2 == 1:  # if it's a system turn
 
-                cur_domain = getDomain(idx, dialogue["log"], domains, last_domain)
+                cur_domain = getDomain(
+                    idx, dialogue["log"], domains, last_domain
+                )
                 last_domain = [cur_domain]
 
                 dialogue["log"][idx - 1]["domain"] = cur_domain
@@ -669,12 +689,30 @@ def main():
                     },
                     "police": {"book": {"booked": []}, "semi": {}},
                     "restaurant": {
-                        "book": {"booked": [], "time": "", "day": "", "people": ""},
-                        "semi": {"food": "", "pricerange": "", "name": "", "area": ""},
+                        "book": {
+                            "booked": [],
+                            "time": "",
+                            "day": "",
+                            "people": "",
+                        },
+                        "semi": {
+                            "food": "",
+                            "pricerange": "",
+                            "name": "",
+                            "area": "",
+                        },
                     },
-                    "hospital": {"book": {"booked": []}, "semi": {"department": ""}},
+                    "hospital": {
+                        "book": {"booked": []},
+                        "semi": {"department": ""},
+                    },
                     "hotel": {
-                        "book": {"booked": [], "stay": "", "day": "", "people": ""},
+                        "book": {
+                            "booked": [],
+                            "stay": "",
+                            "day": "",
+                            "people": "",
+                        },
                         "semi": {
                             "name": "not mentioned",
                             "area": "not mentioned",
@@ -719,12 +757,30 @@ def main():
                     },
                     "police": {"book": {"booked": []}, "semi": {}},
                     "restaurant": {
-                        "book": {"booked": [], "time": "", "day": "", "people": ""},
-                        "semi": {"food": "", "pricerange": "", "name": "", "area": ""},
+                        "book": {
+                            "booked": [],
+                            "time": "",
+                            "day": "",
+                            "people": "",
+                        },
+                        "semi": {
+                            "food": "",
+                            "pricerange": "",
+                            "name": "",
+                            "area": "",
+                        },
                     },
-                    "hospital": {"book": {"booked": []}, "semi": {"department": ""}},
+                    "hospital": {
+                        "book": {"booked": []},
+                        "semi": {"department": ""},
+                    },
                     "hotel": {
-                        "book": {"booked": [], "stay": "", "day": "", "people": ""},
+                        "book": {
+                            "booked": [],
+                            "stay": "",
+                            "day": "",
+                            "people": "",
+                        },
                         "semi": {
                             "name": "not mentioned",
                             "area": "not mentioned",
@@ -769,10 +825,23 @@ def main():
                     },
                     "police": {"book": {"booked": []}, "semi": {}},
                     "restaurant": {
-                        "book": {"booked": [], "time": "", "day": "", "people": ""},
-                        "semi": {"food": "", "pricerange": "", "name": "", "area": ""},
+                        "book": {
+                            "booked": [],
+                            "time": "",
+                            "day": "",
+                            "people": "",
+                        },
+                        "semi": {
+                            "food": "",
+                            "pricerange": "",
+                            "name": "",
+                            "area": "",
+                        },
                     },
-                    "hospital": {"book": {"booked": []}, "semi": {"department": ""}},
+                    "hospital": {
+                        "book": {"booked": []},
+                        "semi": {"department": ""},
+                    },
                     "hotel": {
                         "book": {
                             "booked": [],
@@ -821,10 +890,23 @@ def main():
                     },
                     "police": {"book": {"booked": []}, "semi": {}},
                     "restaurant": {
-                        "book": {"booked": [], "time": "", "day": "", "people": ""},
-                        "semi": {"food": "", "pricerange": "", "name": "", "area": ""},
+                        "book": {
+                            "booked": [],
+                            "time": "",
+                            "day": "",
+                            "people": "",
+                        },
+                        "semi": {
+                            "food": "",
+                            "pricerange": "",
+                            "name": "",
+                            "area": "",
+                        },
                     },
-                    "hospital": {"book": {"booked": []}, "semi": {"department": ""}},
+                    "hospital": {
+                        "book": {"booked": []},
+                        "semi": {"department": ""},
+                    },
                     "hotel": {
                         "book": {
                             "booked": [
@@ -878,10 +960,23 @@ def main():
                     },
                     "police": {"book": {"booked": []}, "semi": {}},
                     "restaurant": {
-                        "book": {"booked": [], "time": "", "day": "", "people": ""},
-                        "semi": {"food": "", "pricerange": "", "name": "", "area": ""},
+                        "book": {
+                            "booked": [],
+                            "time": "",
+                            "day": "",
+                            "people": "",
+                        },
+                        "semi": {
+                            "food": "",
+                            "pricerange": "",
+                            "name": "",
+                            "area": "",
+                        },
                     },
-                    "hospital": {"book": {"booked": []}, "semi": {"department": ""}},
+                    "hospital": {
+                        "book": {"booked": []},
+                        "semi": {"department": ""},
+                    },
                     "hotel": {
                         "book": {
                             "booked": [
@@ -931,7 +1026,9 @@ def main():
                 "text": "Okay, do you have a specific area you want to stay in?",
                 "metadata": default_state()["belief_state"],
             },
-            {"text": "no, i just need to make sure it's cheap. oh, and i need parking"},
+            {
+                "text": "no, i just need to make sure it's cheap. oh, and i need parking"
+            },
             {
                 "text": "I found 1 cheap hotel for you that includes parking. Do you like me to book it?",
                 "metadata": default_state()["belief_state"],
@@ -954,7 +1051,9 @@ def main():
         ]
     }
     create_data(dialogue2)
-    print("Create WOZ-like dialogues. Get yourself a coffee, this might take a while.")
+    print(
+        "Create WOZ-like dialogues. Get yourself a coffee, this might take a while."
+    )
     delex_data = createData()
     print("Divide dialogues...")
     divideData(delex_data)

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2017-present, Facebook, Inc.
 # All rights reserved.
 #
@@ -8,28 +9,31 @@ Training utilities.
 """
 
 import argparse
-import random
-import pdb
-import time
-import itertools
-import sys
 import copy
-import re
+import itertools
 import logging
-import torch
-from torch import optim
-import torch.nn as nn
-from torch.autograd import Variable
-import numpy as np
+import pdb
+import random
+import re
+import sys
+import time
 
-from convlab2.e2e.rnn_rollout.data import STOP_TOKENS
+import numpy as np
+import torch
+import torch.nn as nn
+from torch import optim
+from torch.autograd import Variable
+
 import convlab2.e2e.rnn_rollout.vis as vis
+from convlab2.e2e.rnn_rollout.data import STOP_TOKENS
 
 
 class Criterion(object):
     """Weighted CrossEntropyLoss."""
 
-    def __init__(self, dictionary, device_id=None, bad_toks=[], reduction="mean"):
+    def __init__(
+        self, dictionary, device_id=None, bad_toks=[], reduction="mean"
+    ):
         w = torch.Tensor(len(dictionary)).fill_(1)
         for tok in bad_toks:
             w[dictionary.get_idx(tok)] = 0.0
@@ -70,7 +74,11 @@ class Engine(object):
                 self.model, plot_weight=False, plot_grad=True
             )
             self.loss_plot = vis.Plot(
-                ["train", "valid", "valid_select"], "loss", "loss", "epoch", running_n=1
+                ["train", "valid", "valid_select"],
+                "loss",
+                "loss",
+                "epoch",
+                running_n=1,
             )
             self.ppl_plot = vis.Plot(
                 ["train", "valid", "valid_select"],
@@ -127,11 +135,15 @@ class Engine(object):
 
             # compute LM loss and selection loss
             loss = self.crit(out.view(-1, N), tgt)
-            loss += self.sel_crit(sel_out, sel_tgt) * self.model.args.sel_weight
+            loss += (
+                self.sel_crit(sel_out, sel_tgt) * self.model.args.sel_weight
+            )
             self.opt.zero_grad()
             # backward step with gradient clipping
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.clip)
+            torch.nn.utils.clip_grad_norm_(
+                self.model.parameters(), self.args.clip
+            )
             self.opt.step()
 
             if self.args.visual and self.t % 100 == 0:
@@ -177,7 +189,9 @@ class Engine(object):
 
         # dividing by the number of words in the input, not the tokens modeled,
         # because the latter includes padding
-        return valid_loss / validset_stats["nonpadn"], select_loss / len(validset)
+        return valid_loss / validset_stats["nonpadn"], select_loss / len(
+            validset
+        )
 
     def iter(self, N, epoch, lr, traindata, validdata):
         """Performs on iteration of the training.
@@ -187,7 +201,9 @@ class Engine(object):
         validset, validset_stats = validdata
 
         train_loss, train_time = self.train_pass(N, trainset)
-        valid_loss, valid_select_loss = self.valid_pass(N, validset, validset_stats)
+        valid_loss, valid_select_loss = self.valid_pass(
+            N, validset, validset_stats
+        )
 
         if self.verbose:
             logging.info(
@@ -209,7 +225,9 @@ class Engine(object):
             self.loss_plot.update("valid_select", epoch, valid_select_loss)
             self.ppl_plot.update("train", epoch, np.exp(train_loss))
             self.ppl_plot.update("valid", epoch, np.exp(valid_loss))
-            self.ppl_plot.update("valid_select", epoch, np.exp(valid_select_loss))
+            self.ppl_plot.update(
+                "valid_select", epoch, np.exp(valid_select_loss)
+            )
 
         return train_loss, valid_loss, valid_select_loss
 
@@ -221,10 +239,16 @@ class Engine(object):
         last_decay_epoch = 0
         self.t = 0
 
-        validdata = corpus.valid_dataset(self.args.bsz, device_id=self.device_id)
+        validdata = corpus.valid_dataset(
+            self.args.bsz, device_id=self.device_id
+        )
         for epoch in range(1, self.args.max_epoch + 1):
-            traindata = corpus.train_dataset(self.args.bsz, device_id=self.device_id)
-            _, _, valid_select_loss = self.iter(N, epoch, lr, traindata, validdata)
+            traindata = corpus.train_dataset(
+                self.args.bsz, device_id=self.device_id
+            )
+            _, _, valid_select_loss = self.iter(
+                N, epoch, lr, traindata, validdata
+            )
 
             if valid_select_loss < best_valid_select_loss:
                 best_valid_select_loss = valid_select_loss
@@ -245,7 +269,9 @@ class Engine(object):
                     break
                 self.opt = optim.SGD(self.model.parameters(), lr=lr)
 
-            traindata = corpus.train_dataset(self.args.bsz, device_id=self.device_id)
+            traindata = corpus.train_dataset(
+                self.args.bsz, device_id=self.device_id
+            )
             train_loss, valid_loss, valid_select_loss = self.iter(
                 N, epoch, lr, traindata, validdata
             )

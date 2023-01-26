@@ -1,7 +1,8 @@
+# -*- coding: utf-8 -*-
+import json
 import logging
 import os
 import time
-import json
 
 
 class _Config:
@@ -52,7 +53,9 @@ class _Config:
             self.data = os.path.join(
                 os.path.dirname(os.path.abspath(__file__)), self.data
             )
-            self.db = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.db)
+            self.db = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), self.db
+            )
 
         # init_method = {
         #     'tsdf-camrest':self._camrest_tsdf_init,
@@ -190,7 +193,9 @@ class _Config:
         current_time = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
 
         stderr_handler = logging.StreamHandler()
-        log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "log")
+        log_dir = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "log"
+        )
         if not os.path.exists(log_dir):
             os.mkdir(log_dir)
         file_handler = logging.FileHandler(

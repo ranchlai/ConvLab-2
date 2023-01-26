@@ -1,12 +1,15 @@
-from convlab2.dst.trade.crosswoz.utils.config import *
-from convlab2.dst.trade.crosswoz.models.TRADE import *
+# -*- coding: utf-8 -*-
+from copy import deepcopy
+
 import numpy as np
+import quadprog
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import numpy as np
-import quadprog
-from copy import deepcopy
+
+from convlab2.dst.trade.crosswoz.models.TRADE import *
+from convlab2.dst.trade.crosswoz.utils.config import *
+
 
 ## TAKEN FROM https://github.com/facebookresearch/GradientEpisodicMemory/blob/master/model/gem.py
 def store_grad(pp, grads, grad_dims, task_id):
@@ -42,7 +45,9 @@ def overwrite_grad(pp, newgrad, grad_dims):
         if param.grad is not None:
             beg = 0 if cnt == 0 else sum(grad_dims[:cnt])
             en = sum(grad_dims[: cnt + 1])
-            this_grad = newgrad[beg:en].contiguous().view(param.grad.data.size())
+            this_grad = (
+                newgrad[beg:en].contiguous().view(param.grad.data.size())
+            )
             param.grad.data.copy_(this_grad)
         cnt += 1
 
@@ -91,9 +96,16 @@ if args["dataset"] == "multiwoz":
 else:
     print("You need to provide the --dataset information")
 
-_, _, test, test_special, lang, SLOTS_LIST, gating_dict, max_word = prepare_data_seq(
-    True, args["task"], False, batch_size=BSZ
-)
+(
+    _,
+    _,
+    test,
+    test_special,
+    lang,
+    SLOTS_LIST,
+    gating_dict,
+    max_word,
+) = prepare_data_seq(True, args["task"], False, batch_size=BSZ)
 
 ### LOAD DATA
 args["data_ratio"] = 1
@@ -105,9 +117,16 @@ train_GEM, _, _, _, _, _, _, _ = prepare_data_seq(
 args["only_domain"] = except_domain
 args["except_domain"] = ""
 args["fisher_sample"] = 0
-train_single, dev_single, test_single, _, _, SLOTS_LIST_single, _, _ = prepare_data_seq(
-    True, args["task"], False, batch_size=BSZ
-)
+(
+    train_single,
+    dev_single,
+    test_single,
+    _,
+    _,
+    SLOTS_LIST_single,
+    _,
+    _,
+) = prepare_data_seq(True, args["task"], False, batch_size=BSZ)
 args["except_domain"] = except_domain
 
 #### LOAD MODEL
@@ -151,7 +170,9 @@ try:
                     data_o, int(args["clip"]), SLOTS_LIST[1], reset=(i == 0)
                 )
                 model.loss_grad.backward()
-                store_grad(model.parameters, grads, grad_dims, task_id=idx_task)
+                store_grad(
+                    model.parameters, grads, grad_dims, task_id=idx_task
+                )
                 idx_task += 1
                 if i == (n_tasks - 2):
                     break

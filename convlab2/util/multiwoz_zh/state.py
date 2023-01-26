@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 def default_state():
     state = dict(
         user_action=[],
@@ -8,7 +9,10 @@ def default_state():
         history=[],
     )
     state["belief_state"] = {
-        "出租车": {"book": {}, "semi": {"出发时间": "", "目的地": "", "出发地": "", "到达时间": ""}},
+        "出租车": {
+            "book": {},
+            "semi": {"出发时间": "", "目的地": "", "出发地": "", "到达时间": ""},
+        },
         "警察机关": {"book": {}, "semi": {}},
         "餐厅": {
             "book": {"人数": "", "日期": "", "时间": ""},

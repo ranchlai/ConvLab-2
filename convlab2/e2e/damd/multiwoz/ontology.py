@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 all_domains = [
     "restaurant",
     "hotel",
@@ -114,7 +115,15 @@ informable_slots = {
     ],
     "attraction": ["area", "type", "name"],
     "train": ["destination", "day", "arrive", "departure", "people", "leave"],
-    "restaurant": ["food", "pricerange", "area", "name", "time", "day", "people"],
+    "restaurant": [
+        "food",
+        "pricerange",
+        "area",
+        "name",
+        "time",
+        "day",
+        "people",
+    ],
 }
 all_infslot = [
     "type",
@@ -204,7 +213,14 @@ dialog_acts = {
         "nobook",
     ],
     "attraction": ["inform", "request", "nooffer", "recommend", "select"],
-    "train": ["inform", "request", "nooffer", "offerbook", "offerbooked", "select"],
+    "train": [
+        "inform",
+        "request",
+        "nooffer",
+        "offerbook",
+        "offerbooked",
+        "select",
+    ],
     "taxi": ["inform", "request"],
     "police": ["inform", "request"],
     "hospital": ["inform", "request"],

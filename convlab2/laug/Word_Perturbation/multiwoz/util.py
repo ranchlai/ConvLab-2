@@ -1,17 +1,18 @@
-import re
+# -*- coding: utf-8 -*-
 import json
 import os
 import random
+import re
 import string
+from collections import Counter, defaultdict
 from copy import deepcopy
-from typing import List, Iterable
-from collections import defaultdict, Counter
-from functools import reduce, lru_cache
+from functools import lru_cache, reduce
 from io import StringIO
 from pprint import pprint
+from typing import Iterable, List
 
-from .types import MultiwozSampleType, MultiwozDatasetType, SentenceType
-from .tokenize_util import tokenize, convert_sentence_to_tokens
+from .tokenize_util import convert_sentence_to_tokens, tokenize
+from .types import MultiwozDatasetType, MultiwozSampleType, SentenceType
 
 
 ## load json and dump json ############
@@ -34,7 +35,9 @@ def p_str(obj):
     return sio.getvalue()
 
 
-punctuation_pattern = re.compile(r"^[{}]+$".format("\\".join(string.punctuation)))
+punctuation_pattern = re.compile(
+    r"^[{}]+$".format("\\".join(string.punctuation))
+)
 RePatternType = type(re.compile(""))
 
 
@@ -74,7 +77,9 @@ def _get_all_slots(multiwoz: MultiwozDatasetType):
 class Patterns:
     time_pattern = re.compile(r"^\d{1,2}:\d{1,2}$")
     integer_pattern = re.compile(r"^[+-]?(\d+|\d{1,3}(,\d{3})*)$")
-    ref_pattern = re.compile(r"(?=.*[A-Z].*[0-9].*|.*[0-9].*[A-Z].*)[A-Z0-9]{8}")
+    ref_pattern = re.compile(
+        r"(?=.*[A-Z].*[0-9].*|.*[0-9].*[A-Z].*)[A-Z0-9]{8}"
+    )
 
 
 class Helper:
@@ -231,7 +236,9 @@ class Helper:
             domain = domain_intent.split("-")[0].lower()
             domains.add(domain)
             for slot, value in slot_value_list:
-                slots.add((domain, slot.lower() if isinstance(slot, str) else slot))
+                slots.add(
+                    (domain, slot.lower() if isinstance(slot, str) else slot)
+                )
 
         word2index = {v.lower(): i for i, v in enumerate(words)}
         for domain in domains:
@@ -279,7 +286,9 @@ class Helper:
             if is_punctuation(word):
                 excluding_indexes.add(i)
             elif (
-                word == "reference" and i + 1 < len(words) and words[i + 1] == "number"
+                word == "reference"
+                and i + 1 < len(words)
+                and words[i + 1] == "number"
             ):
                 # exclude "reference number"
                 excluding_indexes.update((i, i + 1))

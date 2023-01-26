@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 SVMNLU build a classifier for each semantic tuple (intent-slot-value) based on n-gram features. It's first proposed by Mairesse et al. (2009). We adapt the implementation from pydial.
 For more information, please refer to ``convlab2/nlu/svm/camrest/README.md``
@@ -16,9 +17,9 @@ import configparser
 import os
 import zipfile
 
-from convlab2.util.file_util import cached_path
-from convlab2.nlu.svm import Classifier
 from convlab2.nlu import NLU
+from convlab2.nlu.svm import Classifier
+from convlab2.util.file_util import cached_path
 
 
 class SVMNLU(NLU):
@@ -73,8 +74,13 @@ class SVMNLU(NLU):
             output (dict):
                 The dialog act of utterance.
         """
-        sentinfo = {"turn-id": 0, "asr-hyps": [{"asr-hyp": utterance, "score": 0}]}
-        slu_hyps = self.c.decode_sent(sentinfo, self.config.get("decode", "output"))
+        sentinfo = {
+            "turn-id": 0,
+            "asr-hyps": [{"asr-hyp": utterance, "score": 0}],
+        }
+        slu_hyps = self.c.decode_sent(
+            sentinfo, self.config.get("decode", "output")
+        )
         act_list = []
         for hyp in slu_hyps:
             if hyp["slu-hyp"]:

@@ -6,6 +6,7 @@
 """
 import copy
 import datetime
+
 from deploy.utils.lock import MyLock
 
 
@@ -79,7 +80,9 @@ class ExpireDict(object):
         expire_keys = set({})
         if self.max_items is not None:
             if len(self.values) > self.max_items:
-                items_sorted = sorted(self.values.items(), key=lambda x: x[1][0])
+                items_sorted = sorted(
+                    self.values.items(), key=lambda x: x[1][0]
+                )
                 expire_keys = expire_keys.union(
                     set([k for k, _ in items_sorted[: self.max_items // 2]])
                 )

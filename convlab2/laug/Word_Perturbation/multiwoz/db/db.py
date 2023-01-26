@@ -1,4 +1,6 @@
-from typing import Union, Callable, List, Optional
+# -*- coding: utf-8 -*-
+from typing import Callable, List, Optional, Union
+
 from ..util import choice
 
 

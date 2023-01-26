@@ -1,9 +1,11 @@
-import torch
-from torch.nn import functional
-from torch.autograd import Variable
-from convlab2.dst.trade.crosswoz.utils.config import *
-import torch.nn as nn
+# -*- coding: utf-8 -*-
 import numpy as np
+import torch
+import torch.nn as nn
+from torch.autograd import Variable
+from torch.nn import functional
+
+from convlab2.dst.trade.crosswoz.utils.config import *
 
 
 def sequence_mask(sequence_length, max_len=None):
@@ -15,7 +17,9 @@ def sequence_mask(sequence_length, max_len=None):
     seq_range_expand = Variable(seq_range_expand)
     if sequence_length.is_cuda:
         seq_range_expand = seq_range_expand.cuda()
-    seq_length_expand = sequence_length.unsqueeze(1).expand_as(seq_range_expand)
+    seq_length_expand = sequence_length.unsqueeze(1).expand_as(
+        seq_range_expand
+    )
     return seq_range_expand < seq_length_expand
 
 
@@ -172,7 +176,9 @@ def masking(losses, mask):
         seq_range_expand = seq_range.unsqueeze(0).expand(batch_size, max_len)
         if mask[:, si].is_cuda:
             seq_range_expand = seq_range_expand.cuda()
-        seq_length_expand = mask[:, si].unsqueeze(1).expand_as(seq_range_expand)
+        seq_length_expand = (
+            mask[:, si].unsqueeze(1).expand_as(seq_range_expand)
+        )
         mask_.append((seq_range_expand < seq_length_expand))
     mask_ = torch.stack(mask_)
     mask_ = mask_.transpose(0, 1)

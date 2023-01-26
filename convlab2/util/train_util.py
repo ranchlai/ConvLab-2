@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
+import logging
 import os
 import time
-import logging
+
 import torch
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")

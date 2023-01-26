@@ -1,13 +1,16 @@
-import os
+# -*- coding: utf-8 -*-
 import json
+import os
 import pickle
 import zipfile
+from copy import deepcopy
+
 import torch
 import torch.utils.data as data
-from convlab2.util.crosswoz.state import default_state
+
 from convlab2.dst.rule.crosswoz.dst import RuleDST
 from convlab2.policy.vector.vector_crosswoz import CrossWozVector
-from copy import deepcopy
+from convlab2.util.crosswoz.state import default_state
 
 
 class PolicyDataLoaderCrossWoz:
@@ -39,7 +42,10 @@ class PolicyDataLoaderCrossWoz:
         raw_data = {}
         for part in ["train", "val", "test"]:
             archive = zipfile.ZipFile(
-                os.path.join(root_dir, "data/crosswoz/{}.json.zip".format(part)), "r"
+                os.path.join(
+                    root_dir, "data/crosswoz/{}.json.zip".format(part)
+                ),
+                "r",
             )
             with archive.open("{}.json".format(part), "r") as f:
                 raw_data[part] = json.load(f)
@@ -63,11 +69,15 @@ class PolicyDataLoaderCrossWoz:
                         for domain, svs in turn["sys_state"].items():
                             for slot, value in svs.items():
                                 if slot != "selectedResults":
-                                    dst.state["belief_state"][domain][slot] = value
+                                    dst.state["belief_state"][domain][
+                                        slot
+                                    ] = value
                         action = turn["dialog_act"]
                         self.data[part].append(
                             [
-                                self.vector.state_vectorize(deepcopy(dst.state)),
+                                self.vector.state_vectorize(
+                                    deepcopy(dst.state)
+                                ),
                                 self.vector.action_vectorize(action),
                             ]
                         )
@@ -75,13 +85,17 @@ class PolicyDataLoaderCrossWoz:
 
         os.makedirs(processed_dir)
         for part in ["train", "val", "test"]:
-            with open(os.path.join(processed_dir, "{}.pkl".format(part)), "wb") as f:
+            with open(
+                os.path.join(processed_dir, "{}.pkl".format(part)), "wb"
+            ) as f:
                 pickle.dump(self.data[part], f)
 
     def _load_data(self, processed_dir):
         self.data = {}
         for part in ["train", "val", "test"]:
-            with open(os.path.join(processed_dir, "{}.pkl".format(part)), "rb") as f:
+            with open(
+                os.path.join(processed_dir, "{}.pkl".format(part)), "rb"
+            ) as f:
                 self.data[part] = pickle.load(f)
 
     def create_dataset(self, part, batchsz):

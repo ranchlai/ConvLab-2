@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 extract all value appear in dialog act and state, for translation.
 """

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from convlab2.dst.dst import DST
 from convlab2.util.camrest.state import default_state
 

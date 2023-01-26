@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 """
 
@@ -12,7 +13,15 @@ import numpy as np
 
 from convlab2.util.camrest.dbquery import Database
 
-days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+days = [
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
+]
 domain_keywords = {
     "restaurant": "place to dine",
     "train": "train",
@@ -83,7 +92,9 @@ class GoalGenerator:
                         ind_slot_value_cnt["info"] = {}
                     if slot not in ind_slot_value_cnt["info"]:
                         ind_slot_value_cnt["info"][slot] = Counter()
-                    ind_slot_value_cnt["info"][slot][d["goal"]["info"][slot]] += 1
+                    ind_slot_value_cnt["info"][slot][
+                        d["goal"]["info"][slot]
+                    ] += 1
             if "reqt" in d["goal"]:
                 for slot in d["goal"]["reqt"]:
                     if "reqt" not in ind_slot_value_cnt:
@@ -113,9 +124,9 @@ class GoalGenerator:
                 self.ind_slot_dist["reqt"][slot] = ind_slot_value_cnt["reqt"][
                     slot
                 ] / len(dialogs)
-                self.ind_slot_value_dist["reqt"][slot] = ind_slot_value_cnt["reqt"][
-                    slot
-                ] / len(dialogs)
+                self.ind_slot_value_dist["reqt"][slot] = ind_slot_value_cnt[
+                    "reqt"
+                ][slot] / len(dialogs)
 
         pickle.dump(
             (self.ind_slot_dist, self.ind_slot_value_dist),
@@ -138,9 +149,14 @@ class GoalGenerator:
                             cnt_slot_value["info"][slot]
                         )
 
-                if "name" in domain_goal["info"] and len(domain_goal["info"]) > 1:
+                if (
+                    "name" in domain_goal["info"]
+                    and len(domain_goal["info"]) > 1
+                ):
                     if random.random() < cnt_slot["info"]["name"]:
-                        domain_goal["info"] = {"name": domain_goal["info"]["name"]}
+                        domain_goal["info"] = {
+                            "name": domain_goal["info"]["name"]
+                        }
                     else:
                         del domain_goal["info"]["name"]
 
@@ -211,7 +227,9 @@ class GoalGenerator:
         while len(state[info]) > 0:
             num_acts = random.randint(1, min(len(state[info]), 3))
             slots = random.sample(list(state[info].keys()), num_acts)
-            sents = [fill_info_template(user_goal, slot, info) for slot in slots]
+            sents = [
+                fill_info_template(user_goal, slot, info) for slot in slots
+            ]
             m.extend(sents)
             message.append(" ".join(m))
             m = []
@@ -226,7 +244,9 @@ class GoalGenerator:
                     continue
                 slot_strings.append(slot)
             if len(slot_strings) > 0:
-                message.append(templates["request"].format(", ".join(slot_strings)))
+                message.append(
+                    templates["request"].format(", ".join(slot_strings))
+                )
             if "food" in state["reqt"]:
                 message.append("Make sure to ask about what food it serves.")
 

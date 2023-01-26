@@ -1,6 +1,8 @@
-import numpy
+# -*- coding: utf-8 -*-
 import json
 import os
+
+import numpy
 
 PAD = 0
 EOS = 1
@@ -41,7 +43,15 @@ domains = [
     "booking",
     "general",
 ]
-functions = ["inform", "request", "recommend", "book", "select", "sorry", "none"]
+functions = [
+    "inform",
+    "request",
+    "recommend",
+    "book",
+    "select",
+    "sorry",
+    "none",
+]
 arguments = [
     "pricerange",
     "id",

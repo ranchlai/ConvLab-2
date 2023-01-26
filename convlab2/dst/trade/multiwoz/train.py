@@ -1,16 +1,18 @@
+# -*- coding: utf-8 -*-
 import os
 
 # set CUDA ID
 os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
-from tqdm import tqdm
-import torch.nn as nn
-
-from convlab2.dst.trade.multiwoz.utils.config import *
-from convlab2.dst.trade.multiwoz.models.TRADE import *
+import shutil
+import zipfile
 
 import numpy as np
-import shutil, zipfile
+import torch.nn as nn
+from tqdm import tqdm
+
+from convlab2.dst.trade.multiwoz.models.TRADE import *
+from convlab2.dst.trade.multiwoz.utils.config import *
 from convlab2.util.file_util import cached_path
 
 """
@@ -23,9 +25,9 @@ def download_data(
 ):
     """Automatically download the pretrained model and necessary data."""
     multiwoz_root = os.path.dirname(os.path.abspath(__file__))
-    if os.path.exists(os.path.join(multiwoz_root, "data/multi-woz")) and os.path.exists(
-        os.path.join(multiwoz_root, "data/dev_dials.json")
-    ):
+    if os.path.exists(
+        os.path.join(multiwoz_root, "data/multi-woz")
+    ) and os.path.exists(os.path.join(multiwoz_root, "data/dev_dials.json")):
         return
     data_dir = os.path.join(multiwoz_root, "data")
     if not os.path.exists(data_dir):
@@ -42,7 +44,9 @@ def download_data(
         try:
             assert target_file in files
         except Exception as e:
-            print("allennlp download file error: TRADE Cross model download failed.")
+            print(
+                "allennlp download file error: TRADE Cross model download failed."
+            )
             raise e
         shutil.copyfile(os.path.join(data_dir, target_file), zip_file_path)
     with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
@@ -100,7 +104,9 @@ for epoch in range(200):
     # Run the train function
     pbar = tqdm(enumerate(train), total=len(train))
     for i, data in pbar:
-        model.train_batch(data, int(args["clip"]), SLOTS_LIST[1], reset=(i == 0))
+        model.train_batch(
+            data, int(args["clip"]), SLOTS_LIST[1], reset=(i == 0)
+        )
         model.optimize(args["clip"])
         pbar.set_description(model.print_loss())
         # print(data)

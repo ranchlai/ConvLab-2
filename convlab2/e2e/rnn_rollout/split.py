@@ -1,14 +1,15 @@
+# -*- coding: utf-8 -*-
 # Copyright 2017-present, Facebook, Inc.
 # All rights reserved.
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import pdb
 import argparse
-import data
+import pdb
 import re
 
+import data
 
 item_pattern = re.compile("^item([0-9])=([0-9\-])+$")
 
@@ -82,7 +83,9 @@ def main():
     lines = data.read_lines(args.log_file)
     bots = dict()
     for line in lines:
-        if line.startswith(args.bot_name + "1") or line.startswith(args.bot_name + "2"):
+        if line.startswith(args.bot_name + "1") or line.startswith(
+            args.bot_name + "2"
+        ):
             bots[line.split(" ")[2]] = line
 
     humans = dict()

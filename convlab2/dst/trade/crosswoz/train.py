@@ -1,16 +1,19 @@
+# -*- coding: utf-8 -*-
 # specify cuda id
 import os
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
-from convlab2.dst.trade.crosswoz.utils.config import MODE
-from tqdm import tqdm
-import torch.nn as nn
-import shutil, zipfile
-from convlab2.util.file_util import cached_path
+import shutil
+import zipfile
 
-from convlab2.dst.trade.crosswoz.utils.config import *
+import torch.nn as nn
+from tqdm import tqdm
+
 from convlab2.dst.trade.crosswoz.models.TRADE import *
+from convlab2.dst.trade.crosswoz.utils.config import *
+from convlab2.dst.trade.crosswoz.utils.config import MODE
+from convlab2.util.file_util import cached_path
 
 """
 python train.py
@@ -22,9 +25,9 @@ def download_data(
 ):
     """Automatically download the pretrained model and necessary data."""
     crosswoz_root = os.path.dirname(os.path.abspath(__file__))
-    if os.path.exists(os.path.join(crosswoz_root, "data/crosswoz")) and os.path.exists(
-        os.path.join(crosswoz_root, "data/dev_dials.json")
-    ):
+    if os.path.exists(
+        os.path.join(crosswoz_root, "data/crosswoz")
+    ) and os.path.exists(os.path.join(crosswoz_root, "data/dev_dials.json")):
         return
     data_dir = os.path.join(crosswoz_root, "data")
     if not os.path.exists(data_dir):
@@ -41,7 +44,9 @@ def download_data(
         try:
             assert target_file in files
         except Exception as e:
-            print("allennlp download file error: TRADE Cross model download failed.")
+            print(
+                "allennlp download file error: TRADE Cross model download failed."
+            )
             raise e
         shutil.copyfile(os.path.join(data_dir, target_file), zip_file_path)
     with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
@@ -78,7 +83,9 @@ download_data()
     SLOTS_LIST,
     gating_dict,
     max_word,
-) = prepare_data_seq_cn(True, args["task"], False, batch_size=int(args["batch"]))
+) = prepare_data_seq_cn(
+    True, args["task"], False, batch_size=int(args["batch"])
+)
 
 model = globals()[args["decoder"]](
     hidden_size=int(args["hidden"]),
@@ -103,7 +110,9 @@ for epoch in range(200):
     for i, data in pbar:
         ## only part data to train
         # if MODE == 'cn' and i >= 1400: break
-        model.train_batch(data, int(args["clip"]), SLOTS_LIST[1], reset=(i == 0))
+        model.train_batch(
+            data, int(args["clip"]), SLOTS_LIST[1], reset=(i == 0)
+        )
         model.optimize(args["clip"])
         pbar.set_description(model.print_loss())
         # print(data)

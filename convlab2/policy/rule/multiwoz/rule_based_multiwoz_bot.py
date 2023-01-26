@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import copy
 import json
 import random
@@ -10,7 +11,15 @@ from convlab2.util.multiwoz.multiwoz_slot_trans import REF_SYS_DA, REF_USR_DA
 SELECTABLE_SLOTS = {
     "Attraction": ["area", "entrance fee", "name", "type"],
     "Hospital": ["department"],
-    "Hotel": ["area", "internet", "name", "parking", "pricerange", "stars", "type"],
+    "Hotel": [
+        "area",
+        "internet",
+        "name",
+        "parking",
+        "pricerange",
+        "stars",
+        "type",
+    ],
     "Restaurant": ["area", "name", "food", "pricerange"],
     "Taxi": [],
     "Train": [],
@@ -281,7 +290,9 @@ class RuleBasedMultiwozBot(Policy):
                         DA[domain + "-NoOffer"].append(
                             [
                                 slot_name,
-                                state["belief_state"][domain.lower()]["semi"][slot],
+                                state["belief_state"][domain.lower()]["semi"][
+                                    slot
+                                ],
                             ]
                         )
             if (domain + "-Inform") not in DA:
@@ -318,7 +329,9 @@ class RuleBasedMultiwozBot(Policy):
                         DA[domain + "-NoOffer"].append(
                             [
                                 slot_name,
-                                state["belief_state"][domain.lower()]["semi"][slot],
+                                state["belief_state"][domain.lower()]["semi"][
+                                    slot
+                                ],
                             ]
                         )
 
@@ -364,12 +377,21 @@ class RuleBasedMultiwozBot(Policy):
                         DA[domain + "-Inform"] = []
                     if (domain + "-Recommend") not in DA:
                         DA[domain + "-Recommend"] = []
-                    DA[domain + "-Inform"].append(["Choice", str(len(kb_result))])
+                    DA[domain + "-Inform"].append(
+                        ["Choice", str(len(kb_result))]
+                    )
                     idx = random.randint(0, 999999) % len(kb_result)
                     # idx = 0
                     choice = kb_result[idx]
-                    if domain in ["Hotel", "Attraction", "Police", "Restaurant"]:
-                        DA[domain + "-Recommend"].append(["Name", choice["name"]])
+                    if domain in [
+                        "Hotel",
+                        "Attraction",
+                        "Police",
+                        "Restaurant",
+                    ]:
+                        DA[domain + "-Recommend"].append(
+                            ["Name", choice["name"]]
+                        )
                     self.recommend_flag = 0
                     self.candidate = choice
                     props = []
@@ -382,7 +404,9 @@ class RuleBasedMultiwozBot(Policy):
                         slot = props[i][0]
                         string = REF_USR_DA[domain].get(slot, slot)
                         if string in INFORMABLE_SLOTS:
-                            DA[domain + "-Recommend"].append([string, str(props[i][1])])
+                            DA[domain + "-Recommend"].append(
+                                [string, str(props[i][1])]
+                            )
 
                 # Ask user to choose a candidate.
                 elif p < 0.5:
@@ -409,14 +433,21 @@ class RuleBasedMultiwozBot(Policy):
                     if domain + "-Select" not in DA:
                         DA[domain + "-Select"] = []
                     for i in range(min(len(props[0][1]), 5)):
-                        prop_value = REF_USR_DA[domain].get(props[0][0], props[0][0])
-                        DA[domain + "-Select"].append([prop_value, props[0][1][i]])
+                        prop_value = REF_USR_DA[domain].get(
+                            props[0][0], props[0][0]
+                        )
+                        DA[domain + "-Select"].append(
+                            [prop_value, props[0][1][i]]
+                        )
 
                 # Ask user for more constraint
                 else:
                     reqs = []
                     for prop in state["belief_state"][domain.lower()]["semi"]:
-                        if state["belief_state"][domain.lower()]["semi"][prop] == "":
+                        if (
+                            state["belief_state"][domain.lower()]["semi"][prop]
+                            == ""
+                        ):
                             prop_value = REF_USR_DA[domain].get(prop, prop)
                             reqs.append([prop_value, "?"])
                     i = 0
@@ -437,11 +468,17 @@ class RuleBasedMultiwozBot(Policy):
                         DA[domain + "-Request"].append(req)
 
     def _update_train(self, user_act, user_action, state, DA):
-        trans = {"day": "Day", "destination": "Destination", "departure": "Departure"}
+        trans = {
+            "day": "Day",
+            "destination": "Destination",
+            "departure": "Departure",
+        }
         constraints = []
         for time in ["leaveAt", "arriveBy"]:
             if state["belief_state"]["train"]["semi"][time] != "":
-                constraints.append([time, state["belief_state"]["train"]["semi"][time]])
+                constraints.append(
+                    [time, state["belief_state"]["train"]["semi"][time]]
+                )
 
         if len(constraints) == 0:
             p = random.random()
@@ -462,7 +499,9 @@ class RuleBasedMultiwozBot(Policy):
                 slot = REF_USR_DA["Train"].get(prop, prop)
                 DA["Train-Request"].append([slot, "?"])
             else:
-                constraints.append([prop, state["belief_state"]["train"]["semi"][prop]])
+                constraints.append(
+                    [prop, state["belief_state"]["train"]["semi"][prop]]
+                )
 
         kb_result = self.db.query("train", constraints)
         self.kb_result["Train"] = deepcopy(kb_result)
@@ -478,7 +517,9 @@ class RuleBasedMultiwozBot(Policy):
                 # slot[0] = Train_DA_MAP.get(slot[0], slot[0])
                 slot_name = REF_SYS_DA["Train"].get(slot[0], slot[0])
                 try:
-                    DA["Train-Inform"].append([slot[0], kb_result[0][slot_name]])
+                    DA["Train-Inform"].append(
+                        [slot[0], kb_result[0][slot_name]]
+                    )
                 except:
                     pass
             return
@@ -514,7 +555,10 @@ class RuleBasedMultiwozBot(Policy):
         for slot in user_action[user_act]:
             if domain in booking_info and slot[0] in booking_info[domain]:
                 if "Booking-Book" not in DA:
-                    if domain in self.kb_result and len(self.kb_result[domain]) > 0:
+                    if (
+                        domain in self.kb_result
+                        and len(self.kb_result[domain]) > 0
+                    ):
                         if "Ref" in self.kb_result[domain][0]:
                             DA["Booking-Book"] = [
                                 ["Ref", self.kb_result[domain][0]["Ref"]]
@@ -542,7 +586,9 @@ def check_diff(last_state, state):
                     ] not in user_action[domain.capitalize() + "-Inform"]:
                         user_action[domain.capitalize() + "-Inform"].append(
                             [
-                                REF_USR_DA[domain.capitalize()].get(slot, slot),
+                                REF_USR_DA[domain.capitalize()].get(
+                                    slot, slot
+                                ),
                                 state["belief_state"][domain]["book"][slot],
                             ]
                         )
@@ -556,7 +602,9 @@ def check_diff(last_state, state):
                     ] not in user_action[domain.capitalize() + "-Inform"]:
                         user_action[domain.capitalize() + "-Inform"].append(
                             [
-                                REF_USR_DA[domain.capitalize()].get(slot, slot),
+                                REF_USR_DA[domain.capitalize()].get(
+                                    slot, slot
+                                ),
                                 state["belief_state"][domain]["semi"][slot],
                             ]
                         )
@@ -564,9 +612,10 @@ def check_diff(last_state, state):
             for slot in state["request_state"][domain]:
                 if (domain.capitalize() + "-Request") not in user_action:
                     user_action[domain.capitalize() + "-Request"] = []
-                if [REF_USR_DA[domain].get(slot, slot), "?"] not in user_action[
-                    domain.capitalize() + "-Request"
-                ]:
+                if [
+                    REF_USR_DA[domain].get(slot, slot),
+                    "?",
+                ] not in user_action[domain.capitalize() + "-Request"]:
                     user_action[domain.capitalize() + "-Request"].append(
                         [REF_USR_DA[domain].get(slot, slot), "?"]
                     )
@@ -587,7 +636,9 @@ def check_diff(last_state, state):
                     ] not in user_action[domain.capitalize() + "-Inform"]:
                         user_action[domain.capitalize() + "-Inform"].append(
                             [
-                                REF_USR_DA[domain.capitalize()].get(slot, slot),
+                                REF_USR_DA[domain.capitalize()].get(
+                                    slot, slot
+                                ),
                                 state["belief_state"][domain]["book"][slot],
                             ]
                         )
@@ -605,7 +656,9 @@ def check_diff(last_state, state):
                     ] not in user_action[domain.capitalize() + "-Inform"]:
                         user_action[domain.capitalize() + "-Inform"].append(
                             [
-                                REF_USR_DA[domain.capitalize()].get(slot, slot),
+                                REF_USR_DA[domain.capitalize()].get(
+                                    slot, slot
+                                ),
                                 state["belief_state"][domain]["semi"][slot],
                             ]
                         )
@@ -621,7 +674,12 @@ def check_diff(last_state, state):
                         "?",
                     ] not in user_action[domain.capitalize() + "-Request"]:
                         user_action[domain.capitalize() + "-Request"].append(
-                            [REF_USR_DA[domain.capitalize()].get(slot, slot), "?"]
+                            [
+                                REF_USR_DA[domain.capitalize()].get(
+                                    slot, slot
+                                ),
+                                "?",
+                            ]
                         )
     return user_action
 

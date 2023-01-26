@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2017-present, Facebook, Inc.
 # All rights reserved.
 #
@@ -13,7 +14,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init
 from torch.autograd import Variable
-import torch.nn.functional as F
 
 
 def init_rnn(rnn, init_range, weights=None, biases=None):
@@ -30,7 +30,9 @@ def init_rnn(rnn, init_range, weights=None, biases=None):
 
 def init_rnn_cell(rnn, init_range):
     """Initializes RNNCell uniformly."""
-    init_rnn(rnn, init_range, ["weight_ih", "weight_hh"], ["bias_ih", "bias_hh"])
+    init_rnn(
+        rnn, init_range, ["weight_ih", "weight_hh"], ["bias_ih", "bias_hh"]
+    )
 
 
 def init_cont(cont, init_range):

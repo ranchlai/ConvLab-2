@@ -1,17 +1,19 @@
-import json
-import random
-import sys
-import zipfile
+# -*- coding: utf-8 -*-
 import copy
-import re
-import jieba
-from collections import defaultdict
+import json
 import os
 import pickle as pkl
-from nltk.translate.bleu_score import corpus_bleu, SmoothingFunction
+import random
+import re
+import sys
+import zipfile
+from collections import defaultdict
 from pprint import pprint
-from convlab2.nlg.template.crosswoz.nlg import TemplateNLG
 
+import jieba
+from nltk.translate.bleu_score import SmoothingFunction, corpus_bleu
+
+from convlab2.nlg.template.crosswoz.nlg import TemplateNLG
 
 seed = 2019
 random.seed(seed)
@@ -58,8 +60,12 @@ def value_replace(sentences, dialog_act):
 
         if "酒店设施" in intent:
             try:
-                sentences = sentences.replace("[" + intent + "]", act[2].split("-")[1])
-                sentences = sentences.replace("[" + intent + "1]", act[2].split("-")[1])
+                sentences = sentences.replace(
+                    "[" + intent + "]", act[2].split("-")[1]
+                )
+                sentences = sentences.replace(
+                    "[" + intent + "1]", act[2].split("-")[1]
+                )
             except Exception as e:
                 print("Act causing problem in replacement:")
                 pprint(act)
@@ -71,7 +77,10 @@ def value_replace(sentences, dialog_act):
             )  # if multiple same intents and this is 1st
 
     if "[" in sentences and "]" in sentences:
-        print("\n\nValue replacement not completed!!! Current sentence: %s" % sentences)
+        print(
+            "\n\nValue replacement not completed!!! Current sentence: %s"
+            % sentences
+        )
         print("current da:")
         print(dialog_act)
         pattern = re.compile(r"(\[[^\[^\]]+\])")
@@ -151,13 +160,19 @@ def get_bleu4(dialog_acts, golden_utts, gen_utts, data_key):
             gens.append([x for x in jieba.lcut(lex_gen) if x.strip()])
             refs.append(
                 [
-                    [x for x in jieba.lcut(value_replace(s, lex_das)) if x.strip()]
+                    [
+                        x
+                        for x in jieba.lcut(value_replace(s, lex_das))
+                        if x.strip()
+                    ]
                     for s in das2utts[das]["refs"]
                 ]
             )
 
     with open(
-        os.path.join("", "generated_sens_%s.json" % data_key), "w", encoding="utf-8"
+        os.path.join("", "generated_sens_%s.json" % data_key),
+        "w",
+        encoding="utf-8",
     ) as f:
         json.dump(
             {"refs": refs, "gens": gens},

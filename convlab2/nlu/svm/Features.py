@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import itertools
 import math
 from collections import defaultdict
@@ -48,10 +49,14 @@ class nbest(object):
             self.max_length = int(config.get("classifier", "max_ngram_length"))
         self.skip_ngrams = False
         if config.has_option("classifier", "skip_ngrams"):
-            self.skip_ngrams = config.get("classifier", "skip_ngrams") == "True"
+            self.skip_ngrams = (
+                config.get("classifier", "skip_ngrams") == "True"
+            )
         self.skip_ngram_decay = 0.9
         if config.has_option("classifier", "skip_ngram_decay"):
-            self.skip_ngram_decay = float(config.get("classifier", "skip_ngram_decay"))
+            self.skip_ngram_decay = float(
+                config.get("classifier", "skip_ngram_decay")
+            )
         self.max_ngrams = 200
         if config.has_option("classifier", "max_ngrams"):
             self.max_ngrams = int(config.get("classifier", "max_ngrams"))
@@ -69,7 +74,9 @@ class nbest(object):
 
         min_score = min([score for score, _hyp in asr_hyps])
 
-        asr_hyps = [(math.exp(score + min_score), hyp) for score, hyp in asr_hyps]
+        asr_hyps = [
+            (math.exp(score + min_score), hyp) for score, hyp in asr_hyps
+        ]
         total_p = sum([score for score, _hyp in asr_hyps])
 
         if total_p == 0:
@@ -95,7 +102,9 @@ class nbest(object):
 
     def calculate_sent(self, log_turn, log_input_key="batch"):
 
-        asr_hyps = [(hyp["score"], hyp["asr-hyp"]) for hyp in log_turn["asr-hyps"]]
+        asr_hyps = [
+            (hyp["score"], hyp["asr-hyp"]) for hyp in log_turn["asr-hyps"]
+        ]
         asr_hyps = [(score, hyp) for score, hyp in asr_hyps if score > -100]
         # do exp of scores and normalise
         if not asr_hyps:
@@ -103,7 +112,9 @@ class nbest(object):
 
         min_score = min([score for score, _hyp in asr_hyps])
 
-        asr_hyps = [(math.exp(score + min_score), hyp) for score, hyp in asr_hyps]
+        asr_hyps = [
+            (math.exp(score + min_score), hyp) for score, hyp in asr_hyps
+        ]
         total_p = sum([score for score, _hyp in asr_hyps])
 
         if total_p == 0:
@@ -161,7 +172,9 @@ def get_ngrams(sentence, max_length, skip_ngrams=False, add_tags=True):
             subsets = set(itertools.combinations(range(len(words)), n))
             for subset in subsets:
                 subset = sorted(subset)
-                dists = [(subset[i] - subset[i - 1]) for i in range(1, len(subset))]
+                dists = [
+                    (subset[i] - subset[i - 1]) for i in range(1, len(subset))
+                ]
                 out.append((" ".join([words[j] for j in subset]), dists))
 
     return out
@@ -173,7 +186,10 @@ class nbestLengths(object):
 
     def calculate(self, log_turn, log_input_key="batch"):
         out = {}
-        hyps = [hyp["asr-hyp"] for hyp in log_turn["input"][log_input_key]["asr-hyps"]]
+        hyps = [
+            hyp["asr-hyp"]
+            for hyp in log_turn["input"][log_input_key]["asr-hyps"]
+        ]
         for i, hyp in enumerate(hyps):
             out[i] = len(hyp.split())
         return out
@@ -188,7 +204,10 @@ class nbestScores(object):
 
     def calculate(self, log_turn, log_input_key="batch"):
         out = {}
-        scores = [hyp["score"] for hyp in log_turn["input"][log_input_key]["asr-hyps"]]
+        scores = [
+            hyp["score"]
+            for hyp in log_turn["input"][log_input_key]["asr-hyps"]
+        ]
         for i, score in enumerate(scores):
             out[i] = score
         return out
@@ -201,7 +220,9 @@ class cnet(object):
     def __init__(self, config):
         import json
 
-        self.slots_enumerated = json.loads(config.get("grammar", "slots_enumerated"))
+        self.slots_enumerated = json.loads(
+            config.get("grammar", "slots_enumerated")
+        )
         self.max_length = 3
         if config.has_option("classifier", "max_ngram_length"):
             self.max_length = int(config.get("classifier", "max_ngram_length"))
@@ -213,11 +234,17 @@ class cnet(object):
 
     def calculate(self, log_turn, log_input_key="batch"):
         if self.last_parse == log_turn["input"]["audio-file"]:
-            return dict([(ng.string_repn(), ng.score()) for ng in self.final_ngrams])
+            return dict(
+                [(ng.string_repn(), ng.score()) for ng in self.final_ngrams]
+            )
         cnet = log_turn["input"][log_input_key]["cnet"]
-        self.final_ngrams = get_cnngrams(cnet, self.max_ngrams, self.max_length)
+        self.final_ngrams = get_cnngrams(
+            cnet, self.max_ngrams, self.max_length
+        )
         self.last_parse = log_turn["input"]["audio-file"]
-        return dict([(ng.string_repn(), ng.score()) for ng in self.final_ngrams])
+        return dict(
+            [(ng.string_repn(), ng.score()) for ng in self.final_ngrams]
+        )
 
     def tuple_calculate(self, this_tuple, log_turn, log_input_key="batch"):
         final_ngrams = self.final_ngrams
@@ -264,7 +291,9 @@ def get_cnngrams(cnet, max_ngrams, max_length):
                 new_active_ngrams.append(this_ngram)
                 finished_ngrams.append(this_ngram)
 
-        active_ngrams = cn_ngram_prune((new_active_ngrams[:]), int(1.5 * max_ngrams))
+        active_ngrams = cn_ngram_prune(
+            (new_active_ngrams[:]), int(1.5 * max_ngrams)
+        )
 
     return cn_ngram_prune(cn_ngram_merge(finished_ngrams), max_ngrams)
 
@@ -294,7 +323,8 @@ class cnNgram(object):
 
     def __len__(self):
         return (
-            len([x for x in self.words if x != "!null"]) + self.replacement_length_delta
+            len([x for x in self.words if x != "!null"])
+            + self.replacement_length_delta
         )
 
     def word_list(
@@ -323,7 +353,9 @@ def cn_ngram_merge(ngrams):
         if ngram not in merged:
             merged[ngram] = ngram.logp
         else:
-            merged[ngram] = math.log(math.exp(ngram.logp) + math.exp(merged[ngram]))
+            merged[ngram] = math.log(
+                math.exp(ngram.logp) + math.exp(merged[ngram])
+            )
 
     new_ngrams = []
     for ngram in merged:
@@ -376,13 +408,18 @@ if __name__ == "__main__":
     ]
     final_ngrams = get_cnngrams(cn, 200, 3)
     print(dict([(ng.string_repn(), ng.score()) for ng in final_ngrams]))
-    import configparser, json, Tuples
+    import configparser
+    import json
+
+    import Tuples
 
     config = configparser.ConfigParser()
     config.read("output/experiments/feature_set/run_1.cfg")
     nb = cnet(config)
     log_file = json.load(
-        open("corpora/data/Mar13_S2A0/voip-318851c80b-20130328_224811/log.json")
+        open(
+            "corpora/data/Mar13_S2A0/voip-318851c80b-20130328_224811/log.json"
+        )
     )
     log_turn = log_file["turns"][2]
     print(nb.calculate(log_turn))

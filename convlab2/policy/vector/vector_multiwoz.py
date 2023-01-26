@@ -1,20 +1,24 @@
 # -*- coding: utf-8 -*-
-import os
 import json
+import os
+
 import numpy as np
+
 from convlab2.policy.vec import Vector
+from convlab2.util.multiwoz.dbquery import Database
 from convlab2.util.multiwoz.lexicalize import (
+    deflat_da,
     delexicalize_da,
     flat_da,
-    deflat_da,
     lexicalize_da,
 )
 from convlab2.util.multiwoz.state import default_state
-from convlab2.util.multiwoz.dbquery import Database
 
 DEFAULT_INTENT_FILEPATH = os.path.join(
     os.path.dirname(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        )
     ),
     "data/multiwoz/trackable_intent.json",
 )
@@ -114,7 +118,9 @@ class MultiWozVector(Vector):
         for domain in self.db_domains:
             constraint = turn[domain.lower()]["semi"].items()
             entities = self.db.query(domain.lower(), constraint)
-            pointer_vector = self.one_hot_vector(len(entities), domain, pointer_vector)
+            pointer_vector = self.one_hot_vector(
+                len(entities), domain, pointer_vector
+            )
 
         return pointer_vector
 
@@ -174,7 +180,9 @@ class MultiWozVector(Vector):
                     self.cur_domain = domain
 
         action = (
-            state["user_action"] if self.character == "sys" else state["system_action"]
+            state["user_action"]
+            if self.character == "sys"
+            else state["system_action"]
         )
         opp_action = delexicalize_da(action, self.requestable)
         opp_action = flat_da(opp_action)
@@ -184,7 +192,9 @@ class MultiWozVector(Vector):
                 opp_act_vec[self.opp2vec[da]] = 1.0
 
         action = (
-            state["system_action"] if self.character == "sys" else state["user_action"]
+            state["system_action"]
+            if self.character == "sys"
+            else state["user_action"]
         )
         action = delexicalize_da(action, self.requestable)
         action = flat_da(action)
@@ -196,7 +206,9 @@ class MultiWozVector(Vector):
         belief_state = np.zeros(self.belief_state_dim)
         i = 0
         for domain in self.belief_domains:
-            for slot, value in state["belief_state"][domain.lower()]["semi"].items():
+            for slot, value in state["belief_state"][domain.lower()][
+                "semi"
+            ].items():
                 if value:
                     belief_state[i] = 1.0
                 i += 1
@@ -210,7 +222,9 @@ class MultiWozVector(Vector):
 
         final = 1.0 if state["terminated"] else 0.0
 
-        state_vec = np.r_[opp_act_vec, last_act_vec, belief_state, book, degree, final]
+        state_vec = np.r_[
+            opp_act_vec, last_act_vec, belief_state, book, degree, final
+        ]
         assert len(state_vec) == self.state_dim
         return state_vec
 
@@ -250,7 +264,10 @@ class MultiWozVector(Vector):
         entities = {}
         for domint in action:
             domain, intent = domint.split("-")
-            if domain not in entities and domain.lower() not in ["general", "booking"]:
+            if domain not in entities and domain.lower() not in [
+                "general",
+                "booking",
+            ]:
                 entities[domain] = self.dbquery_domain(domain)
         if self.cur_domain and self.cur_domain not in entities:
             entities[self.cur_domain] = self.dbquery_domain(self.cur_domain)

@@ -1,17 +1,20 @@
+# -*- coding: utf-8 -*-
+import json
 import os
 import re
 import zipfile
-import json
-import torch
-from unidecode import unidecode
+
 import spacy
-from convlab2.util.file_util import cached_path, get_root_path
-from convlab2.nlu.nlu import NLU
+import torch
+from spacy.symbols import LEMMA, ORTH, POS
+from unidecode import unidecode
+
 from convlab2.nlu.jointBERT.dataloader import Dataloader
 from convlab2.nlu.jointBERT.jointBERT import JointBERT
 from convlab2.nlu.jointBERT.multiwoz.postprocess import recover_intent
 from convlab2.nlu.jointBERT.multiwoz.preprocess import preprocess
-from spacy.symbols import ORTH, LEMMA, POS
+from convlab2.nlu.nlu import NLU
+from convlab2.util.file_util import cached_path, get_root_path
 
 
 class BERTNLU(NLU):
@@ -24,7 +27,8 @@ class BERTNLU(NLU):
         assert mode == "usr" or mode == "sys" or mode == "all"
         self.mode = mode
         config_file = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "configs/{}".format(config_file)
+            os.path.dirname(os.path.abspath(__file__)),
+            "configs/{}".format(config_file),
         )
         config = json.load(open(config_file))
         # print(config['DEVICE'])
@@ -37,7 +41,9 @@ class BERTNLU(NLU):
         if not os.path.exists(os.path.join(data_dir, "intent_vocab.json")):
             preprocess(mode)
 
-        intent_vocab = json.load(open(os.path.join(data_dir, "intent_vocab.json")))
+        intent_vocab = json.load(
+            open(os.path.join(data_dir, "intent_vocab.json"))
+        )
         tag_vocab = json.load(open(os.path.join(data_dir, "tag_vocab.json")))
         dataloader = Dataloader(
             intent_vocab=intent_vocab,
@@ -80,7 +86,8 @@ class BERTNLU(NLU):
             spacy_model_module = __import__("en_core_web_sm")
             self.nlp = spacy_model_module.load()
         with open(
-            os.path.join(get_root_path(), "data/multiwoz/db/postcode.json"), "r"
+            os.path.join(get_root_path(), "data/multiwoz/db/postcode.json"),
+            "r",
         ) as f:
             token_list = json.load(f)
 
@@ -96,12 +103,18 @@ class BERTNLU(NLU):
         utterance = re.sub(r"\b(id|Id)\b", "ID", utterance)
         # tokenization first, very important!
         ori_word_seq = [
-            token.text for token in self.nlp(unidecode(utterance)) if token.text.strip()
+            token.text
+            for token in self.nlp(unidecode(utterance))
+            if token.text.strip()
         ]
         # print(ori_word_seq)
         ori_tag_seq = ["O"] * len(ori_word_seq)
         if self.use_context:
-            if len(context) > 0 and type(context[0]) is list and len(context[0]) > 1:
+            if (
+                len(context) > 0
+                and type(context[0]) is list
+                and len(context[0]) > 1
+            ):
                 context = [item[1] for item in context]
             context_seq = self.dataloader.tokenizer.encode(
                 "[CLS] " + " [SEP] ".join(context[-3:])

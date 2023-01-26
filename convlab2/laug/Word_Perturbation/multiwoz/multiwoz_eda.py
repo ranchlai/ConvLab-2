@@ -1,24 +1,25 @@
+# -*- coding: utf-8 -*-
 import tqdm
 
+from .db.slot_value_replace import (
+    MultiSourceDBLoader,
+    assert_correct_turn,
+    replace_slot_values_in_turn,
+)
 from .task_oriented_eda import eda
-from .types import MultiwozSampleType, SentenceType, MultiwozDatasetType
+from .tokenize_util import (
+    convert_sentence_to_tokens,
+    convert_tokens_to_string,
+    tokenize,
+)
+from .types import MultiwozDatasetType, MultiwozSampleType, SentenceType
 from .util import (
     AugmentationRecorder,
-    iter_dialogues,
     Helper,
     choice,
     is_span_info_consistent_with_text,
+    iter_dialogues,
     p_str,
-)
-from .tokenize_util import (
-    tokenize,
-    convert_tokens_to_string,
-    convert_sentence_to_tokens,
-)
-from .db.slot_value_replace import (
-    replace_slot_values_in_turn,
-    MultiSourceDBLoader,
-    assert_correct_turn,
 )
 
 
@@ -38,7 +39,9 @@ class MultiwozEDA:
         # attributes for slot value replacement
         self.db_loader = db_loader
         self.inform_intents = inform_intents
-        self.slot_value_replacement_probability = slot_value_replacement_probability
+        self.slot_value_replacement_probability = (
+            slot_value_replacement_probability
+        )
 
         # attributes for EDA.
         self.eda_config = dict(
@@ -54,21 +57,33 @@ class MultiwozEDA:
     def _get_excluding_indexes(self, words, span_info, dialog_act):
         return self.helper._get_excluding_indexes(words, span_info, dialog_act)
 
-    def _augment_sentence_only(self, sentence: SentenceType, span_info, dialog_act):
+    def _augment_sentence_only(
+        self, sentence: SentenceType, span_info, dialog_act
+    ):
         """don't change DA (span indexes may change)"""
         words = convert_sentence_to_tokens(sentence)
-        excluding_indexes = self._get_excluding_indexes(words, span_info, dialog_act)
+        excluding_indexes = self._get_excluding_indexes(
+            words, span_info, dialog_act
+        )
 
         for new_words, index_map in eda(
             words, **self.eda_config, excluding_indexes=excluding_indexes
         ):
             new_span_info = []
             for x in span_info:
-                new_span_info.append([*x[:3], index_map[x[3]], index_map[x[4]]])
-            yield convert_tokens_to_string(new_words), new_span_info, dialog_act
+                new_span_info.append(
+                    [*x[:3], index_map[x[3]], index_map[x[4]]]
+                )
+            yield convert_tokens_to_string(
+                new_words
+            ), new_span_info, dialog_act
 
-    def augment_sentence_only(self, sentence: SentenceType, span_info, dialog_act):
-        return list(self._augment_sentence_only(sentence, span_info, dialog_act))
+    def augment_sentence_only(
+        self, sentence: SentenceType, span_info, dialog_act
+    ):
+        return list(
+            self._augment_sentence_only(sentence, span_info, dialog_act)
+        )
 
     def _augment_sample(
         self, sample: MultiwozSampleType, mode="usr"
@@ -76,7 +91,9 @@ class MultiwozEDA:
         recorder = AugmentationRecorder(sample)
 
         for turn_index, turn in iter_dialogues(sample, mode=mode):
-            if not is_span_info_consistent_with_text(turn["text"], turn["span_info"]):
+            if not is_span_info_consistent_with_text(
+                turn["text"], turn["span_info"]
+            ):
                 continue
             try:
                 assert_correct_turn(turn)
@@ -99,7 +116,11 @@ class MultiwozEDA:
                 span_info = turn["span_info"]
                 dialog_act = turn["dialog_act"]
                 tokens = tokenize(text)
-                augmented_sentence, augmented_span_info, augmented_dialog_act = choice(
+                (
+                    augmented_sentence,
+                    augmented_span_info,
+                    augmented_dialog_act,
+                ) = choice(
                     self._augment_sentence_only(tokens, span_info, dialog_act)
                 )
             except (ValueError, IndexError):

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 def fix_general_label_error(labels, type, slots):
     label_dict = (
         dict([(l[0], l[1]) for l in labels])
@@ -103,7 +104,14 @@ def fix_general_label_error(labels, type, slots):
                 and label_dict[slot] == "2"
                 or slot == "attraction-type"
                 and label_dict[slot]
-                in ["gastropub", "la raza", "galleria", "gallery", "science", "m"]
+                in [
+                    "gastropub",
+                    "la raza",
+                    "galleria",
+                    "gallery",
+                    "science",
+                    "m",
+                ]
                 or "area" in slot
                 and label_dict[slot] in ["moderate"]
                 or "day" in slot

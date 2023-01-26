@@ -1,15 +1,21 @@
+# -*- coding: utf-8 -*-
 """
     evaluate DST model
 """
 
-import os
-import json
 import importlib
+import json
+import os
 
 from tqdm import tqdm
 
 from convlab2.dst import DST
-from convlab2.dst.dstc9.utils import prepare_data, eval_states, dump_result, extract_gt
+from convlab2.dst.dstc9.utils import (
+    dump_result,
+    eval_states,
+    extract_gt,
+    prepare_data,
+)
 
 
 def evaluate(model_dir, subtask, test_data, gt):

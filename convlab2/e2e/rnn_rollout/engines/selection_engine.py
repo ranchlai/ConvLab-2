@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2017-present, Facebook, Inc.
 # All rights reserved.
 #
@@ -7,7 +8,7 @@
 import torch
 from torch.autograd import Variable
 
-from convlab2.e2e.rnn_rollout.engines import EngineBase, Criterion
+from convlab2.e2e.rnn_rollout.engines import Criterion, EngineBase
 
 
 class SelectionEngine(EngineBase):
@@ -31,7 +32,9 @@ class SelectionEngine(EngineBase):
             sel_tgt = [Variable(t) for t in sel_tgt]
 
         # remove YOU:/THEM: from the end
-        sel_out = model(inpts[:-1], lens[:-1], rev_idxs[:-1], hid_idxs[:-1], ctx)
+        sel_out = model(
+            inpts[:-1], lens[:-1], rev_idxs[:-1], hid_idxs[:-1], ctx
+        )
 
         return sel_out, sel_tgt
 

@@ -1,26 +1,26 @@
-import torch
-import torch.nn as nn
-from torch.autograd import Variable
-from torch.optim import lr_scheduler
-from torch import optim
-import torch.nn.functional as F
-import random
-import numpy as np
+# -*- coding: utf-8 -*-
+# import pandas as pd
+import copy
+import json
 
 # import matplotlib.pyplot as plt
 # import seaborn  as sns
 # import nltk
 import os
-import json
-
-# import pandas as pd
-import copy
-
-
-from convlab2.dst.trade.multiwoz.utils.measures import wer, moses_multi_bleu
-from convlab2.dst.trade.multiwoz.utils.masked_cross_entropy import *
-from convlab2.dst.trade.multiwoz.utils.config import *
 import pprint
+import random
+
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch import optim
+from torch.autograd import Variable
+from torch.optim import lr_scheduler
+
+from convlab2.dst.trade.multiwoz.utils.config import *
+from convlab2.dst.trade.multiwoz.utils.masked_cross_entropy import *
+from convlab2.dst.trade.multiwoz.utils.measures import moses_multi_bleu, wer
 
 
 class TRADE(nn.Module):
@@ -126,7 +126,13 @@ class TRADE(nn.Module):
         torch.save(self.decoder, directory + "/dec.th")
 
     def reset(self):
-        self.loss, self.print_every, self.loss_ptr, self.loss_gate, self.loss_class = (
+        (
+            self.loss,
+            self.print_every,
+            self.loss_ptr,
+            self.loss_gate,
+            self.loss_class,
+        ) = (
             0,
             1,
             0,
@@ -151,7 +157,9 @@ class TRADE(nn.Module):
 
         loss_ptr = masked_cross_entropy_for_value(
             all_point_outputs.transpose(0, 1).contiguous(),
-            data["generate_y"].contiguous(),  # [:,:len(self.point_slots)].contiguous(),
+            data[
+                "generate_y"
+            ].contiguous(),  # [:,:len(self.point_slots)].contiguous(),
             data["y_lengths"],
         )  # [:,:len(self.point_slots)])
         loss_gate = self.cross_entorpy(
@@ -205,7 +213,9 @@ class TRADE(nn.Module):
         # Get the words that can be copy from the memory
         batch_size = len(data["context_len"])
         self.copy_list = data["context_plain"]
-        max_res_len = data["generate_y"].size(2) if self.encoder.training else 10
+        max_res_len = (
+            data["generate_y"].size(2) if self.encoder.training else 10
+        )
         (
             all_point_outputs,
             all_gate_outputs,
@@ -222,7 +232,12 @@ class TRADE(nn.Module):
             use_teacher_forcing,
             slot_temp,
         )
-        return all_point_outputs, all_gate_outputs, words_point_out, words_class_out
+        return (
+            all_point_outputs,
+            all_gate_outputs,
+            words_point_out,
+            words_class_out,
+        )
 
     def evaluate(self, dev, matric_best, slot_temp, early_stop=None):
         # Set to not-training mode to disable dropout
@@ -230,7 +245,9 @@ class TRADE(nn.Module):
         self.decoder.train(False)
         print("STARTING EVALUATION")
         all_prediction = {}
-        inverse_unpoint_slot = dict([(v, k) for k, v in self.gating_dict.items()])
+        inverse_unpoint_slot = dict(
+            [(v, k) for k, v in self.gating_dict.items()]
+        )
         pbar = tqdm(enumerate(dev), total=len(dev))
         for j, data_dev in pbar:
             # Encode and Decode
@@ -270,7 +287,9 @@ class TRADE(nn.Module):
                                 )
                         else:
                             predict_belief_bsz_ptr.append(
-                                slot_temp[si] + "-" + inverse_unpoint_slot[sg.item()]
+                                slot_temp[si]
+                                + "-"
+                                + inverse_unpoint_slot[sg.item()]
                             )
                 else:
                     for si, _ in enumerate(gate):
@@ -285,14 +304,17 @@ class TRADE(nn.Module):
                         if st == "none":
                             continue
                         else:
-                            predict_belief_bsz_ptr.append(slot_temp[si] + "-" + str(st))
+                            predict_belief_bsz_ptr.append(
+                                slot_temp[si] + "-" + str(st)
+                            )
 
                 all_prediction[data_dev["ID"][bi]][data_dev["turn_id"][bi]][
                     "pred_bs_ptr"
                 ] = predict_belief_bsz_ptr
 
                 if (
-                    set(data_dev["turn_belief"][bi]) != set(predict_belief_bsz_ptr)
+                    set(data_dev["turn_belief"][bi])
+                    != set(predict_belief_bsz_ptr)
                     and args["genSample"]
                 ):
                     print("True", set(data_dev["turn_belief"][bi]))
@@ -305,9 +327,11 @@ class TRADE(nn.Module):
                 indent=4,
             )
 
-        joint_acc_score_ptr, F1_score_ptr, turn_acc_score_ptr = self.evaluate_metrics(
-            all_prediction, "pred_bs_ptr", slot_temp
-        )
+        (
+            joint_acc_score_ptr,
+            F1_score_ptr,
+            turn_acc_score_ptr,
+        ) = self.evaluate_metrics(all_prediction, "pred_bs_ptr", slot_temp)
 
         evaluation_metrics = {
             "Joint Acc": joint_acc_score_ptr,
@@ -320,9 +344,7 @@ class TRADE(nn.Module):
         self.encoder.train(True)
         self.decoder.train(True)
 
-        joint_acc_score = (
-            joint_acc_score_ptr  # (joint_acc_score_ptr + joint_acc_score_class)/2
-        )
+        joint_acc_score = joint_acc_score_ptr  # (joint_acc_score_ptr + joint_acc_score_class)/2
         F1_score = F1_score_ptr
 
         if early_stop == "F1":
@@ -413,21 +435,30 @@ class EncoderRNN(nn.Module):
         self.hidden_size = hidden_size
         self.dropout = dropout
         self.dropout_layer = nn.Dropout(dropout)
-        self.embedding = nn.Embedding(vocab_size, hidden_size, padding_idx=PAD_token)
+        self.embedding = nn.Embedding(
+            vocab_size, hidden_size, padding_idx=PAD_token
+        )
         self.embedding.weight.data.normal_(0, 0.1)
         self.gru = nn.GRU(
-            hidden_size, hidden_size, n_layers, dropout=dropout, bidirectional=True
+            hidden_size,
+            hidden_size,
+            n_layers,
+            dropout=dropout,
+            bidirectional=True,
         )
         # self.domain_W = nn.Linear(hidden_size, nb_domain)
 
         if args["load_embedding"]:
-            with open(os.path.join("data/", "emb{}.json".format(vocab_size))) as f:
+            with open(
+                os.path.join("data/", "emb{}.json".format(vocab_size))
+            ) as f:
                 E = json.load(f)
             new = self.embedding.weight.data.new
             self.embedding.weight.data.copy_(new(E))
             self.embedding.weight.requires_grad = True
             print(
-                "Encoder embedding requires_grad", self.embedding.weight.requires_grad
+                "Encoder embedding requires_grad",
+                self.embedding.weight.requires_grad,
             )
 
         if args["fix_embedding"]:
@@ -451,15 +482,27 @@ class EncoderRNN(nn.Module):
             )
         outputs, hidden = self.gru(embedded, hidden)
         if input_lengths:
-            outputs, _ = nn.utils.rnn.pad_packed_sequence(outputs, batch_first=False)
+            outputs, _ = nn.utils.rnn.pad_packed_sequence(
+                outputs, batch_first=False
+            )
         hidden = hidden[0] + hidden[1]
-        outputs = outputs[:, :, : self.hidden_size] + outputs[:, :, self.hidden_size :]
+        outputs = (
+            outputs[:, :, : self.hidden_size]
+            + outputs[:, :, self.hidden_size :]
+        )
         return outputs.transpose(0, 1), hidden.unsqueeze(0)
 
 
 class Generator(nn.Module):
     def __init__(
-        self, lang, shared_emb, vocab_size, hidden_size, dropout, slots, nb_gate
+        self,
+        lang,
+        shared_emb,
+        vocab_size,
+        hidden_size,
+        dropout,
+        slots,
+        nb_gate,
     ):
         super(Generator, self).__init__()
         self.vocab_size = vocab_size
@@ -501,7 +544,9 @@ class Generator(nn.Module):
         all_point_outputs = torch.zeros(
             len(slot_temp), batch_size, max_res_len, self.vocab_size
         )
-        all_gate_outputs = torch.zeros(len(slot_temp), batch_size, self.nb_gate)
+        all_gate_outputs = torch.zeros(
+            len(slot_temp), batch_size, self.nb_gate
+        )
         if USE_CUDA:
             all_point_outputs = all_point_outputs.cuda()
             all_gate_outputs = all_gate_outputs.cuda()
@@ -545,7 +590,9 @@ class Generator(nn.Module):
             words_class_out = []
 
             for wi in range(max_res_len):
-                dec_state, hidden = self.gru(decoder_input.expand_as(hidden), hidden)
+                dec_state, hidden = self.gru(
+                    decoder_input.expand_as(hidden), hidden
+                )
 
                 enc_out = encoded_outputs.repeat(len(slot_temp), 1, 1)
                 enc_len = encoded_lens * len(slot_temp)
@@ -558,7 +605,9 @@ class Generator(nn.Module):
                         self.W_gate(context_vec), all_gate_outputs.size()
                     )
 
-                p_vocab = self.attend_vocab(self.embedding.weight, hidden.squeeze(0))
+                p_vocab = self.attend_vocab(
+                    self.embedding.weight, hidden.squeeze(0)
+                )
                 p_gen_vec = torch.cat(
                     [dec_state.squeeze(0), context_vec, decoder_input], -1
                 )
@@ -567,7 +616,9 @@ class Generator(nn.Module):
                 if USE_CUDA:
                     p_context_ptr = p_context_ptr.cuda()
 
-                p_context_ptr.scatter_add_(1, story.repeat(len(slot_temp), 1), prob)
+                p_context_ptr.scatter_add_(
+                    1, story.repeat(len(slot_temp), 1), prob
+                )
 
                 final_p_vocab = (1 - vocab_pointer_switches).expand_as(
                     p_context_ptr
@@ -575,7 +626,9 @@ class Generator(nn.Module):
                     p_context_ptr
                 ) * p_vocab
                 pred_word = torch.argmax(final_p_vocab, dim=1)
-                words = [self.lang.index2word[w_idx.item()] for w_idx in pred_word]
+                words = [
+                    self.lang.index2word[w_idx.item()] for w_idx in pred_word
+                ]
 
                 for si in range(len(slot_temp)):
                     words_point_out[si].append(
@@ -583,7 +636,8 @@ class Generator(nn.Module):
                     )
 
                 all_point_outputs[:, :, wi, :] = torch.reshape(
-                    final_p_vocab, (len(slot_temp), batch_size, self.vocab_size)
+                    final_p_vocab,
+                    (len(slot_temp), batch_size, self.vocab_size),
                 )
 
                 if use_teacher_forcing:
@@ -621,7 +675,9 @@ class Generator(nn.Module):
                     p_gen_vec = torch.cat(
                         [dec_state.squeeze(0), context_vec, decoder_input], -1
                     )
-                    vocab_pointer_switches = self.sigmoid(self.W_ratio(p_gen_vec))
+                    vocab_pointer_switches = self.sigmoid(
+                        self.W_ratio(p_gen_vec)
+                    )
                     p_context_ptr = torch.zeros(p_vocab.size())
                     if USE_CUDA:
                         p_context_ptr = p_context_ptr.cuda()
@@ -633,7 +689,10 @@ class Generator(nn.Module):
                     ) * p_vocab
                     pred_word = torch.argmax(final_p_vocab, dim=1)
                     words.append(
-                        [self.lang.index2word[w_idx.item()] for w_idx in pred_word]
+                        [
+                            self.lang.index2word[w_idx.item()]
+                            for w_idx in pred_word
+                        ]
                     )
                     all_point_outputs[counter, :, wi, :] = final_p_vocab
                     if use_teacher_forcing:

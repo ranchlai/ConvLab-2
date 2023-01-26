@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
-import os
 import json
+import os
+
 import numpy as np
+
 from convlab2.policy.vec import Vector
+from convlab2.util.camrest.dbquery import Database
 from convlab2.util.camrest.lexicalize import (
+    deflat_da,
     delexicalize_da,
     flat_da,
-    deflat_da,
     lexicalize_da,
 )
-from convlab2.util.camrest.dbquery import Database
 
 
 class CamrestVector(Vector):
@@ -65,7 +67,9 @@ class CamrestVector(Vector):
         self.request2vec = dict((a, i) for i, a in enumerate(self.request_da))
         self.request_dim = len(self.request_da)
 
-        self.state_dim = self.da_opp_dim + self.da_dim + self.inform_dim + 6 + 1
+        self.state_dim = (
+            self.da_opp_dim + self.da_dim + self.inform_dim + 6 + 1
+        )
 
     def pointer(self, turn):
         constraint = turn.items()
@@ -105,7 +109,9 @@ class CamrestVector(Vector):
         self.state = state["belief_state"]
 
         action = (
-            state["user_action"] if self.character == "sys" else state["system_action"]
+            state["user_action"]
+            if self.character == "sys"
+            else state["system_action"]
         )
         opp_action = delexicalize_da(action, self.requestable)
         opp_action = flat_da(opp_action)
@@ -115,7 +121,9 @@ class CamrestVector(Vector):
                 opp_act_vec[self.opp2vec[da]] = 1.0
 
         action = (
-            state["system_action"] if self.character == "sys" else state["user_action"]
+            state["system_action"]
+            if self.character == "sys"
+            else state["user_action"]
         )
         action = delexicalize_da(action, self.requestable)
         action = flat_da(action)

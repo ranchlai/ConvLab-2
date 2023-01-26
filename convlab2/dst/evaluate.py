@@ -3,13 +3,14 @@
 Evaluate DST models on specified dataset
 Usage: python evaluate.py [MultiWOZ|CrossWOZ|MultiWOZ-zh|CrossWOZ-en] [TRADE|mdbt|sumbt] [val|test|human_val]
 """
+import copy
 import random
+import sys
+
+import jieba
 import numpy
 import torch
-import sys
 from tqdm import tqdm
-import copy
-import jieba
 
 multiwoz_slot_list = [
     "attraction-area",
@@ -126,8 +127,8 @@ crosswoz_slot_list = [
     "酒店-酒店设施-室外游泳池",
 ]
 
-from convlab2.dst.sumbt.multiwoz_zh.sumbt import multiwoz_zh_slot_list
 from convlab2.dst.sumbt.crosswoz_en.sumbt import crosswoz_en_slot_list
+from convlab2.dst.sumbt.multiwoz_zh.sumbt import multiwoz_zh_slot_list
 
 
 def format_history(context):
@@ -178,7 +179,9 @@ def reformat_state(state):
                         "未提到",
                         "没有提到",
                     ]:
-                        new_state.append(domain + "_book" + "-" + slot + "-" + val)
+                        new_state.append(
+                            domain + "_book" + "-" + slot + "-" + val
+                        )
     # lower
     new_state = [item.lower() for item in new_state]
     return new_state
@@ -326,8 +329,12 @@ if __name__ == "__main__":
                 raise Exception("Available models: TRADE/mdbt/sumbt")
 
         ## load data
-        from convlab2.util.dataloader.module_dataloader import AgentDSTDataloader
-        from convlab2.util.dataloader.dataset_dataloader import MultiWOZDataloader
+        from convlab2.util.dataloader.dataset_dataloader import (
+            MultiWOZDataloader,
+        )
+        from convlab2.util.dataloader.module_dataloader import (
+            AgentDSTDataloader,
+        )
 
         dataloader = AgentDSTDataloader(
             dataset_dataloader=MultiWOZDataloader(dataset_name.endswith("zh"))
@@ -367,11 +374,15 @@ if __name__ == "__main__":
             all_predictions[session_count] = copy.deepcopy(curr_sess)
 
         slot_list = (
-            multiwoz_zh_slot_list if dataset_name.endswith("zh") else multiwoz_slot_list
+            multiwoz_zh_slot_list
+            if dataset_name.endswith("zh")
+            else multiwoz_slot_list
         )
-        joint_acc_score_ptr, F1_score_ptr, turn_acc_score_ptr = evaluate_metrics(
-            all_predictions, "pred_bs_ptr", slot_list
-        )
+        (
+            joint_acc_score_ptr,
+            F1_score_ptr,
+            turn_acc_score_ptr,
+        ) = evaluate_metrics(all_predictions, "pred_bs_ptr", slot_list)
         evaluation_metrics = {
             "Joint Acc": joint_acc_score_ptr,
             "Turn Acc": turn_acc_score_ptr,
@@ -402,10 +413,12 @@ if __name__ == "__main__":
                 raise Exception("Available models: TRADE")
 
         # load data
+        from convlab2.util.dataloader.dataset_dataloader import (
+            CrossWOZDataloader,
+        )
         from convlab2.util.dataloader.module_dataloader import (
             CrossWOZAgentDSTDataloader,
         )
-        from convlab2.util.dataloader.dataset_dataloader import CrossWOZDataloader
 
         dataloader = CrossWOZAgentDSTDataloader(
             dataset_dataloader=CrossWOZDataloader(en)
@@ -462,9 +475,11 @@ if __name__ == "__main__":
             all_predictions[session_count] = copy.deepcopy(curr_sess)
 
         slot_list = crosswoz_en_slot_list if en else crosswoz_slot_list
-        joint_acc_score_ptr, F1_score_ptr, turn_acc_score_ptr = evaluate_metrics(
-            all_predictions, "pred_bs_ptr", slot_list
-        )
+        (
+            joint_acc_score_ptr,
+            F1_score_ptr,
+            turn_acc_score_ptr,
+        ) = evaluate_metrics(all_predictions, "pred_bs_ptr", slot_list)
         evaluation_metrics = {
             "Joint Acc": joint_acc_score_ptr,
             "Turn Acc": turn_acc_score_ptr,

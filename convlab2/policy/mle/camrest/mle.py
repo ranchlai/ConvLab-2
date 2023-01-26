@@ -1,15 +1,21 @@
 # -*- coding: utf-8 -*-
-import torch
-import os
 import json
+import os
+
+import torch
+
 from convlab2.policy.mle.mle import MLEAbstract
 from convlab2.policy.rlmodule import MultiDiscretePolicy
 from convlab2.policy.vector.vector_camrest import CamrestVector
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-DEFAULT_DIRECTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
-DEFAULT_ARCHIVE_FILE = os.path.join(DEFAULT_DIRECTORY, "mle_policy_camrest.zip")
+DEFAULT_DIRECTORY = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "models"
+)
+DEFAULT_ARCHIVE_FILE = os.path.join(
+    DEFAULT_DIRECTORY, "mle_policy_camrest.zip"
+)
 
 
 class MLE(MLEAbstract):
@@ -27,7 +33,10 @@ class MLE(MLEAbstract):
         )
 
         with open(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json"), "r"
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "config.json"
+            ),
+            "r",
         ) as f:
             cfg = json.load(f)
 

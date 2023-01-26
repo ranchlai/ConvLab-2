@@ -1,31 +1,42 @@
+# -*- coding: utf-8 -*-
+import argparse
+import collections
+import os
+import time
+from collections import defaultdict
+
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
-import torch.utils.data
-
-from convlab2.dst.comer.multiwoz import models
-from convlab2.dst.comer.multiwoz import dataloader
-from convlab2.dst.comer.multiwoz import utils
-from convlab2.dst.comer.multiwoz import dict as dic
 import torch.nn.init as init
-import os
-import argparse
-import time
-import collections
+import torch.utils.data
 from pytorch_pretrained_bert import BertModel
-from convlab2.dst.comer.multiwoz.convert_mw import bert, tokenizer, bert_type
-from collections import defaultdict
+from torch.autograd import Variable
+
+from convlab2.dst.comer.multiwoz import dataloader
+from convlab2.dst.comer.multiwoz import dict as dic
+from convlab2.dst.comer.multiwoz import models, utils
+from convlab2.dst.comer.multiwoz.convert_mw import bert, bert_type, tokenizer
 
 # config
 parser = argparse.ArgumentParser(description="train.py")
 
-parser.add_argument("-config", default="config.yaml", type=str, help="config file")
 parser.add_argument(
-    "-gpus", default=[0], nargs="+", type=int, help="Use CUDA on the listed devices."
+    "-config", default="config.yaml", type=str, help="config file"
 )
-parser.add_argument("-restore", default="", type=str, help="restore checkpoint")
+parser.add_argument(
+    "-gpus",
+    default=[0],
+    nargs="+",
+    type=int,
+    help="Use CUDA on the listed devices.",
+)
+parser.add_argument(
+    "-restore", default="", type=str, help="restore checkpoint"
+)
 parser.add_argument("-seed", type=int, default=1234, help="Random seed")
-parser.add_argument("-model", default="seq2seq", type=str, help="Model selection")
+parser.add_argument(
+    "-model", default="seq2seq", type=str, help="Model selection"
+)
 parser.add_argument("-score", default="", type=str, help="score_fn")
 parser.add_argument(
     "-pretrain", default=True, type=bool, help="load pretrain embedding"
@@ -70,7 +81,9 @@ trainloader = dataloader.get_loader(
 validloader = dataloader.get_loader(
     validset, batch_size=1, shuffle=False, num_workers=2
 )
-testloader = dataloader.get_loader(testset, batch_size=1, shuffle=False, num_workers=2)
+testloader = dataloader.get_loader(
+    testset, batch_size=1, shuffle=False, num_workers=2
+)
 
 if opt.pretrain:
     pretrain_embed = {}
@@ -107,13 +120,17 @@ if use_cuda:
 #    model = nn.DataParallel(model, device_ids=opt.gpus, dim=0)
 
 
-params = {n: p for n, p in model.named_parameters() if "src_embedding" not in n}
+params = {
+    n: p for n, p in model.named_parameters() if "src_embedding" not in n
+}
 
 # optimizer
 if opt.restore:
     optim = checkpoints["optim"]
 else:
-    optim = torch.optim.Adam(params.values(), lr=config.learning_rate, amsgrad=True)
+    optim = torch.optim.Adam(
+        params.values(), lr=config.learning_rate, amsgrad=True
+    )
 
 
 # total number of parameters
@@ -205,9 +222,14 @@ def train_and_eval(epoch):
             src2s = src2[:, i, :].transpose(0, 1)
             src3s = src3[:, i, :].transpose(0, 1)
             tgts = tgt[:, i, :].transpose(0, 1)
-            tgtvs = tgtv[:, i, :, :].transpose(0, 1).transpose(1, 2)  # batch third
+            tgtvs = (
+                tgtv[:, i, :, :].transpose(0, 1).transpose(1, 2)
+            )  # batch third
             tgtpvs = (
-                tgtpv[:, i, :, :, :].transpose(0, 1).transpose(1, 2).transpose(2, 3)
+                tgtpv[:, i, :, :, :]
+                .transpose(0, 1)
+                .transpose(1, 2)
+                .transpose(2, 3)
             )
             src1_lens = src1_len[:, i]
             src2_lens = src2_len[:, i]
@@ -327,7 +349,14 @@ def eval(epoch):
 
             # get prediction sequence
             samples, ssamples, vsamples, _ = model.sample(
-                src1, src1_len, src2, src2_len, src3, src3_len, tgtpv, tgtpv_len
+                src1,
+                src1_len,
+                src2,
+                src2_len,
+                src3,
+                src3_len,
+                tgtpv,
+                tgtpv_len,
             )
 
             for x, xv, xvv, y, yv, yvv in zip(

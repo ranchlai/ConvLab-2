@@ -1,11 +1,13 @@
-import json
-import random
-import os
-from pprint import pprint
-import functools
+# -*- coding: utf-8 -*-
 import copy
-from collections import defaultdict
+import functools
+import json
+import os
+import random
 import zipfile
+from collections import defaultdict
+from pprint import pprint
+
 from convlab2.nlg import NLG
 
 
@@ -51,7 +53,8 @@ class TemplateNLG(NLG):
         :return: a sentence
         """
         dialog_act = [
-            [str(x[0]), str(x[1]), str(x[2]), str(x[3]).lower()] for x in dialog_act
+            [str(x[0]), str(x[1]), str(x[2]), str(x[3]).lower()]
+            for x in dialog_act
         ]
         # print(dialog_act)
         dialog_act = copy.deepcopy(dialog_act)
@@ -64,7 +67,9 @@ class TemplateNLG(NLG):
                 else:
                     template = self.manual_system_template
 
-                return self._manual_generate(copy.deepcopy(dialog_act), template)
+                return self._manual_generate(
+                    copy.deepcopy(dialog_act), template
+                )
             elif mode == "auto":
                 if is_user:
                     template = self.auto_user_template
@@ -80,9 +85,13 @@ class TemplateNLG(NLG):
                     template1 = self.auto_system_template
                     template2 = self.manual_system_template
                 try:
-                    res = self._auto_generate(copy.deepcopy(dialog_act), template1)
+                    res = self._auto_generate(
+                        copy.deepcopy(dialog_act), template1
+                    )
                 except:
-                    res = self._manual_generate(copy.deepcopy(dialog_act), template2)
+                    res = self._manual_generate(
+                        copy.deepcopy(dialog_act), template2
+                    )
                 return res
 
             else:
@@ -172,7 +181,9 @@ class TemplateNLG(NLG):
 
     def _manual_generate(self, dialog_act, template):
         dialog_act = copy.deepcopy(dialog_act)
-        intent_list = self._prepare_intent_string_list(copy.deepcopy(dialog_act))
+        intent_list = self._prepare_intent_string_list(
+            copy.deepcopy(dialog_act)
+        )
         sentences = ""
         while intent_list:
             intent = intent_list.pop(0)
@@ -180,7 +191,9 @@ class TemplateNLG(NLG):
             # "Recommend+酒店+名称1+名称2+名称3+名称4"等：
             if intent not in template.keys() and "1" in intent:
                 base_intent = "+".join(intent.split("+")[:3]).strip("1")
-                repetition = len(intent.split("+")) - 2 - 1  # times of repetition - 1
+                repetition = (
+                    len(intent.split("+")) - 2 - 1
+                )  # times of repetition - 1
                 while (
                     self._multi_same_intent_process(base_intent, repetition)
                     not in template.keys()
@@ -190,10 +203,13 @@ class TemplateNLG(NLG):
                 if len(intent.split("+")) - 2 - repetition >= 1:
                     intent_list = [
                         self._multi_same_intent_process(
-                            base_intent, len(intent.split("+")) - 2 - repetition
+                            base_intent,
+                            len(intent.split("+")) - 2 - repetition,
                         )
                     ] + intent_list
-                intent = self._multi_same_intent_process(base_intent, repetition)
+                intent = self._multi_same_intent_process(
+                    base_intent, repetition
+                )
             elif "Inform" in intent and "无" in intent:
                 intent = "Inform+主体+属性+无"
 
@@ -201,17 +217,23 @@ class TemplateNLG(NLG):
             sentence = self._postprocess(sentence, intent_list == [])
             sentences += sentence
             # slot replacement:
-            sentences = self._value_replace(sentences, copy.deepcopy(dialog_act))
+            sentences = self._value_replace(
+                sentences, copy.deepcopy(dialog_act)
+            )
         return sentences
 
     def _auto_generate(self, dialog_act, template):
         dialog_act = copy.deepcopy(dialog_act)
-        intent_list = self._prepare_intent_string_list(copy.deepcopy(dialog_act))
+        intent_list = self._prepare_intent_string_list(
+            copy.deepcopy(dialog_act)
+        )
         multi_intent = "*".join(intent_list)
         try:
             sentences = random.choice(template[multi_intent])
             # slot replacement:
-            sentences = self._value_replace(sentences, copy.deepcopy(dialog_act))
+            sentences = self._value_replace(
+                sentences, copy.deepcopy(dialog_act)
+            )
 
         except Exception as e:  # todo address the error
             # if multi_intent not in template.keys():
@@ -381,11 +403,15 @@ class TemplateNLG(NLG):
         if "Inform" in intent2 and "无" in intent2:
             intent2 = "Inform+主体+属性+无"
         try:
-            assert intent1 in intent_order[role] and intent2 in intent_order[role]
+            assert (
+                intent1 in intent_order[role] and intent2 in intent_order[role]
+            )
         except AssertionError:
             print(role, intent1, intent2)
             raise AssertionError
-        return intent_order[role].index(intent1) - intent_order[role].index(intent2)
+        return intent_order[role].index(intent1) - intent_order[role].index(
+            intent2
+        )
 
     def _prepare_intent_string_list(self, dialog_act):
         """
@@ -419,14 +445,17 @@ class TemplateNLG(NLG):
                             + "+".join(
                                 [
                                     intent.split("+")[-1] + str(k)
-                                    for k in range(2, intent_frequency[intent] + 1)
+                                    for k in range(
+                                        2, intent_frequency[intent] + 1
+                                    )
                                 ]
                             )
                         )
                         intent_frequency[new_intent] = 1
                         del intent_frequency[intent]
             intent_list = sorted(
-                intent_frequency.keys(), key=functools.cmp_to_key(self._cmp_intent)
+                intent_frequency.keys(),
+                key=functools.cmp_to_key(self._cmp_intent),
             )
             return copy.copy(intent_list)
         else:
@@ -465,7 +494,9 @@ class TemplateNLG(NLG):
 
 def example():
     data_dir = "../../../../data/crosswoz/"
-    train_data = read_zipped_json(os.path.join(data_dir, "test.json.zip"), "test.json")
+    train_data = read_zipped_json(
+        os.path.join(data_dir, "test.json.zip"), "test.json"
+    )
     messages = [d["messages"] for d in train_data.values()]
     for i in range(100):
         for message in random.choices(messages):
@@ -480,17 +511,26 @@ def example():
                 pprint(dialog_act)
 
                 # system model for manual, auto, auto_manual
-                nlg_sys_manual = TemplateNLG(is_user=r["role"] == "usr", mode="manual")
-                nlg_sys_auto = TemplateNLG(is_user=r["role"] == "usr", mode="auto")
+                nlg_sys_manual = TemplateNLG(
+                    is_user=r["role"] == "usr", mode="manual"
+                )
+                nlg_sys_auto = TemplateNLG(
+                    is_user=r["role"] == "usr", mode="auto"
+                )
                 nlg_sys_auto_manual = TemplateNLG(
                     is_user=r["role"] == "usr", mode="auto_manual"
                 )
 
                 # generate
                 try:
-                    print("manual      : ", nlg_sys_manual.generate(dialog_act))
+                    print(
+                        "manual      : ", nlg_sys_manual.generate(dialog_act)
+                    )
                     print("auto        : ", nlg_sys_auto.generate(dialog_act))
-                    print("auto_manual : ", nlg_sys_auto_manual.generate(dialog_act))
+                    print(
+                        "auto_manual : ",
+                        nlg_sys_auto_manual.generate(dialog_act),
+                    )
                 except Exception as e:
                     print("Generation failure.")
                     print(repr(e))
@@ -498,4 +538,8 @@ def example():
 
 if __name__ == "__main__":
     nlg = TemplateNLG(is_user=False)
-    print(nlg.generate([["Inform", "地铁", "目的地", "云峰山"], ["Request", "地铁", "出发地", ""]]))
+    print(
+        nlg.generate(
+            [["Inform", "地铁", "目的地", "云峰山"], ["Request", "地铁", "出发地", ""]]
+        )
+    )

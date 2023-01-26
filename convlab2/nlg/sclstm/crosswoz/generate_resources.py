@@ -1,18 +1,19 @@
 #!/usr/bin/env python
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 # # Generate training data
 
-import os
+import functools
 import json
-import jieba
+import os
+import random
 import re
-from pprint import pprint
+import zipfile
 from collections import defaultdict
 from copy import copy
-import random
-import zipfile
-import functools
+from pprint import pprint
+
+import jieba
 
 
 def read_json(filename):
@@ -181,18 +182,30 @@ def main():
         if "Inform" in intent2 and "无" in intent2:
             intent2 = "Inform+主体+属性+无"
         try:
-            assert intent1 in intent_order[role] and intent2 in intent_order[role]
+            assert (
+                intent1 in intent_order[role] and intent2 in intent_order[role]
+            )
         except AssertionError:
             print(role, intent1, intent2)
-        return intent_order[role].index(intent1) - intent_order[role].index(intent2)
+        return intent_order[role].index(intent1) - intent_order[role].index(
+            intent2
+        )
 
     data_dir = "../../../../../data/crosswoz"
-    data_dir = os.path.abspath(os.path.join(os.path.abspath(__file__), data_dir))
-    train_archive = zipfile.ZipFile(os.path.join(data_dir, "train.json.zip"), "r")
+    data_dir = os.path.abspath(
+        os.path.join(os.path.abspath(__file__), data_dir)
+    )
+    train_archive = zipfile.ZipFile(
+        os.path.join(data_dir, "train.json.zip"), "r"
+    )
     train_data = json.load(train_archive.open("train.json"))
-    valid_archive = zipfile.ZipFile(os.path.join(data_dir, "val.json.zip"), "r")
+    valid_archive = zipfile.ZipFile(
+        os.path.join(data_dir, "val.json.zip"), "r"
+    )
     valid_data = json.load(valid_archive.open("val.json"))
-    test_archive = zipfile.ZipFile(os.path.join(data_dir, "test.json.zip"), "r")
+    test_archive = zipfile.ZipFile(
+        os.path.join(data_dir, "test.json.zip"), "r"
+    )
     test_data = json.load(test_archive.open("test.json"))
 
     data = {"train": train_data, "valid": valid_data, "test": test_data}
@@ -224,13 +237,18 @@ def main():
                 if "酒店设施" in cur_act[2]:
                     facility = cur_act[2].split("-")[1]
                     if cur_act[0] == "Inform":
-                        cur_act[2] = cur_act[2].split("-")[0] + "+" + cur_act[3]
+                        cur_act[2] = (
+                            cur_act[2].split("-")[0] + "+" + cur_act[3]
+                        )
                     elif cur_act[0] == "Request":
                         cur_act[2] = cur_act[2].split("-")[0]
                 if cur_act[0] == "Select":
                     cur_act[2] = "源领域+" + cur_act[3]
                 intent = "+".join(cur_act[:-1])
-                if "+".join(cur_act) == "Inform+景点+门票+免费" or cur_act[-1] == "无":
+                if (
+                    "+".join(cur_act) == "Inform+景点+门票+免费"
+                    or cur_act[-1] == "无"
+                ):
                     intent = "+".join(cur_act)
                 intent_list.append(intent)
 
@@ -255,8 +273,12 @@ def main():
                         )
 
                         if intent_frequency[intent] > 1:
-                            content = content.replace(placeholder, placeholder_one)
-                            content = content.replace(value, placeholder_with_number)
+                            content = content.replace(
+                                placeholder, placeholder_one
+                            )
+                            content = content.replace(
+                                value, placeholder_with_number
+                            )
                         else:
                             content = content.replace(value, placeholder)
                     else:
@@ -264,7 +286,9 @@ def main():
 
             # multi-intent name
             try:
-                intent_list = sorted(intent_list, key=functools.cmp_to_key(cmp_intent))
+                intent_list = sorted(
+                    intent_list, key=functools.cmp_to_key(cmp_intent)
+                )
             except:
                 print(round["content"])
             multi_intent = "*".join(intent_list)
@@ -318,7 +342,9 @@ def main():
             os.path.join(output_data_dir, "vocab.txt"), "w", encoding="utf-8"
         ) as fvocab:
             fvocab.write("PAD_token\nSOS_token\nEOS_token\nUNK_token\n")
-            for key, value in sorted(vocab_dict.items(), key=lambda x: int(x[1])):
+            for key, value in sorted(
+                vocab_dict.items(), key=lambda x: int(x[1])
+            ):
                 if key.strip():
                     fvocab.write(key + "\t" + str(value) + "\n")
 
@@ -378,13 +404,18 @@ def main():
                         if "酒店设施" in cur_act[2]:
                             facility = cur_act[2].split("-")[1]
                             if cur_act[0] == "Inform":
-                                cur_act[2] = cur_act[2].split("-")[0] + "+" + cur_act[3]
+                                cur_act[2] = (
+                                    cur_act[2].split("-")[0] + "+" + cur_act[3]
+                                )
                             elif cur_act[0] == "Request":
                                 cur_act[2] = cur_act[2].split("-")[0]
                         if cur_act[0] == "Select":
                             cur_act[2] = "源领域+" + cur_act[3]
                         intent = "+".join(cur_act[:-1])
-                        if "+".join(cur_act) == "Inform+景点+门票+免费" or cur_act[-1] == "无":
+                        if (
+                            "+".join(cur_act) == "Inform+景点+门票+免费"
+                            or cur_act[-1] == "无"
+                        ):
                             intent = "+".join(cur_act)
                         intent_list.append(intent)
 
@@ -394,9 +425,12 @@ def main():
                         value = "none"
                         freq = "none"
                         if (
-                            act[0] in ["Inform", "Recommend"] or "酒店设施" in intent
+                            act[0] in ["Inform", "Recommend"]
+                            or "酒店设施" in intent
                         ) and not intent.endswith("无"):
-                            if act[3] in content or (facility and facility in content):
+                            if act[3] in content or (
+                                facility and facility in content
+                            ):
                                 # value to be replaced
                                 if "酒店设施" in intent:
                                     value = facility
@@ -407,7 +441,10 @@ def main():
                                 placeholder = "[" + intent + "]"
                                 placeholder_one = "[" + intent + "1]"
                                 placeholder_with_number = (
-                                    "[" + intent + str(intent_frequency[intent]) + "]"
+                                    "["
+                                    + intent
+                                    + str(intent_frequency[intent])
+                                    + "]"
                                 )
 
                                 if intent_frequency[intent] > 1:
@@ -418,7 +455,9 @@ def main():
                                         value, placeholder_with_number
                                     )
                                 else:
-                                    content = content.replace(value, placeholder)
+                                    content = content.replace(
+                                        value, placeholder
+                                    )
 
                             freq = str(intent_frequency[intent])
                         elif act[0] == "Request":
@@ -448,7 +487,9 @@ def main():
                         else:
                             feat_value = [new_act[2], freq, value]
 
-                        feat_dict[idx][round_id] = feat_dict[idx].get(round_id, dict())
+                        feat_dict[idx][round_id] = feat_dict[idx].get(
+                            round_id, dict()
+                        )
                         feat_dict[idx][round_id][feat_key] = feat_dict[idx][
                             round_id
                         ].get(feat_key, [])
@@ -476,12 +517,16 @@ def main():
         with open(
             os.path.join(output_data_dir, "text.json"), "w", encoding="utf-8"
         ) as f:
-            json.dump(all_text_dict, f, indent=4, sort_keys=True, ensure_ascii=False)
+            json.dump(
+                all_text_dict, f, indent=4, sort_keys=True, ensure_ascii=False
+            )
 
         with open(
             os.path.join(output_data_dir, "feat.json"), "w", encoding="utf-8"
         ) as f:
-            json.dump(feat_dict, f, indent=4, sort_keys=True, ensure_ascii=False)
+            json.dump(
+                feat_dict, f, indent=4, sort_keys=True, ensure_ascii=False
+            )
 
         # ### template.txt
 
@@ -492,9 +537,13 @@ def main():
                     template_set.add("d:" + k.split("-")[0])
                     template_set.add("d-a:" + k)
                     for v in ls:
-                        template_set.add("d-a-s-v:" + k + "-" + v[0] + "-" + str(v[1]))
+                        template_set.add(
+                            "d-a-s-v:" + k + "-" + v[0] + "-" + str(v[1])
+                        )
         with open(
-            os.path.join(output_data_dir, "template.txt"), "w", encoding="utf-8"
+            os.path.join(output_data_dir, "template.txt"),
+            "w",
+            encoding="utf-8",
         ) as ftem:
             ftem.write("\n".join(sorted(list(template_set), reverse=True)))
 
@@ -511,7 +560,9 @@ def main():
         with open(
             os.path.join(output_data_dir, "split.json"), "w", encoding="utf-8"
         ) as f:
-            json.dump(split_dict, f, indent=4, sort_keys=True, ensure_ascii=False)
+            json.dump(
+                split_dict, f, indent=4, sort_keys=True, ensure_ascii=False
+            )
 
 
 if __name__ == "__main__":

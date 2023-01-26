@@ -1,4 +1,4 @@
-# coding=utf-8
+# -*- coding: utf-8 -*-
 # Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc. team.
 # Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
 #
@@ -16,34 +16,42 @@
 """BERT finetuning runner."""
 
 from __future__ import absolute_import, division, print_function
-from collections import OrderedDict
+
 import argparse
 import csv
+import io
+import json
 import logging
 import os
 import random
 import sys
-import io
-import json
+from collections import OrderedDict
+from pprint import pprint
 
 import numpy as np
 import torch
-from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
-from torch.utils.data.distributed import DistributedSampler
-
-from torch.nn import CrossEntropyLoss, MSELoss, BCEWithLogitsLoss
-from scipy.stats import pearsonr, spearmanr
-from sklearn.metrics import matthews_corrcoef, f1_score
-
 from pytorch_pretrained_bert.file_utils import (
+    CONFIG_NAME,
     PYTORCH_PRETRAINED_BERT_CACHE,
     WEIGHTS_NAME,
-    CONFIG_NAME,
 )
-from pytorch_pretrained_bert.modeling import BertForSequenceClassification, BertConfig
-from pytorch_pretrained_bert.tokenization import BertTokenizer
+from pytorch_pretrained_bert.modeling import (
+    BertConfig,
+    BertForSequenceClassification,
+)
 from pytorch_pretrained_bert.optimization import BertAdam, WarmupLinearSchedule
-from pprint import pprint
+from pytorch_pretrained_bert.tokenization import BertTokenizer
+from scipy.stats import pearsonr, spearmanr
+from sklearn.metrics import f1_score, matthews_corrcoef
+from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss
+from torch.utils.data import (
+    DataLoader,
+    RandomSampler,
+    SequentialSampler,
+    TensorDataset,
+)
+from torch.utils.data.distributed import DistributedSampler
+
 from convlab2.policy.hdsa.multiwoz.tools import obtain_TP_TN_FN_FP
 
 logger = logging.getLogger(__name__)
@@ -52,7 +60,9 @@ logger = logging.getLogger(__name__)
 class InputExample(object):
     """A single training/test example for simple sequence classification."""
 
-    def __init__(self, file, turn, guid, text_m, text_a, text_b=None, label=None):
+    def __init__(
+        self, file, turn, guid, text_m, text_a, text_b=None, label=None
+    ):
         """Constructs a InputExample.
 
         Args:
@@ -76,7 +86,9 @@ class InputExample(object):
 class InputFeatures(object):
     """A single set of features of data."""
 
-    def __init__(self, file, turn, input_ids, input_mask, segment_ids, label_id):
+    def __init__(
+        self, file, turn, input_ids, input_mask, segment_ids, label_id
+    ):
         self.file = file
         self.turn = turn
         self.input_ids = input_ids
@@ -128,7 +140,8 @@ class QqpProcessor(DataProcessor):
     def get_dev_examples(self, data_dir, dataset="dev"):
         """See base class."""
         return self._create_examples(
-            self._read_tsv(os.path.join(data_dir, "{}.tsv".format(dataset))), dataset
+            self._read_tsv(os.path.join(data_dir, "{}.tsv".format(dataset))),
+            dataset,
         )
 
     def get_labels(self):
@@ -242,9 +255,15 @@ def convert_examples_to_features(
             logger.info("*** Example ***")
             logger.info("guid: %s" % (example.guid))
             logger.info("tokens: %s" % " ".join([str(x) for x in tokens]))
-            logger.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
-            logger.info("input_mask: %s" % " ".join([str(x) for x in input_mask]))
-            logger.info("segment_ids: %s" % " ".join([str(x) for x in segment_ids]))
+            logger.info(
+                "input_ids: %s" % " ".join([str(x) for x in input_ids])
+            )
+            logger.info(
+                "input_mask: %s" % " ".join([str(x) for x in input_mask])
+            )
+            logger.info(
+                "segment_ids: %s" % " ".join([str(x) for x in segment_ids])
+            )
             logger.info("label: %s (id = %d)" % (example.label, label_id))
 
         features.append(
@@ -319,7 +338,9 @@ def main():
         "--do_train", action="store_true", help="Whether to run training."
     )
     parser.add_argument(
-        "--do_eval", action="store_true", help="Whether to run eval on the dev set."
+        "--do_eval",
+        action="store_true",
+        help="Whether to run eval on the dev set.",
     )
     parser.add_argument(
         "--data_dir",
@@ -339,7 +360,10 @@ def main():
         help="The output directory where the model checkpoints will be loaded during evaluation",
     )
     parser.add_argument(
-        "--load_step", type=int, default=0, help="The checkpoint step to be loaded"
+        "--load_step",
+        type=int,
+        default=0,
+        help="The checkpoint step to be loaded",
     )
     parser.add_argument(
         "--fact",
@@ -362,7 +386,10 @@ def main():
         help="Total batch size for training.",
     )
     parser.add_argument(
-        "--eval_batch_size", default=18, type=int, help="Total batch size for eval."
+        "--eval_batch_size",
+        default=18,
+        type=int,
+        help="Total batch size for eval.",
     )
     ## Other parameters
     parser.add_argument(
@@ -374,7 +401,10 @@ def main():
         "bert-base-multilingual-cased, bert-base-chinese.",
     )
     parser.add_argument(
-        "--task_name", default="QQP", type=str, help="The name of the task to train."
+        "--task_name",
+        default="QQP",
+        type=str,
+        help="The name of the task to train.",
     )
     parser.add_argument("--period", type=int, default=500)
     parser.add_argument(
@@ -416,7 +446,9 @@ def main():
         "E.g., 0.1 = 10%% of training.",
     )
     parser.add_argument(
-        "--no_cuda", action="store_true", help="Whether not to use CUDA when available"
+        "--no_cuda",
+        action="store_true",
+        help="Whether not to use CUDA when available",
     )
     parser.add_argument(
         "--local_rank",
@@ -447,10 +479,16 @@ def main():
         "Positive power of 2: static loss scaling value.\n",
     )
     parser.add_argument(
-        "--server_ip", type=str, default="", help="Can be used for distant debugging."
+        "--server_ip",
+        type=str,
+        default="",
+        help="Can be used for distant debugging.",
     )
     parser.add_argument(
-        "--server_port", type=str, default="", help="Can be used for distant debugging."
+        "--server_port",
+        type=str,
+        default="",
+        help="Can be used for distant debugging.",
     )
     args = parser.parse_args()
     pprint(vars(args))
@@ -505,7 +543,9 @@ def main():
             )
         )
 
-    args.train_batch_size = args.train_batch_size // args.gradient_accumulation_steps
+    args.train_batch_size = (
+        args.train_batch_size // args.gradient_accumulation_steps
+    )
 
     random.seed(args.seed)
     np.random.seed(args.seed)
@@ -514,7 +554,9 @@ def main():
         torch.cuda.manual_seed_all(args.seed)
 
     if not args.do_train and not args.do_eval:
-        raise ValueError("At least one of `do_train` or `do_eval` must be True.")
+        raise ValueError(
+            "At least one of `do_train` or `do_eval` must be True."
+        )
 
     logger.info(
         "Datasets are loaded from {}\n Outputs will be saved to {}".format(
@@ -563,14 +605,16 @@ def main():
         )
         if args.local_rank != -1:
             num_train_optimization_steps = (
-                num_train_optimization_steps // torch.distributed.get_world_size()
+                num_train_optimization_steps
+                // torch.distributed.get_world_size()
             )
 
     cache_dir = (
         args.cache_dir
         if args.cache_dir
         else os.path.join(
-            str(PYTORCH_PRETRAINED_BERT_CACHE), "distributed_{}".format(args.local_rank)
+            str(PYTORCH_PRETRAINED_BERT_CACHE),
+            "distributed_{}".format(args.local_rank),
         )
     )
     if args.load_dir:
@@ -604,21 +648,24 @@ def main():
         optimizer_grouped_parameters = [
             {
                 "params": [
-                    p for n, p in param_optimizer if not any(nd in n for nd in no_decay)
+                    p
+                    for n, p in param_optimizer
+                    if not any(nd in n for nd in no_decay)
                 ],
                 "weight_decay": 0.01,
             },
             {
                 "params": [
-                    p for n, p in param_optimizer if any(nd in n for nd in no_decay)
+                    p
+                    for n, p in param_optimizer
+                    if any(nd in n for nd in no_decay)
                 ],
                 "weight_decay": 0.0,
             },
         ]
         if args.fp16:
             try:
-                from apex.optimizers import FP16_Optimizer
-                from apex.optimizers import FusedAdam
+                from apex.optimizers import FP16_Optimizer, FusedAdam
             except ImportError:
                 raise ImportError(
                     "Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training."
@@ -633,9 +680,12 @@ def main():
             if args.loss_scale == 0:
                 optimizer = FP16_Optimizer(optimizer, dynamic_loss_scale=True)
             else:
-                optimizer = FP16_Optimizer(optimizer, static_loss_scale=args.loss_scale)
+                optimizer = FP16_Optimizer(
+                    optimizer, static_loss_scale=args.loss_scale
+                )
             warmup_linear = WarmupLinearSchedule(
-                warmup=args.warmup_proportion, t_total=num_train_optimization_steps
+                warmup=args.warmup_proportion,
+                t_total=num_train_optimization_steps,
             )
 
         else:
@@ -651,7 +701,11 @@ def main():
     best_F1 = 0
     if args.do_train:
         train_features = convert_examples_to_features(
-            train_examples, label_list, args.max_seq_length, tokenizer, output_mode
+            train_examples,
+            label_list,
+            args.max_seq_length,
+            tokenizer,
+            output_mode,
         )
         logger.info("***** Running training *****")
         logger.info("  Num examples = %d", len(train_examples))
@@ -714,8 +768,11 @@ def main():
                     if args.fp16:
                         # modify learning rate with special warm up BERT uses
                         # if args.fp16 is False, BertAdam is used that handles this automatically
-                        lr_this_step = args.learning_rate * warmup_linear.get_lr(
-                            global_step, args.warmup_proportion
+                        lr_this_step = (
+                            args.learning_rate
+                            * warmup_linear.get_lr(
+                                global_step, args.warmup_proportion
+                            )
                         )
                         for param_group in optimizer.param_groups:
                             param_group["lr"] = lr_this_step
@@ -726,7 +783,9 @@ def main():
 
                 if (step + 1) % args.period == 0:
                     # Save a trained model, configuration and tokenizer
-                    model_to_save = model.module if hasattr(model, "module") else model
+                    model_to_save = (
+                        model.module if hasattr(model, "module") else model
+                    )
 
                     # If we save using the predefined names, we can load using `from_pretrained`
                     model.eval()
@@ -749,10 +808,16 @@ def main():
                         if not os.path.exists(output_dir):
                             os.makedirs(output_dir)
 
-                        output_model_file = os.path.join(output_dir, WEIGHTS_NAME)
-                        output_config_file = os.path.join(output_dir, CONFIG_NAME)
+                        output_model_file = os.path.join(
+                            output_dir, WEIGHTS_NAME
+                        )
+                        output_config_file = os.path.join(
+                            output_dir, CONFIG_NAME
+                        )
 
-                        torch.save(model_to_save.state_dict(), output_model_file)
+                        torch.save(
+                            model_to_save.state_dict(), output_model_file
+                        )
                         model_to_save.config.to_json_file(output_config_file)
                         tokenizer.save_vocabulary(output_dir)
 
@@ -771,7 +836,9 @@ def main():
         load_step = args.load_step
 
         if args.load_dir is not None:
-            load_step = int(os.path.split(args.load_dir)[1].replace("save_step_", ""))
+            load_step = int(
+                os.path.split(args.load_dir)[1].replace("save_step_", "")
+            )
             print("load_step = {}".format(load_step))
 
         F1 = evaluate(
@@ -786,16 +853,33 @@ def main():
         )
 
         with open("test_result.txt", "a") as f:
-            print("load step: {} F1: {}".format(str(load_step), str(F1)), file=f)
+            print(
+                "load step: {} F1: {}".format(str(load_step), str(F1)), file=f
+            )
 
 
 def evaluate(
-    args, model, device, processor, label_list, num_labels, tokenizer, output_mode
+    args,
+    model,
+    device,
+    processor,
+    label_list,
+    num_labels,
+    tokenizer,
+    output_mode,
 ):
-    if args.do_eval and (args.local_rank == -1 or torch.distributed.get_rank() == 0):
-        eval_examples = processor.get_dev_examples(args.data_dir, dataset=args.test_set)
+    if args.do_eval and (
+        args.local_rank == -1 or torch.distributed.get_rank() == 0
+    ):
+        eval_examples = processor.get_dev_examples(
+            args.data_dir, dataset=args.test_set
+        )
         eval_features = convert_examples_to_features(
-            eval_examples, label_list, args.max_seq_length, tokenizer, output_mode
+            eval_examples,
+            label_list,
+            args.max_seq_length,
+            tokenizer,
+            output_mode,
         )
         logger.info("***** Running evaluation *****")
         logger.info("  Num examples = %d", len(eval_examples))
@@ -839,20 +923,26 @@ def evaluate(
             for i in range(idx, idx + batch_size):
                 if eval_features[i].file not in output:
                     output[eval_features[i].file] = {}
-                output[eval_features[i].file][eval_features[i].turn] = preds_numpy[
-                    i - idx
-                ].tolist()
-            TP, TN, FN, FP = obtain_TP_TN_FN_FP(preds, label_ids, TP, TN, FN, FP)
+                output[eval_features[i].file][
+                    eval_features[i].turn
+                ] = preds_numpy[i - idx].tolist()
+            TP, TN, FN, FP = obtain_TP_TN_FN_FP(
+                preds, label_ids, TP, TN, FN, FP
+            )
             idx += batch_size
 
-        with open("data/BERT_{}_prediction.json".format(args.test_set), "w") as f:
+        with open(
+            "data/BERT_{}_prediction.json".format(args.test_set), "w"
+        ) as f:
             json.dump(output, f)
 
         precision = TP / (TP + FP + 0.001)
         recall = TP / (TP + FN + 0.001)
         F1 = 2 * precision * recall / (precision + recall + 0.001)
         logger.info(
-            "precision is {} recall is {} F1 is {}".format(precision, recall, F1)
+            "precision is {} recall is {} F1 is {}".format(
+                precision, recall, F1
+            )
         )
         return F1
 

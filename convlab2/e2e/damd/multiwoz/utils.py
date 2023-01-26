@@ -1,7 +1,10 @@
-import logging
+# -*- coding: utf-8 -*-
 import json
-import numpy as np
+import logging
 from collections import OrderedDict
+
+import numpy as np
+
 from convlab2.e2e.damd.multiwoz import ontology
 
 
@@ -67,7 +70,10 @@ class Vocab(object):
 
     def construct(self):
         l = sorted(self._freq_dict.keys(), key=lambda x: -self._freq_dict[x])
-        print("Vocabulary size including oov: %d" % (len(l) + len(self._idx2word)))
+        print(
+            "Vocabulary size including oov: %d"
+            % (len(l) + len(self._idx2word))
+        )
         if len(l) + len(self._idx2word) < self.vocab_size:
             logging.warning(
                 "actual label set smaller than that configured: {}/{}".format(
@@ -90,8 +96,12 @@ class Vocab(object):
         self.vocab_size_oov = len(self._idx2word)
 
     def load_vocab(self, vocab_path):
-        self._freq_dict = json.loads(open(vocab_path + ".freq.json", "r").read())
-        self._word2idx = json.loads(open(vocab_path + ".word2idx.json", "r").read())
+        self._freq_dict = json.loads(
+            open(vocab_path + ".freq.json", "r").read()
+        )
+        self._word2idx = json.loads(
+            open(vocab_path + ".word2idx.json", "r").read()
+        )
         self._idx2word = {}
         for w, idx in self._word2idx.items():
             self._idx2word[idx] = w
@@ -110,7 +120,8 @@ class Vocab(object):
         if not include_oov:
             if self._word2idx.get(word, None) is None:
                 raise ValueError(
-                    "Unknown word: %s. Vocabulary should include oovs here." % word
+                    "Unknown word: %s. Vocabulary should include oovs here."
+                    % word
                 )
             return self._word2idx[word]
         else:
@@ -193,7 +204,9 @@ def padSeqs(
         elif trunc_method == "post":
             trunc = s[:maxlen]
         else:
-            raise ValueError('Truncating type "%s" not understood' % trunc_method)
+            raise ValueError(
+                'Truncating type "%s" not understood' % trunc_method
+            )
 
         # check `trunc` has expected shape
         trunc = np.asarray(trunc, dtype=dtype)
@@ -253,7 +266,10 @@ def get_glove_matrix(glove_path, vocab, initial_embedding_np):
 def position_encoding_init(self, n_position, d_pos_vec):
     position_enc = np.array(
         [
-            [pos / np.power(10000, 2 * (j // 2) / d_pos_vec) for j in range(d_pos_vec)]
+            [
+                pos / np.power(10000, 2 * (j // 2) / d_pos_vec)
+                for j in range(d_pos_vec)
+            ]
             if pos != 0
             else np.zeros(d_pos_vec)
             for pos in range(n_position)

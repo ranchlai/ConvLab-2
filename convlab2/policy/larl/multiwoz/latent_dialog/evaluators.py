@@ -1,18 +1,26 @@
-from nltk.translate.bleu_score import corpus_bleu, SmoothingFunction
-import math
-import convlab2.policy.larl.multiwoz.latent_dialog.normalizer.delexicalize as delex
-from convlab2.policy.larl.multiwoz.latent_dialog.utils import get_tokenize
-from collections import Counter
-from nltk.util import ngrams
-from convlab2.policy.larl.multiwoz.latent_dialog.corpora import SYS, USR, BOS, EOS
+# -*- coding: utf-8 -*-
 import json
+import logging
+import math
+import os
+import random
+import sqlite3
+from collections import Counter
+
+from nltk.translate.bleu_score import SmoothingFunction, corpus_bleu
+from nltk.util import ngrams
+
+import convlab2.policy.larl.multiwoz.latent_dialog.normalizer.delexicalize as delex
+from convlab2.policy.larl.multiwoz.latent_dialog.corpora import (
+    BOS,
+    EOS,
+    SYS,
+    USR,
+)
 from convlab2.policy.larl.multiwoz.latent_dialog.normalizer.delexicalize import (
     normalize,
 )
-import sqlite3
-import os
-import random
-import logging
+from convlab2.policy.larl.multiwoz.latent_dialog.utils import get_tokenize
 
 
 class BaseEvaluator(object):
@@ -77,7 +85,9 @@ class BLEUScorer(object):
                     for ref in refs:
                         refcnts = Counter(ngrams(ref, i + 1))
                         for ng in hypcnts:
-                            max_counts[ng] = max(max_counts.get(ng, 0), refcnts[ng])
+                            max_counts[ng] = max(
+                                max_counts.get(ng, 0), refcnts[ng]
+                            )
                     clipcnt = dict(
                         (ng, min(count, max_counts[ng]))
                         for ng, count in hypcnts.items()
@@ -100,8 +110,12 @@ class BLEUScorer(object):
         # computing bleu score
         p0 = 1e-7
         bp = 1 if c > r else math.exp(1 - float(r) / float(c))
-        p_ns = [float(clip_count[i]) / float(count[i] + p0) + p0 for i in range(4)]
-        s = math.fsum(w * math.log(p_n) for w, p_n in zip(weights, p_ns) if p_n)
+        p_ns = [
+            float(clip_count[i]) / float(count[i] + p0) + p0 for i in range(4)
+        ]
+        s = math.fsum(
+            w * math.log(p_n) for w, p_n in zip(weights, p_ns) if p_n
+        )
         bleu = bp * math.exp(s)
         return bleu
 
@@ -133,9 +147,13 @@ class BleuEvaluator(BaseEvaluator):
             hyp_tokens = tokenize(hyp)
             refs.append([ref_tokens])
             hyps.append(hyp_tokens)
-        bleu = corpus_bleu(refs, hyps, smoothing_function=SmoothingFunction().method1)
+        bleu = corpus_bleu(
+            refs, hyps, smoothing_function=SmoothingFunction().method1
+        )
         report = "\n===== BLEU = %f =====\n" % (bleu,)
-        return "\n===== REPORT FOR DATASET {} ====={}".format(self.data_name, report)
+        return "\n===== REPORT FOR DATASET {} ====={}".format(
+            self.data_name, report
+        )
 
 
 class MultiWozDB(object):
@@ -153,9 +171,13 @@ class MultiWozDB(object):
 
     for domain in domains:
         print(
-            os.path.join(CUR_DIR, "data/norm-multi-woz/db/{}-dbase.db".format(domain))
+            os.path.join(
+                CUR_DIR, "data/norm-multi-woz/db/{}-dbase.db".format(domain)
+            )
         )
-        db = os.path.join(CUR_DIR, "data/norm-multi-woz/db/{}-dbase.db".format(domain))
+        db = os.path.join(
+            CUR_DIR, "data/norm-multi-woz/db/{}-dbase.db".format(domain)
+        )
         conn = sqlite3.connect(db)
         c = conn.cursor()
         dbs[domain] = c
@@ -196,9 +218,13 @@ class MultiWozDB(object):
                     val2 = val.replace("'", "''")
                     val2 = normalize(val2)
                     if key == "leaveAt":
-                        sql_query += r" and " + key + " > " + r"'" + val2 + r"'"
+                        sql_query += (
+                            r" and " + key + " > " + r"'" + val2 + r"'"
+                        )
                     elif key == "arriveBy":
-                        sql_query += r" and " + key + " < " + r"'" + val2 + r"'"
+                        sql_query += (
+                            r" and " + key + " < " + r"'" + val2 + r"'"
+                        )
                     else:
                         sql_query += r" and " + key + "=" + r"'" + val2 + r"'"
 
@@ -249,7 +275,13 @@ class MultiWozEvaluator(BaseEvaluator):
                 if "reqt" in d["goal"][domain]:
                     # if d['goal'][domain].has_key('reqt'):
                     for s in d["goal"][domain]["reqt"]:  # addtional requests:
-                        if s in ["phone", "address", "postcode", "reference", "id"]:
+                        if s in [
+                            "phone",
+                            "address",
+                            "postcode",
+                            "reference",
+                            "id",
+                        ]:
                             # ones that can be easily delexicalized
                             goal[domain]["requestable"].append(s)
                 if "book" in d["goal"][domain]:
@@ -288,7 +320,12 @@ class MultiWozEvaluator(BaseEvaluator):
             for domain in goal.keys():
                 # for computing success
                 if "[" + domain + "_name]" in sent_t or "_id" in sent_t:
-                    if domain in ["restaurant", "hotel", "attraction", "train"]:
+                    if domain in [
+                        "restaurant",
+                        "hotel",
+                        "attraction",
+                        "train",
+                    ]:
                         # HERE YOU CAN PUT YOUR BELIEF STATE ESTIMATION
                         venues = self.db.queryResultVenues(
                             domain, realDialogue["log"][t * 2 + 1]
@@ -307,7 +344,9 @@ class MultiWozEvaluator(BaseEvaluator):
                                 not flag and venues
                             ):  # sometimes there are no results so sample won't work
                                 # print venues
-                                venue_offered[domain] = random.sample(venues, 1)
+                                venue_offered[domain] = random.sample(
+                                    venues, 1
+                                )
                     else:  # not limited so we can provide one
                         venue_offered[domain] = "[" + domain + "_name]"
 
@@ -317,24 +356,41 @@ class MultiWozEvaluator(BaseEvaluator):
                         if domain + "_reference" in sent_t:
                             if "restaurant_reference" in sent_t:
                                 if (
-                                    realDialogue["log"][t * 2]["db_pointer"][-5] == 1
+                                    realDialogue["log"][t * 2]["db_pointer"][
+                                        -5
+                                    ]
+                                    == 1
                                 ):  # if pointer was allowing for that?
-                                    provided_requestables[domain].append("reference")
+                                    provided_requestables[domain].append(
+                                        "reference"
+                                    )
 
                             elif "hotel_reference" in sent_t:
                                 if (
-                                    realDialogue["log"][t * 2]["db_pointer"][-3] == 1
+                                    realDialogue["log"][t * 2]["db_pointer"][
+                                        -3
+                                    ]
+                                    == 1
                                 ):  # if pointer was allowing for that?
-                                    provided_requestables[domain].append("reference")
+                                    provided_requestables[domain].append(
+                                        "reference"
+                                    )
 
                             elif "train_reference" in sent_t:
                                 if (
-                                    realDialogue["log"][t * 2]["db_pointer"][-1] == 1
+                                    realDialogue["log"][t * 2]["db_pointer"][
+                                        -1
+                                    ]
+                                    == 1
                                 ):  # if pointer was allowing for that?
-                                    provided_requestables[domain].append("reference")
+                                    provided_requestables[domain].append(
+                                        "reference"
+                                    )
 
                             else:
-                                provided_requestables[domain].append("reference")
+                                provided_requestables[domain].append(
+                                    "reference"
+                                )
                     else:
                         if domain + "_" + requestable + "]" in sent_t:
                             provided_requestables[domain].append(requestable)
@@ -483,14 +539,21 @@ class MultiWozEvaluator(BaseEvaluator):
 
         # iterate each turn
         m_targetutt = [
-            turn["text"] for idx, turn in enumerate(dialog["log"]) if idx % 2 == 1
+            turn["text"]
+            for idx, turn in enumerate(dialog["log"])
+            if idx % 2 == 1
         ]
         for t in range(len(m_targetutt)):
             for domain in domains_in_goal:
                 sent_t = m_targetutt[t]
                 # for computing match - where there are limited entities
                 if domain + "_name" in sent_t or "_id" in sent_t:
-                    if domain in ["restaurant", "hotel", "attraction", "train"]:
+                    if domain in [
+                        "restaurant",
+                        "hotel",
+                        "attraction",
+                        "train",
+                    ]:
                         # HERE YOU CAN PUT YOUR BELIEF STATE ESTIMATION
                         venues = self.db.queryResultVenues(
                             domain, dialog["log"][t * 2 + 1]
@@ -509,7 +572,9 @@ class MultiWozEvaluator(BaseEvaluator):
                                 not flag and venues
                             ):  # sometimes there are no results so sample won't work
                                 # print venues
-                                venue_offered[domain] = random.sample(venues, 1)
+                                venue_offered[domain] = random.sample(
+                                    venues, 1
+                                )
                     else:  # not limited so we can provide one
                         venue_offered[domain] = "[" + domain + "_name]"
 
@@ -521,23 +586,31 @@ class MultiWozEvaluator(BaseEvaluator):
                                 if (
                                     dialog["log"][t * 2]["db_pointer"][-5] == 1
                                 ):  # if pointer was allowing for that?
-                                    provided_requestables[domain].append("reference")
+                                    provided_requestables[domain].append(
+                                        "reference"
+                                    )
 
                             elif "hotel_reference" in sent_t:
                                 if (
                                     dialog["log"][t * 2]["db_pointer"][-3] == 1
                                 ):  # if pointer was allowing for that?
-                                    provided_requestables[domain].append("reference")
+                                    provided_requestables[domain].append(
+                                        "reference"
+                                    )
 
                                     # return goal, 0, match, real_requestables
                             elif "train_reference" in sent_t:
                                 if (
                                     dialog["log"][t * 2]["db_pointer"][-1] == 1
                                 ):  # if pointer was allowing for that?
-                                    provided_requestables[domain].append("reference")
+                                    provided_requestables[domain].append(
+                                        "reference"
+                                    )
 
                             else:
-                                provided_requestables[domain].append("reference")
+                                provided_requestables[domain].append(
+                                    "reference"
+                                )
                     else:
                         if domain + "_" + requestable in sent_t:
                             provided_requestables[domain].append(requestable)
@@ -557,7 +630,8 @@ class MultiWozEvaluator(BaseEvaluator):
 
             # if id was not requested but train was found we dont want to override it to check if we booked the right train
             if domain == "train" and (
-                not venue_offered[domain] and "id" not in goal["train"]["requestable"]
+                not venue_offered[domain]
+                and "id" not in goal["train"]["requestable"]
             ):
                 venue_offered[domain] = "[" + domain + "_name]"
 
@@ -668,14 +742,21 @@ class MultiWozEvaluator(BaseEvaluator):
 
         # iterate each turn
         m_targetutt = [
-            turn["text"] for idx, turn in enumerate(dialog["log"]) if idx % 2 == 1
+            turn["text"]
+            for idx, turn in enumerate(dialog["log"])
+            if idx % 2 == 1
         ]
         for t in range(len(m_targetutt)):
             for domain in domains_in_goal:
                 sent_t = m_targetutt[t]
                 # for computing match - where there are limited entities
                 if domain + "_name" in sent_t or domain + "_id" in sent_t:
-                    if domain in ["restaurant", "hotel", "attraction", "train"]:
+                    if domain in [
+                        "restaurant",
+                        "hotel",
+                        "attraction",
+                        "train",
+                    ]:
                         venue_offered[domain] = "[" + domain + "_name]"
                         """
                         venues = self.db.queryResultVenues(domain, dialog['log'][t * 2 + 1])
@@ -700,24 +781,38 @@ class MultiWozEvaluator(BaseEvaluator):
                         if domain + "_reference" in sent_t:
                             if "restaurant_reference" in sent_t:
                                 if (
-                                    True or dialog["log"][t * 2]["db_pointer"][-5] == 1
+                                    True
+                                    or dialog["log"][t * 2]["db_pointer"][-5]
+                                    == 1
                                 ):  # if pointer was allowing for that?
-                                    provided_requestables[domain].append("reference")
+                                    provided_requestables[domain].append(
+                                        "reference"
+                                    )
 
                             elif "hotel_reference" in sent_t:
                                 if (
-                                    True or dialog["log"][t * 2]["db_pointer"][-3] == 1
+                                    True
+                                    or dialog["log"][t * 2]["db_pointer"][-3]
+                                    == 1
                                 ):  # if pointer was allowing for that?
-                                    provided_requestables[domain].append("reference")
+                                    provided_requestables[domain].append(
+                                        "reference"
+                                    )
                                     # return goal, 0, match, real_requestables
                             elif "train_reference" in sent_t:
                                 if (
-                                    True or dialog["log"][t * 2]["db_pointer"][-1] == 1
+                                    True
+                                    or dialog["log"][t * 2]["db_pointer"][-1]
+                                    == 1
                                 ):  # if pointer was allowing for that?
-                                    provided_requestables[domain].append("reference")
+                                    provided_requestables[domain].append(
+                                        "reference"
+                                    )
 
                             else:
-                                provided_requestables[domain].append("reference")
+                                provided_requestables[domain].append(
+                                    "reference"
+                                )
                     else:
                         if domain + "_" + requestable in sent_t:
                             provided_requestables[domain].append(requestable)
@@ -737,7 +832,8 @@ class MultiWozEvaluator(BaseEvaluator):
 
             # if id was not requested but train was found we dont want to override it to check if we booked the right train
             if domain == "train" and (
-                not venue_offered[domain] and "id" not in goal["train"]["requestable"]
+                not venue_offered[domain]
+                and "id" not in goal["train"]["requestable"]
             ):
                 venue_offered[domain] = "[" + domain + "_name]"
 
@@ -845,11 +941,19 @@ class MultiWozEvaluator(BaseEvaluator):
                 success, match, stats = self._evaluateRolloutDialogue(dial)
             else:
                 data = delex_dialogues[filename]
-                goal, success, match, requestables, _ = self._evaluateRealDialogue(
-                    data, filename
-                )
+                (
+                    goal,
+                    success,
+                    match,
+                    requestables,
+                    _,
+                ) = self._evaluateRealDialogue(data, filename)
                 success, match, stats = self._evaluateGeneratedDialogue(
-                    dial, goal, data, requestables, soft_acc=mode == "offline_rl"
+                    dial,
+                    goal,
+                    data,
+                    requestables,
+                    soft_acc=mode == "offline_rl",
                 )
 
             successes += success
@@ -869,7 +973,9 @@ class MultiWozEvaluator(BaseEvaluator):
 
         report = ""
         report += (
-            "{} Corpus Matches : {:2.2f}%".format(mode, (matches / float(total) * 100))
+            "{} Corpus Matches : {:2.2f}%".format(
+                mode, (matches / float(total) * 100)
+            )
             + "\n"
         )
         report += (
@@ -894,7 +1000,9 @@ class MultiWozEvaluator(BaseEvaluator):
                 + [EOS]
             )
             hyp_tokens = (
-                [BOS] + tokenize(hyp.replace(SYS, "").replace(USR, "").strip()) + [EOS]
+                [BOS]
+                + tokenize(hyp.replace(SYS, "").replace(USR, "").strip())
+                + [EOS]
             )
             refs.append([ref_tokens])
             hyps.append(hyp_tokens)

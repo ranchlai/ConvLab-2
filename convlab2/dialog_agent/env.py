@@ -23,12 +23,16 @@ class Environment:
         return self.sys_dst.state
 
     def step(self, action):
-        model_response = self.sys_nlg.generate(action) if self.sys_nlg else action
+        model_response = (
+            self.sys_nlg.generate(action) if self.sys_nlg else action
+        )
         observation = self.usr.response(model_response)
         if self.evaluator:
             self.evaluator.add_sys_da(self.usr.get_in_da())
             self.evaluator.add_usr_da(self.usr.get_out_da())
-        dialog_act = self.sys_nlu.predict(observation) if self.sys_nlu else observation
+        dialog_act = (
+            self.sys_nlu.predict(observation) if self.sys_nlu else observation
+        )
         self.sys_dst.state["user_action"] = dialog_act
         state = self.sys_dst.update(dialog_act)
 

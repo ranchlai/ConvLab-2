@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2017-present, Facebook, Inc.
 # All rights reserved.
 #
@@ -7,7 +8,7 @@
 import torch
 from torch.autograd import Variable
 
-from convlab2.e2e.rnn_rollout.engines import EngineBase, Criterion
+from convlab2.e2e.rnn_rollout.engines import Criterion, EngineBase
 
 
 class RnnEngine(EngineBase):

@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
-from convlab2.policy.larl.multiwoz.latent_dialog.utils import cast_type, FLOAT
+
+from convlab2.policy.larl.multiwoz.latent_dialog.utils import FLOAT, cast_type
 
 
 class IdentityConnector(nn.Module):
@@ -47,7 +49,9 @@ class Bi2UniConnector(nn.Module):
         else:
             # FIXME fatal error here!
             num_layer = hidden_state.size()[0]
-            new_s = self.fc(hidden_state.view(-1, self.hidden_size * num_layer))
+            new_s = self.fc(
+                hidden_state.view(-1, self.hidden_size * num_layer)
+            )
             new_s = new_s.view(1, -1, self.output_size)
             return new_s
 
@@ -90,7 +94,9 @@ class Hidden2Gaussian(nn.Module):
 
 
 class Hidden2Discrete(nn.Module):
-    def __init__(self, input_size, y_size, k_size, is_lstm=False, has_bias=True):
+    def __init__(
+        self, input_size, y_size, k_size, is_lstm=False, has_bias=True
+    ):
         super(Hidden2Discrete, self).__init__()
         self.y_size = y_size
         self.k_size = k_size
@@ -160,7 +166,9 @@ class GumbelConnector(nn.Module):
         y = logits + eps
         return F.softmax(y / temperature, dim=y.dim() - 1)
 
-    def forward(self, logits, temperature=1.0, hard=False, return_max_id=False):
+    def forward(
+        self, logits, temperature=1.0, hard=False, return_max_id=False
+    ):
         """
         :param logits: [batch_size, n_class] unnormalized log-prob
         :param temperature: non-negative scalar
@@ -171,7 +179,9 @@ class GumbelConnector(nn.Module):
         y = self.gumbel_softmax_sample(logits, temperature, self.use_gpu)
         _, y_hard = th.max(y, dim=1, keepdim=True)
         if hard:
-            y_onehot = cast_type(Variable(th.zeros(y.size())), FLOAT, self.use_gpu)
+            y_onehot = cast_type(
+                Variable(th.zeros(y.size())), FLOAT, self.use_gpu
+            )
             y_onehot.scatter_(1, y_hard, 1.0)
             y = y_onehot
         if return_max_id:

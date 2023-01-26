@@ -1,11 +1,12 @@
+# -*- coding: utf-8 -*-
 """
 reorder generated goals
 """
-from copy import deepcopy
-import pprint
 import json
-import re
+import pprint
 import random
+import re
+from copy import deepcopy
 
 
 def goals_reorder(goal_list):

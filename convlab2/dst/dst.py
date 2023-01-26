@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Dialog State Tracker Interface"""
 import copy
 from abc import abstractmethod

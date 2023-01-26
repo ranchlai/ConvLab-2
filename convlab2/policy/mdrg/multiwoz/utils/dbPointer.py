@@ -1,10 +1,12 @@
-import sqlite3
+# -*- coding: utf-8 -*-
 import os
+import sqlite3
+import zipfile
 
 import numpy as np
-import zipfile
-from convlab2.util.file_util import cached_path
+
 from convlab2.policy.mdrg.multiwoz.utils.nlp import normalize
+from convlab2.util.file_util import cached_path
 
 
 def auto_download():
@@ -172,9 +174,13 @@ def queryResultVenues(domain, turn, real_belief=False):
                     val2 = normalize(val2)
                     val2 = val2.replace("'", "''")
                     if key == "leaveAt":
-                        sql_query += r" and " + key + " > " + r"'" + val2 + r"'"
+                        sql_query += (
+                            r" and " + key + " > " + r"'" + val2 + r"'"
+                        )
                     elif key == "arriveBy":
-                        sql_query += r" and " + key + " < " + r"'" + val2 + r"'"
+                        sql_query += (
+                            r" and " + key + " < " + r"'" + val2 + r"'"
+                        )
                     else:
                         sql_query += r" and " + key + "=" + r"'" + val2 + r"'"
 

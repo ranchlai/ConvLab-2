@@ -1,7 +1,8 @@
+# -*- coding: utf-8 -*-
+import json
 import math
 import os
 import re
-import json
 
 from convlab2.nlu.svm import sutils
 
@@ -24,7 +25,9 @@ class tuples(object):
         self.slots_informable = self.ontology["informable"]
         self.slots = self.ontology["requestable"]
 
-        self.slots_enumerated = json.loads(config.get("grammar", "slots_enumerated"))
+        self.slots_enumerated = json.loads(
+            config.get("grammar", "slots_enumerated")
+        )
         self.config = config
         self.all_tuples = self._getAllTuples()
         self.max_active = 10
@@ -68,7 +71,9 @@ class tuples(object):
     def activeTuples(self, log_turn):
         asr_hyps = log_turn["input"]["live"]["asr-hyps"]
         out = []
-        asr_hyps_conc = ", ".join([asr_hyp["asr-hyp"].lower() for asr_hyp in asr_hyps])
+        asr_hyps_conc = ", ".join(
+            [asr_hyp["asr-hyp"].lower() for asr_hyp in asr_hyps]
+        )
         for this_tuple in self.all_tuples:
             if is_generic(this_tuple[-1]):
                 # this is a generic value
@@ -79,21 +84,32 @@ class tuples(object):
                 if slot == "Phone":
                     matchObj = re.search(r"\d{11}", asr_hyps_conc)
                     if matchObj:
-                        out.append((act, slot, genericValue(slot, matchObj.group())))
+                        out.append(
+                            (act, slot, genericValue(slot, matchObj.group()))
+                        )
                 elif slot == "Ticket":
-                    matchObj = re.search(r"([0-9.]*?) (GBP|gbp)", asr_hyps_conc)
-                    if matchObj:
-                        out.append((act, slot, genericValue(slot, matchObj.group())))
-                elif slot == "Ref":
                     matchObj = re.search(
-                        r"reference number is(\s*?)([a-zA-Z0-9]+)", asr_hyps_conc
+                        r"([0-9.]*?) (GBP|gbp)", asr_hyps_conc
                     )
                     if matchObj:
-                        out.append((act, slot, genericValue(slot, matchObj.group(2))))
+                        out.append(
+                            (act, slot, genericValue(slot, matchObj.group()))
+                        )
+                elif slot == "Ref":
+                    matchObj = re.search(
+                        r"reference number is(\s*?)([a-zA-Z0-9]+)",
+                        asr_hyps_conc,
+                    )
+                    if matchObj:
+                        out.append(
+                            (act, slot, genericValue(slot, matchObj.group(2)))
+                        )
                 elif slot == "Time" or slot == "Arrive" or slot == "Leave":
                     matchObj = re.search(r"\d+?:\d\d", asr_hyps_conc)
                     if matchObj:
-                        out.append((act, slot, genericValue(slot, matchObj.group(0))))
+                        out.append(
+                            (act, slot, genericValue(slot, matchObj.group(0)))
+                        )
             else:
                 out.append(this_tuple)
         return out
@@ -101,7 +117,9 @@ class tuples(object):
     def activeTuples_sent(self, log_turn):
         asr_hyps = log_turn["asr-hyps"]
         out = []
-        asr_hyps_conc = ", ".join([asr_hyp["asr-hyp"].lower() for asr_hyp in asr_hyps])
+        asr_hyps_conc = ", ".join(
+            [asr_hyp["asr-hyp"].lower() for asr_hyp in asr_hyps]
+        )
         for this_tuple in self.all_tuples:
             if is_generic(this_tuple[-1]):
                 # this is a generic value
@@ -114,21 +132,32 @@ class tuples(object):
                 if slot == "Phone":
                     matchObj = re.search(r"\d{11}", asr_hyps_conc)
                     if matchObj:
-                        out.append((act, slot, genericValue(slot, matchObj.group())))
+                        out.append(
+                            (act, slot, genericValue(slot, matchObj.group()))
+                        )
                 elif slot == "Ticket":
-                    matchObj = re.search(r"([0-9.]*?) (GBP|gbp)", asr_hyps_conc)
-                    if matchObj:
-                        out.append((act, slot, genericValue(slot, matchObj.group())))
-                elif slot == "Ref":
                     matchObj = re.search(
-                        r"reference number is(\s*?)([a-zA-Z0-9]+)", asr_hyps_conc
+                        r"([0-9.]*?) (GBP|gbp)", asr_hyps_conc
                     )
                     if matchObj:
-                        out.append((act, slot, genericValue(slot, matchObj.group(2))))
+                        out.append(
+                            (act, slot, genericValue(slot, matchObj.group()))
+                        )
+                elif slot == "Ref":
+                    matchObj = re.search(
+                        r"reference number is(\s*?)([a-zA-Z0-9]+)",
+                        asr_hyps_conc,
+                    )
+                    if matchObj:
+                        out.append(
+                            (act, slot, genericValue(slot, matchObj.group(2)))
+                        )
                 elif slot == "Time" or slot == "Arrive" or slot == "Leave":
                     matchObj = re.search(r"\d+?:\d\d", asr_hyps_conc)
                     if matchObj:
-                        out.append((act, slot, genericValue(slot, matchObj.group(0))))
+                        out.append(
+                            (act, slot, genericValue(slot, matchObj.group(0)))
+                        )
             else:
                 out.append(this_tuple)
         return out
@@ -161,7 +190,9 @@ class tuples(object):
                     score += logp
                 else:
                     score += log1_p
-            if (score > self.log_tail_cutoff or not act) and makes_valid_act(act):
+            if (score > self.log_tail_cutoff or not act) and makes_valid_act(
+                act
+            ):
                 acts.append((act, score))
                 if not act:
                     null_score = score
@@ -204,7 +235,9 @@ def makes_valid_act(tuples):
     if ("affirm",) in tuples and ("negate",) in tuples:
         return False
     triples = [t for t in tuples if len(t) == 3]
-    informed = [(slot, value) for act, slot, value in triples if act == "inform"]
+    informed = [
+        (slot, value) for act, slot, value in triples if act == "inform"
+    ]
     denied = [(slot, value) for act, slot, value in triples if act == "deny"]
     for s, v in informed:
         if (s, v) in denied:

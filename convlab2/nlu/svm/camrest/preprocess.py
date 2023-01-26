@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Preprocess camrest data for SVMNLU.
 
@@ -15,9 +16,9 @@ Output:
 """
 import json
 import os
+import sys
 import zipfile
 from collections import Counter
-import sys
 
 
 def read_zipped_json(filepath, filename):
@@ -44,7 +45,15 @@ if __name__ == "__main__":
 
     db_slot2value = {
         x: []
-        for x in ["address", "area", "food", "phone", "pricerange", "postcode", "name"]
+        for x in [
+            "address",
+            "area",
+            "food",
+            "phone",
+            "pricerange",
+            "postcode",
+            "name",
+        ]
     }
     for item in db:
         for key in item:
@@ -122,7 +131,11 @@ if __name__ == "__main__":
                 if mode == "usr" or mode == "all":
                     text = turn["usr"]["transcript"]
                     log_turn = {
-                        "input": {"live": {"asr-hyps": [{"asr-hyp": text, "score": 0}]}}
+                        "input": {
+                            "live": {
+                                "asr-hyps": [{"asr-hyp": text, "score": 0}]
+                            }
+                        }
                     }
                     log_turns.append(log_turn)
 
@@ -130,14 +143,22 @@ if __name__ == "__main__":
                     for da, svs in turn["usr"]["dialog_act"].items():
                         for s, v in svs:
                             if da == "request":
-                                new_das.append({"act": da, "slots": [["slot", s]]})
+                                new_das.append(
+                                    {"act": da, "slots": [["slot", s]]}
+                                )
                             else:
-                                new_das.append({"act": da, "slots": [[s, v.lower()]]})
+                                new_das.append(
+                                    {"act": da, "slots": [[s, v.lower()]]}
+                                )
                     label_turns.append({"semantics": {"json": new_das}})
                 if mode == "sys" or mode == "all":
                     text = turn["sys"]["sent"]
                     log_turn = {
-                        "input": {"live": {"asr-hyps": [{"asr-hyp": text, "score": 0}]}}
+                        "input": {
+                            "live": {
+                                "asr-hyps": [{"asr-hyp": text, "score": 0}]
+                            }
+                        }
                     }
                     log_turns.append(log_turn)
 
@@ -145,9 +166,13 @@ if __name__ == "__main__":
                     for da, svs in turn["sys"]["dialog_act"].items():
                         for s, v in svs:
                             if da == "request":
-                                new_das.append({"act": da, "slots": [["slot", s]]})
+                                new_das.append(
+                                    {"act": da, "slots": [["slot", s]]}
+                                )
                             else:
-                                new_das.append({"act": da, "slots": [[s, v.lower()]]})
+                                new_das.append(
+                                    {"act": da, "slots": [[s, v.lower()]]}
+                                )
                     label_turns.append({"semantics": {"json": new_das}})
             label_json["turns"] = label_turns
             log_json["turns"] = log_turns
@@ -157,9 +182,13 @@ if __name__ == "__main__":
                 os.makedirs(f_dir)
 
             json.dump(
-                label_json, open(os.path.join(f_dir, "label.json"), "w"), indent=4
+                label_json,
+                open(os.path.join(f_dir, "label.json"), "w"),
+                indent=4,
             )
-            json.dump(log_json, open(os.path.join(f_dir, "log.json"), "w"), indent=4)
+            json.dump(
+                log_json, open(os.path.join(f_dir, "log.json"), "w"), indent=4
+            )
         f = open("configs/{}ListFile".format(d_key), "w")
         f.writelines([x + "\n" for x in filelist])
         f.close()

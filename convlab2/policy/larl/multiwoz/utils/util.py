@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Utility functions
 """
@@ -35,7 +36,9 @@ def padSequence(tensor):
     return padded_tensor, tensor_lengths
 
 
-def loadDialogue(model, val_file, input_tensor, target_tensor, bs_tensor, db_tensor):
+def loadDialogue(
+    model, val_file, input_tensor, target_tensor, bs_tensor, db_tensor
+):
     # Iterate over dialogue
     for idx, (usr, sys, bs, db) in enumerate(
         zip(val_file["usr"], val_file["sys"], val_file["bs"], val_file["db"])

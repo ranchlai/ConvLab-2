@@ -1,34 +1,33 @@
+# -*- coding: utf-8 -*-
 import copy
-from pprint import pprint
 import random
-from itertools import chain
-import numpy as np
 import zipfile
+from itertools import chain
+from pprint import pprint
 
+import numpy as np
 from matplotlib import pyplot as plt
-
 from tensorboardX.writer import SummaryWriter
-from tqdm._tqdm import trange, tqdm
-
-from convlab2.util.file_util import cached_path
-
-from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
-
-from transformers import BertTokenizer
-from transformers import get_linear_schedule_with_warmup, AdamW
+from torch.utils.data import (
+    DataLoader,
+    RandomSampler,
+    SequentialSampler,
+    TensorDataset,
+)
+from tqdm._tqdm import tqdm, trange
+from transformers import AdamW, BertTokenizer, get_linear_schedule_with_warmup
 
 from convlab2.dst.dst import DST
+from convlab2.dst.sumbt.BeliefTrackerSlotQueryMultiSlot import BeliefTracker
 from convlab2.dst.sumbt.crosswoz_en.convert_to_glue_format import (
     convert_to_glue_format,
+    null,
     trans_value,
 )
-from convlab2.util.crosswoz_en.state import default_state
-
-from convlab2.dst.sumbt.BeliefTrackerSlotQueryMultiSlot import BeliefTracker
-from convlab2.dst.sumbt.crosswoz_en.sumbt_utils import *
 from convlab2.dst.sumbt.crosswoz_en.sumbt_config import *
-
-from convlab2.dst.sumbt.crosswoz_en.convert_to_glue_format import null
+from convlab2.dst.sumbt.crosswoz_en.sumbt_utils import *
+from convlab2.util.crosswoz_en.state import default_state
+from convlab2.util.file_util import cached_path
 
 USE_CUDA = torch.cuda.is_available()
 N_GPU = torch.cuda.device_count() if USE_CUDA else 1
@@ -161,7 +160,9 @@ class SUMBTTracker(DST):
             with zipfile.ZipFile(
                 os.path.join(DATA_PATH, f"{split}.json.zip"), "w"
             ) as f:
-                f.write(os.path.join(DATA_PATH, f"{split}.json"), f"{split}.json")
+                f.write(
+                    os.path.join(DATA_PATH, f"{split}.json"), f"{split}.json"
+                )
 
     def __init__(self, data_dir=DATA_PATH):
 
@@ -211,16 +212,21 @@ class SUMBTTracker(DST):
             self.label_token_ids.append(token_ids)
             self.label_len.append(lens)
         self.label_map = [
-            {label: i for i, label in enumerate(labels)} for labels in label_list
+            {label: i for i, label in enumerate(labels)}
+            for labels in label_list
         ]
         self.label_map_inv = [
-            {i: label for i, label in enumerate(labels)} for labels in label_list
+            {i: label for i, label in enumerate(labels)}
+            for labels in label_list
         ]
         self.label_list = label_list
         self.target_slot = processor.target_slot
         ## Get domain-slot-type embeddings
         self.slot_token_ids, self.slot_len = get_label_embedding(
-            processor.target_slot, args.max_label_length, self.tokenizer, self.device
+            processor.target_slot,
+            args.max_label_length,
+            self.tokenizer,
+            self.device,
         )
 
         self.args = args
@@ -251,13 +257,17 @@ class SUMBTTracker(DST):
 
     def load_weights(self, model_path=None):
         if model_path is None:
-            model_ckpt = os.path.join(SUMBT_PATH, "pre-trained/pytorch_model.bin")
+            model_ckpt = os.path.join(
+                SUMBT_PATH, "pre-trained/pytorch_model.bin"
+            )
         else:
             model_ckpt = model_path
         model = self.sumbt_model
         # in the case that slot and values are different between the training and evaluation
         if not USE_CUDA:
-            ptr_model = torch.load(model_ckpt, map_location=torch.device("cpu"))
+            ptr_model = torch.load(
+                model_ckpt, map_location=torch.device("cpu")
+            )
         else:
             ptr_model = torch.load(model_ckpt)
             print("loading pretrained weights")
@@ -276,10 +286,14 @@ class SUMBTTracker(DST):
     def init_session(self):
         self.state = default_state()
         if not self.param_restored:
-            if os.path.isfile(os.path.join(DOWNLOAD_DIRECTORY, "pytorch_model.bin")):
+            if os.path.isfile(
+                os.path.join(DOWNLOAD_DIRECTORY, "pytorch_model.bin")
+            ):
                 print("loading weights from downloaded model")
                 self.load_weights(
-                    model_path=os.path.join(DOWNLOAD_DIRECTORY, "pytorch_model.bin")
+                    model_path=os.path.join(
+                        DOWNLOAD_DIRECTORY, "pytorch_model.bin"
+                    )
                 )
             elif os.path.isfile(
                 os.path.join(SUMBT_PATH, args.output_dir, "pytorch_model.bin")
@@ -309,14 +323,20 @@ class SUMBTTracker(DST):
             utt_user = context[i + 1][1]
 
             tokens_user = [
-                x if x != "#" else "[SEP]" for x in self.tokenizer.tokenize(utt_user)
+                x if x != "#" else "[SEP]"
+                for x in self.tokenizer.tokenize(utt_user)
             ]
             tokens_sys = [
-                x if x != "#" else "[SEP]" for x in self.tokenizer.tokenize(utt_sys)
+                x if x != "#" else "[SEP]"
+                for x in self.tokenizer.tokenize(utt_sys)
             ]
 
-            _truncate_seq_pair(tokens_user, tokens_sys, self.args.max_seq_length - 3)
-            tokens = ["[CLS]"] + tokens_user + ["[SEP]"] + tokens_sys + ["[SEP]"]
+            _truncate_seq_pair(
+                tokens_user, tokens_sys, self.args.max_seq_length - 3
+            )
+            tokens = (
+                ["[CLS]"] + tokens_user + ["[SEP]"] + tokens_sys + ["[SEP]"]
+            )
             input_len = [len(tokens_user) + 2, len(tokens_sys) + 1]
 
             input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
@@ -352,7 +372,9 @@ class SUMBTTracker(DST):
             # print(domain, slot, value)
 
             if domain not in new_belief_state:
-                raise Exception("Error: domain <{}> not in belief state".format(domain))
+                raise Exception(
+                    "Error: domain <{}> not in belief state".format(domain)
+                )
 
             domain_dic = new_belief_state[domain]
             if slot in domain_dic:
@@ -383,7 +405,9 @@ class SUMBTTracker(DST):
         pred_slot_t = pred_slot[0][-1].tolist()
         predict_belief = []
         for idx, i in enumerate(pred_slot_t):
-            predict_belief.append((self.target_slot[idx], self.label_map_inv[idx][i]))
+            predict_belief.append(
+                (self.target_slot[idx], self.label_map_inv[idx][i])
+            )
             # predict_belief.append('{}-{}'.format(self.target_slot[idx], self.label_map_inv[idx][i]))
         self.cached_res[cache_query_key] = predict_belief
 
@@ -394,7 +418,11 @@ class SUMBTTracker(DST):
             if model_path is not None:
                 self.load_weights(model_path)
         ## Training utterances
-        all_input_ids, all_input_len, all_label_ids = convert_examples_to_features(
+        (
+            all_input_ids,
+            all_input_len,
+            all_label_ids,
+        ) = convert_examples_to_features(
             self.train_examples,
             self.label_list,
             args.max_seq_length,
@@ -505,7 +533,9 @@ class SUMBTTracker(DST):
                 },
                 {
                     "params": [
-                        p for n, p in param_optimizer if any(nd in n for nd in no_decay)
+                        p
+                        for n, p in param_optimizer
+                        if any(nd in n for nd in no_decay)
                     ],
                     "weight_decay": 0.0,
                     "lr": args.learning_rate,
@@ -526,8 +556,7 @@ class SUMBTTracker(DST):
 
         if args.fp16:
             try:
-                from apex.optimizers import FP16_Optimizer
-                from apex.optimizers import FusedAdam
+                from apex.optimizers import FP16_Optimizer, FusedAdam
             except ImportError:
                 raise ImportError(
                     "Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training."
@@ -548,7 +577,9 @@ class SUMBTTracker(DST):
 
         else:
             optimizer = AdamW(
-                optimizer_grouped_parameters, lr=args.learning_rate, correct_bias=False
+                optimizer_grouped_parameters,
+                lr=args.learning_rate,
+                correct_bias=False,
             )
             scheduler = get_linear_schedule_with_warmup(
                 optimizer,
@@ -613,7 +644,9 @@ class SUMBTTracker(DST):
                 if summary_writer is not None:
                     summary_writer.add_scalar("Epoch", epoch, global_step)
                     summary_writer.add_scalar("Train/Loss", loss, global_step)
-                    summary_writer.add_scalar("Train/JointAcc", acc, global_step)
+                    summary_writer.add_scalar(
+                        "Train/JointAcc", acc, global_step
+                    )
                     if N_GPU == 1:
                         for i, slot in enumerate(self.processor.target_slot):
                             summary_writer.add_scalar(
@@ -658,7 +691,9 @@ class SUMBTTracker(DST):
             dev_loss_slot, dev_acc_slot = None, None
             nb_dev_examples, nb_dev_steps = 0, 0
 
-            for step, batch in enumerate(tqdm(dev_dataloader, desc="Validation")):
+            for step, batch in enumerate(
+                tqdm(dev_dataloader, desc="Validation")
+            ):
                 batch = tuple(t.to(DEVICE) for t in batch)
                 input_ids, input_len, label_ids = batch
                 if input_ids.dim() == 2:
@@ -681,7 +716,9 @@ class SUMBTTracker(DST):
                         acc = acc.mean()
                         acc_slot = acc_slot.mean(0)
 
-                num_valid_turn = torch.sum(label_ids[:, :, 0].view(-1) > -1, 0).item()
+                num_valid_turn = torch.sum(
+                    label_ids[:, :, 0].view(-1) > -1, 0
+                ).item()
                 dev_loss += loss.item() * num_valid_turn
                 dev_acc += acc.item() * num_valid_turn
 
@@ -691,7 +728,9 @@ class SUMBTTracker(DST):
                         dev_acc_slot = acc_slot * num_valid_turn
                     else:
                         for i, l in enumerate(loss_slot):
-                            dev_loss_slot[i] = dev_loss_slot[i] + l * num_valid_turn
+                            dev_loss_slot[i] = (
+                                dev_loss_slot[i] + l * num_valid_turn
+                            )
                         dev_acc_slot += acc_slot * num_valid_turn
 
                 nb_dev_examples += num_valid_turn
@@ -704,7 +743,9 @@ class SUMBTTracker(DST):
 
             # tensorboard logging
             if summary_writer is not None:
-                summary_writer.add_scalar("Validate/Loss", dev_loss, global_step)
+                summary_writer.add_scalar(
+                    "Validate/Loss", dev_loss, global_step
+                )
                 summary_writer.add_scalar("Validate/Acc", dev_acc, global_step)
                 if N_GPU == 1:
                     for i, slot in enumerate(self.processor.target_slot):
@@ -763,7 +804,11 @@ class SUMBTTracker(DST):
         elif mode == "dev":
             eval_examples = self.test_examples
 
-        all_input_ids, all_input_len, all_label_ids = convert_examples_to_features(
+        (
+            all_input_ids,
+            all_input_len,
+            all_label_ids,
+        ) = convert_examples_to_features(
             eval_examples,
             self.label_list,
             args.max_seq_length,
@@ -805,7 +850,9 @@ class SUMBTTracker(DST):
             "num_slot_rest": 0,
         }
 
-        for input_ids, input_len, label_ids in tqdm(eval_dataloader, desc="Evaluating"):
+        for input_ids, input_len, label_ids in tqdm(
+            eval_dataloader, desc="Evaluating"
+        ):
             # if input_ids.dim() == 2:
             #     input_ids = input_ids.unsqueeze(0)
             #     input_len = input_len.unsqueeze(0)
@@ -890,7 +937,8 @@ class SUMBTTracker(DST):
         out_file_name = "eval_all_accuracies"
         with open(
             os.path.join(
-                os.path.join(SUMBT_PATH, args.output_dir), "%s.txt" % out_file_name
+                os.path.join(SUMBT_PATH, args.output_dir),
+                "%s.txt" % out_file_name,
             ),
             "w",
         ) as f:

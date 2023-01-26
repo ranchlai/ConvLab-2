@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
 import json
 import os
-import zipfile
 import sys
+import zipfile
 from collections import Counter
+
 from nltk.tokenize import word_tokenize
 
 
@@ -53,8 +55,12 @@ def das2tags(sen, das):
             for s, v in svs:
                 v = " ".join(word_tokenize(v))
                 if v != "dontcare" and phrase_in_utt(v, new_sen):
-                    word_index_begin, word_index_end = phrase_idx_utt(v, new_sen)
-                    span_info.append((da, s, v, word_index_begin, word_index_end))
+                    word_index_begin, word_index_end = phrase_idx_utt(
+                        v, new_sen
+                    )
+                    span_info.append(
+                        (da, s, v, word_index_begin, word_index_end)
+                    )
                 else:
                     intents.append(da + "+" + s + "*" + v)
                 new_das[da].append([s, v])
@@ -110,7 +116,13 @@ def preprocess(mode):
                     )
 
                     processed_data[key].append(
-                        [tokens, tags, intents, new_das, context[-context_size:]]
+                        [
+                            tokens,
+                            tags,
+                            intents,
+                            new_das,
+                            context[-context_size:],
+                        ]
                     )
 
                     all_da += [da for da in turn["usr"]["dialog_act"]]
@@ -125,7 +137,13 @@ def preprocess(mode):
                     )
 
                     processed_data[key].append(
-                        [tokens, tags, intents, new_das, context[-context_size:]]
+                        [
+                            tokens,
+                            tags,
+                            intents,
+                            new_das,
+                            context[-context_size:],
+                        ]
                     )
                     all_da += [da for da in turn["sys"]["dialog_act"]]
                     all_intent += intents
@@ -140,7 +158,10 @@ def preprocess(mode):
         print("loaded {}, size {}".format(key, len(processed_data[key])))
         json.dump(
             processed_data[key],
-            open(os.path.join(processed_data_dir, "{}_data.json".format(key)), "w"),
+            open(
+                os.path.join(processed_data_dir, "{}_data.json".format(key)),
+                "w",
+            ),
             indent=2,
         )
 
@@ -148,7 +169,9 @@ def preprocess(mode):
     print("sentence label num:", len(all_intent))
     print("tag num:", len(all_tag))
     json.dump(
-        all_da, open(os.path.join(processed_data_dir, "all_act.json"), "w"), indent=2
+        all_da,
+        open(os.path.join(processed_data_dir, "all_act.json"), "w"),
+        indent=2,
     )
     json.dump(
         all_intent,
@@ -156,7 +179,9 @@ def preprocess(mode):
         indent=2,
     )
     json.dump(
-        all_tag, open(os.path.join(processed_data_dir, "tag_vocab.json"), "w"), indent=2
+        all_tag,
+        open(os.path.join(processed_data_dir, "tag_vocab.json"), "w"),
+        indent=2,
     )
 
 

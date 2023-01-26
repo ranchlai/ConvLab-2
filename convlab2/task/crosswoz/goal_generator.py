@@ -1,24 +1,26 @@
+# -*- coding: utf-8 -*-
 """
 usage:
 from convlab2.task.crosswoz.goal_generator import GoalGenerator
 GoalGenerator.generate()
 """
-import json
-import random
-from copy import deepcopy
-import numpy as np
-from collections import Counter
 import datetime
+import json
 import os
+import random
+from collections import Counter
+from copy import deepcopy
 from pprint import pprint
+
+import numpy as np
 
 from convlab2.task.crosswoz.attraction_generator import AttractionGenerator
 from convlab2.task.crosswoz.hotel_generator import HotelGenerator
 from convlab2.task.crosswoz.metro_generator import MetroGenerator
+from convlab2.task.crosswoz.reorder import goals_reorder
 from convlab2.task.crosswoz.restaurant_generator import RestaurantGenerator
 from convlab2.task.crosswoz.sentence_generator import SentenceGenerator
 from convlab2.task.crosswoz.taxi_generator import TaxiGenerator
-from convlab2.task.crosswoz.reorder import goals_reorder
 
 goal_num = 0
 goal_max = 5
@@ -30,7 +32,8 @@ class GoalGenerator:
         goal_list = generate_method(
             database_dir=os.path.abspath(
                 os.path.join(
-                    os.path.abspath(__file__), "../../../../data/crosswoz/database/"
+                    os.path.abspath(__file__),
+                    "../../../../data/crosswoz/database/",
                 )
             ),
             single_domain=False,
@@ -45,11 +48,15 @@ class GoalGenerator:
             sub_goal_id = sub_goal["id"]
             domain = sub_goal["领域"]
             for slot, value in sub_goal["约束条件"]:
-                semantic_tuples.append([sub_goal_id, domain, slot, value, False])
+                semantic_tuples.append(
+                    [sub_goal_id, domain, slot, value, False]
+                )
             for slot, value in sub_goal["需求信息"]:
                 if "周边" in slot or slot == "推荐菜":
                     value = []
-                semantic_tuples.append([sub_goal_id, domain, slot, value, False])
+                semantic_tuples.append(
+                    [sub_goal_id, domain, slot, value, False]
+                )
         return semantic_tuples
 
 
@@ -108,7 +115,7 @@ class CrossDomainGenerator:
             self.restaurant_generator,
         ]
         """
-        transfer probabolity matrix 
+        transfer probabolity matrix
         [hotel attraction restaurant] to [do-not-trans hotel attraction restaurant]
         """
         self.trans_matrix = [[0, 0.45, 0.45], [0.3, 0.3, 0.3], [0.3, 0.3, 0.3]]
@@ -142,7 +149,9 @@ class CrossDomainGenerator:
 
 
 def load_json(database_dir, filename):
-    list_data = json.load(open(os.path.join(database_dir, filename), encoding="utf-8"))
+    list_data = json.load(
+        open(os.path.join(database_dir, filename), encoding="utf-8")
+    )
     return {x[0]: x[1] for x in list_data}
 
 
@@ -163,7 +172,9 @@ def generate_method(
         "attraction": load_json(
             database_dir, os.path.join(database_dir, "attraction_db.json")
         ),
-        "hotel": load_json(database_dir, os.path.join(database_dir, "hotel_db.json")),
+        "hotel": load_json(
+            database_dir, os.path.join(database_dir, "hotel_db.json")
+        ),
         "restaurant": load_json(
             database_dir, os.path.join(database_dir, "restaurant_db.json")
         ),
@@ -178,14 +189,18 @@ def generate_method(
         single_domain_generator = SingleDomainGenerator(
             database, domain_index=domain_index
         )
-        single_domain_goal = single_domain_generator.generate(multi_target=False)
+        single_domain_goal = single_domain_generator.generate(
+            multi_target=False
+        )
         return single_domain_goal
 
     # 多领域单独生成
     elif not single_domain and not cross_domain and not multi_target:
         # print('method-多领域单独生成')
         single_domain_generator = SingleDomainGenerator(database)
-        single_domain_goals = single_domain_generator.generate(multi_target=False)
+        single_domain_goals = single_domain_generator.generate(
+            multi_target=False
+        )
         # 确保总数至少有一个目标生成
         assert len(single_domain_goals) > 0
 
@@ -198,8 +213,12 @@ def generate_method(
                 metro_generator = MetroGenerator()
                 taxi_generator = TaxiGenerator()
                 if random.random() < 0.1 and len(goal_list) + 2 <= goal_max:
-                    goal_list.append(metro_generator.generate(goal_list, call_count()))
-                    goal_list.append(taxi_generator.generate(goal_list, call_count()))
+                    goal_list.append(
+                        metro_generator.generate(goal_list, call_count())
+                    )
+                    goal_list.append(
+                        taxi_generator.generate(goal_list, call_count())
+                    )
                 else:
                     if random.random() < 0.5:
                         goal_list.append(
@@ -216,7 +235,9 @@ def generate_method(
         # print('method-多领域可跨领域生成')
         # 首先进行单领域单独生成
         single_domain_generator = SingleDomainGenerator(database)
-        single_domain_goals = single_domain_generator.generate(multi_target=False)
+        single_domain_goals = single_domain_generator.generate(
+            multi_target=False
+        )
 
         # # 进行跨领域生成（跳转）
         cross_domain_generator = CrossDomainGenerator(database)
@@ -227,7 +248,10 @@ def generate_method(
             if len(single_domain_goals) + len(cross_domain_goals) == goal_max:
                 break
             for cross_goal in cross_domain_generator.generate(goal):
-                if len(single_domain_goals) + len(cross_domain_goals) == goal_max:
+                if (
+                    len(single_domain_goals) + len(cross_domain_goals)
+                    == goal_max
+                ):
                     break
                 cross_domain_goals.append(cross_goal)
 
@@ -258,7 +282,9 @@ def generate_method(
     elif not single_domain and not cross_domain and multi_target:
         # print('method-多领域多目标单独生成')
         single_domain_generator = SingleDomainGenerator(database)
-        single_domain_goals = single_domain_generator.generate(multi_target=True)
+        single_domain_goals = single_domain_generator.generate(
+            multi_target=True
+        )
 
         goal_list = single_domain_goals
 
@@ -269,8 +295,12 @@ def generate_method(
                 metro_generator = MetroGenerator()
                 taxi_generator = TaxiGenerator()
                 if random.random() < 0.1 and len(goal_list) + 2 <= goal_max:
-                    goal_list.append(metro_generator.generate(goal_list, call_count()))
-                    goal_list.append(taxi_generator.generate(goal_list, call_count()))
+                    goal_list.append(
+                        metro_generator.generate(goal_list, call_count())
+                    )
+                    goal_list.append(
+                        taxi_generator.generate(goal_list, call_count())
+                    )
                 else:
                     if random.random() < 0.5:
                         goal_list.append(
@@ -287,7 +317,9 @@ def generate_method(
         # print('method-多领域多目标可跨领域生成')
         # 首先进行单领域多目标独立生成
         single_domain_generator = SingleDomainGenerator(database)
-        single_domain_goals = single_domain_generator.generate(multi_target=True)
+        single_domain_goals = single_domain_generator.generate(
+            multi_target=True
+        )
 
         # 进行跨领域生成（跳转）
         cross_domain_generator = CrossDomainGenerator(database)
@@ -298,7 +330,10 @@ def generate_method(
             if len(single_domain_goals) + len(cross_domain_goals) == goal_max:
                 break
             for cross_goal in cross_domain_generator.generate(goal):
-                if len(single_domain_goals) + len(cross_domain_goals) == goal_max:
+                if (
+                    len(single_domain_goals) + len(cross_domain_goals)
+                    == goal_max
+                ):
                     break
                 cross_domain_goals.append(cross_goal)
 
@@ -345,7 +380,10 @@ def method_split(all_goal_list):
             single_domain.append(goal_list)
         else:
             for goal in goal_list["goals"]:
-                if goal["领域"] in ["餐馆", "酒店", "景点"] and goal["生成方式"] != "单领域生成":
+                if (
+                    goal["领域"] in ["餐馆", "酒店", "景点"]
+                    and goal["生成方式"] != "单领域生成"
+                ):
                     cross_domain.append(goal_list)
                     cross_flag = True
                     break
@@ -418,13 +456,15 @@ def domain_count(all_goal_list):
         else:
             result[domain]["约束条件"] = 0
             result[domain]["需求信息"] = 0
-        result[domain]["每个目标平均小目标数"] = result[domain]["每个目标平均小目标数"] / len(all_goal_list)
-        result[domain]["目标含有本领域小目标的比例"] = result[domain]["目标含有本领域小目标的比例"] / len(
+        result[domain]["每个目标平均小目标数"] = result[domain]["每个目标平均小目标数"] / len(
             all_goal_list
         )
-        result[domain]["含有本领域多个小目标的目标比例"] = result[domain]["含有本领域多个小目标的目标比例"] / len(
-            all_goal_list
-        )
+        result[domain]["目标含有本领域小目标的比例"] = result[domain][
+            "目标含有本领域小目标的比例"
+        ] / len(all_goal_list)
+        result[domain]["含有本领域多个小目标的目标比例"] = result[domain][
+            "含有本领域多个小目标的目标比例"
+        ] / len(all_goal_list)
     return result
 
 

@@ -1,8 +1,10 @@
-import json
-import random
-import os
-from pprint import pprint
+# -*- coding: utf-8 -*-
 import collections
+import json
+import os
+import random
+from pprint import pprint
+
 from convlab2.nlg import NLG
 
 
@@ -115,7 +117,13 @@ class TemplateNLG(NLG):
             new_action += new_action_group["general"]["other"]
             del new_action_group["general"]
         for domain in new_action_group:
-            for k in ["other", "request", "inform-other", "inform-name", "nooffer"]:
+            for k in [
+                "other",
+                "request",
+                "inform-other",
+                "inform-name",
+                "nooffer",
+            ]:
                 new_action = new_action_group[domain][k] + new_action
         return new_action
 
@@ -178,7 +186,10 @@ class TemplateNLG(NLG):
     def _postprocess(self, sen):
         sen_strip = sen.strip()
         sen = "".join(
-            [val.capitalize() if i == 0 else val for i, val in enumerate(sen_strip)]
+            [
+                val.capitalize() if i == 0 else val
+                for i, val in enumerate(sen_strip)
+            ]
         )
         if len(sen) > 0 and sen[-1] != "?" and sen[-1] != ".":
             sen += "."
@@ -207,7 +218,10 @@ class TemplateNLG(NLG):
                     sentences += sentence
             elif "request" == intent[1]:
                 for slot, value in slot_value_pairs:
-                    if dialog_act not in template or slot not in template[dialog_act]:
+                    if (
+                        dialog_act not in template
+                        or slot not in template[dialog_act]
+                    ):
                         sentence = "What is the {} of {} ? ".format(
                             slot.lower(), dialog_act.split("-")[0].lower()
                         )
@@ -225,8 +239,10 @@ class TemplateNLG(NLG):
                     if isinstance(value, str):
                         value_lower = value.lower()
                     if value in ["do nt care", "do n't care", "dontcare"]:
-                        sentence = "I don't care about the {} of the {}".format(
-                            slot, dialog_act.split("-")[0]
+                        sentence = (
+                            "I don't care about the {} of the {}".format(
+                                slot, dialog_act.split("-")[0]
+                            )
                         )
                     elif (
                         self.is_user
@@ -246,19 +262,27 @@ class TemplateNLG(NLG):
                         sentence = random.choice(
                             [
                                 "it just needs to be {} .".format(value),
-                                "Oh , I really need something {} .".format(value),
-                                "I would prefer something that is {} .".format(value),
+                                "Oh , I really need something {} .".format(
+                                    value
+                                ),
+                                "I would prefer something that is {} .".format(
+                                    value
+                                ),
                                 "it needs to be {} .".format(value),
                             ]
                         )
-                    elif slot in ["internet", "parking"] and value_lower == "no":
+                    elif (
+                        slot in ["internet", "parking"] and value_lower == "no"
+                    ):
                         sentence = random.choice(
                             [
                                 "It does n't need to have {} .".format(slot),
                                 "I do n't need free {} .".format(slot),
                             ]
                         )
-                    elif dialog_act in template and slot in template[dialog_act]:
+                    elif (
+                        dialog_act in template and slot in template[dialog_act]
+                    ):
                         sentence = random.choice(template[dialog_act][slot])
                         sentence = sentence.replace(
                             "#{}-{}#".format(dialog_act.upper(), slot.upper()),
@@ -297,7 +321,11 @@ class TemplateNLG(NLG):
                     for s, v in sorted(slot_value_pairs, key=lambda x: x[0]):
                         if v != "none":
                             sentence = sentence.replace(
-                                "#{}-{}#".format(dialog_act.upper(), s.upper()), v, 1
+                                "#{}-{}#".format(
+                                    dialog_act.upper(), s.upper()
+                                ),
+                                v,
+                                1,
                             )
                     sentence = self._postprocess(sentence)
                     sentences += sentence

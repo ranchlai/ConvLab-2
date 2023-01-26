@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
+from convlab2.laug.Text_Paraphrasing.utils import (
+    paraphrase_span_detection,
+    span2tuple,
+)
 from convlab2.nlg.scgpt.multiwoz.scgpt import SCGPT
-from convlab2.laug.Text_Paraphrasing.utils import span2tuple, paraphrase_span_detection
 
 
 class Text_Paraphrasing:

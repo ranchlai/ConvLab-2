@@ -2,20 +2,18 @@
 import copy
 import json
 import os
+import pprint
 import re
 import shutil
 import urllib
 from collections import OrderedDict
 from io import BytesIO
 from zipfile import ZipFile
-from tqdm import tqdm
-import pprint
 
 import numpy as np
+from tqdm import tqdm
 
-from convlab2.policy.mdrg.multiwoz.utils import dbPointer
-from convlab2.policy.mdrg.multiwoz.utils import delexicalize
-
+from convlab2.policy.mdrg.multiwoz.utils import dbPointer, delexicalize
 from convlab2.policy.mdrg.multiwoz.utils.nlp import normalize
 
 np.set_printoptions(precision=3)
@@ -43,31 +41,31 @@ def fixDelex(filename, data, data2, idx, idx_acts):
         for k, act in turn.items():
             if "Attraction" in k:
                 if "restaurant_" in data["log"][idx]["text"]:
-                    data["log"][idx]["text"] = data["log"][idx]["text"].replace(
-                        "restaurant", "attraction"
-                    )
+                    data["log"][idx]["text"] = data["log"][idx][
+                        "text"
+                    ].replace("restaurant", "attraction")
                 if "hotel_" in data["log"][idx]["text"]:
-                    data["log"][idx]["text"] = data["log"][idx]["text"].replace(
-                        "hotel", "attraction"
-                    )
+                    data["log"][idx]["text"] = data["log"][idx][
+                        "text"
+                    ].replace("hotel", "attraction")
             if "Hotel" in k:
                 if "attraction_" in data["log"][idx]["text"]:
-                    data["log"][idx]["text"] = data["log"][idx]["text"].replace(
-                        "attraction", "hotel"
-                    )
+                    data["log"][idx]["text"] = data["log"][idx][
+                        "text"
+                    ].replace("attraction", "hotel")
                 if "restaurant_" in data["log"][idx]["text"]:
-                    data["log"][idx]["text"] = data["log"][idx]["text"].replace(
-                        "restaurant", "hotel"
-                    )
+                    data["log"][idx]["text"] = data["log"][idx][
+                        "text"
+                    ].replace("restaurant", "hotel")
             if "Restaurant" in k:
                 if "attraction_" in data["log"][idx]["text"]:
-                    data["log"][idx]["text"] = data["log"][idx]["text"].replace(
-                        "attraction", "restaurant"
-                    )
+                    data["log"][idx]["text"] = data["log"][idx][
+                        "text"
+                    ].replace("attraction", "restaurant")
                 if "hotel_" in data["log"][idx]["text"]:
-                    data["log"][idx]["text"] = data["log"][idx]["text"].replace(
-                        "hotel", "restaurant"
-                    )
+                    data["log"][idx]["text"] = data["log"][idx][
+                        "text"
+                    ].replace("hotel", "restaurant")
 
     return data
 
@@ -91,20 +89,30 @@ def delexicaliseReferenceNumber(sent, turn):
                         val = "[" + domain + "_" + slot + "]"
                     else:
                         val = "[" + domain + "_" + slot + "]"
-                    key = normalize(turn["metadata"][domain]["book"]["booked"][0][slot])
-                    sent = (" " + sent + " ").replace(" " + key + " ", " " + val + " ")
+                    key = normalize(
+                        turn["metadata"][domain]["book"]["booked"][0][slot]
+                    )
+                    sent = (" " + sent + " ").replace(
+                        " " + key + " ", " " + val + " "
+                    )
 
                     # try reference with hashtag
                     key = normalize(
-                        "#" + turn["metadata"][domain]["book"]["booked"][0][slot]
+                        "#"
+                        + turn["metadata"][domain]["book"]["booked"][0][slot]
                     )
-                    sent = (" " + sent + " ").replace(" " + key + " ", " " + val + " ")
+                    sent = (" " + sent + " ").replace(
+                        " " + key + " ", " " + val + " "
+                    )
 
                     # try reference with ref#
                     key = normalize(
-                        "ref#" + turn["metadata"][domain]["book"]["booked"][0][slot]
+                        "ref#"
+                        + turn["metadata"][domain]["book"]["booked"][0][slot]
                     )
-                    sent = (" " + sent + " ").replace(" " + key + " ", " " + val + " ")
+                    sent = (" " + sent + " ").replace(
+                        " " + key + " ", " " + val + " "
+                    )
     return sent
 
 
@@ -131,7 +139,10 @@ def addBookingPointer(task, turn, pointer_vector):
             # if turn['metadata']['hotel']['book'].has_key("booked"):
             if "booked" in turn["metadata"]["hotel"]["book"]:
                 if turn["metadata"]["hotel"]["book"]["booked"]:
-                    if "reference" in turn["metadata"]["hotel"]["book"]["booked"][0]:
+                    if (
+                        "reference"
+                        in turn["metadata"]["hotel"]["book"]["booked"][0]
+                    ):
                         hotel_vec = np.array([0, 1])
 
     train_vec = np.array([1, 0])
@@ -141,7 +152,10 @@ def addBookingPointer(task, turn, pointer_vector):
             # if turn['metadata']['train']['book'].has_key("booked"):
             if "booked" in turn["metadata"]["train"]["book"]:
                 if turn["metadata"]["train"]["book"]["booked"]:
-                    if "reference" in turn["metadata"]["train"]["book"]["booked"][0]:
+                    if (
+                        "reference"
+                        in turn["metadata"]["train"]["book"]["booked"][0]
+                    ):
                         train_vec = np.array([0, 1])
 
     pointer_vector = np.append(pointer_vector, rest_vec)
@@ -157,7 +171,9 @@ def addDBPointer(turn):
     pointer_vector = np.zeros(6 * len(domains))
     for domain in domains:
         num_entities = dbPointer.queryResult(domain, turn)
-        pointer_vector = dbPointer.oneHotVector(num_entities, domain, pointer_vector)
+        pointer_vector = dbPointer.oneHotVector(
+            num_entities, domain, pointer_vector
+        )
 
     return pointer_vector
 
@@ -254,9 +270,7 @@ def analyze_dialogue(dialogue, maxlen):
         if i % 2 == 0:  # usr turn
             if "db_pointer" not in d["log"][i]:
                 print("no db")
-                return (
-                    None  # no db_pointer, probably 2 usr turns in a row, wrong dialogue
-                )
+                return None  # no db_pointer, probably 2 usr turns in a row, wrong dialogue
             text = d["log"][i]["text"]
             if not is_ascii(text):
                 print("not ascii")
@@ -335,9 +349,15 @@ def loadData():
         zip_ref.extractall("data/multi-woz")
         zip_ref.close()
         shutil.copy("data/multi-woz/MULTIWOZ2 2/data.json", "data/multi-woz/")
-        shutil.copy("data/multi-woz/MULTIWOZ2 2/valListFile.json", "data/multi-woz/")
-        shutil.copy("data/multi-woz/MULTIWOZ2 2/testListFile.json", "data/multi-woz/")
-        shutil.copy("data/multi-woz/MULTIWOZ2 2/dialogue_acts.json", "data/multi-woz/")
+        shutil.copy(
+            "data/multi-woz/MULTIWOZ2 2/valListFile.json", "data/multi-woz/"
+        )
+        shutil.copy(
+            "data/multi-woz/MULTIWOZ2 2/testListFile.json", "data/multi-woz/"
+        )
+        shutil.copy(
+            "data/multi-woz/MULTIWOZ2 2/dialogue_acts.json", "data/multi-woz/"
+        )
 
 
 def createDelexData():
@@ -388,10 +408,14 @@ def createDelexData():
                 # add database pointer
                 pointer_vector = addDBPointer(turn)
                 # add booking pointer
-                pointer_vector = addBookingPointer(dialogue, turn, pointer_vector)
+                pointer_vector = addBookingPointer(
+                    dialogue, turn, pointer_vector
+                )
 
                 # print pointer_vector
-                dialogue["log"][idx - 1]["db_pointer"] = pointer_vector.tolist()
+                dialogue["log"][idx - 1][
+                    "db_pointer"
+                ] = pointer_vector.tolist()
 
             # FIXING delexicalization:
             dialogue = fixDelex(dialogue_name, dialogue, data2, idx, idx_acts)

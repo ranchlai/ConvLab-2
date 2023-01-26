@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
 import json
-import random
 import os
+import random
 from pprint import pprint
+
 from convlab2.nlg import NLG
 
 
@@ -79,7 +81,9 @@ class TemplateNLG(NLG):
                     template1 = self.auto_system_template
                     template2 = self.manual_system_template
 
-                return self._auto_manual_generate(dialog_acts, template1, template2)
+                return self._auto_manual_generate(
+                    dialog_acts, template1, template2
+                )
 
             else:
                 raise Exception(
@@ -136,7 +140,9 @@ class TemplateNLG(NLG):
 
         return sentences.strip()
 
-    def _generate_single_intent_manual(self, intent, slot_value_pairs, template):
+    def _generate_single_intent_manual(
+        self, intent, slot_value_pairs, template
+    ):
         sentences = ""
         if "request" == intent:
             for slot, value in slot_value_pairs:
@@ -155,7 +161,9 @@ class TemplateNLG(NLG):
                 ):
                     sentence = random.choice(template[intent][slot])
                     sentence = sentence.replace(
-                        "#%s-%s#" % (intent.upper(), slot.upper()), str(value), 1
+                        "#%s-%s#" % (intent.upper(), slot.upper()),
+                        str(value),
+                        1,
                     )
                 else:
                     if intent == "inform":
@@ -194,7 +202,10 @@ class TemplateNLG(NLG):
     def _postprocess(sen):
         sen_strip = sen.strip()
         sen = "".join(
-            [val.capitalize() if i == 0 else val for i, val in enumerate(sen_strip)]
+            [
+                val.capitalize() if i == 0 else val
+                for i, val in enumerate(sen_strip)
+            ]
         )
         if sen and sen[-1] != "?" and sen[-1] != ".":
             sen += "."
@@ -261,7 +272,8 @@ def test():
                 print("--------------------------------")
 
         print(
-            "%d / %d = %.4f" % (num_of_non, num_of_all, num_of_non * 1.0 / num_of_all)
+            "%d / %d = %.4f"
+            % (num_of_non, num_of_all, num_of_non * 1.0 / num_of_all)
         )
 
     test_role("system")
@@ -270,7 +282,10 @@ def test():
 
 def example():
     # dialog act
-    dialog_acts = [["inform", "pricerange", "cheap"], ["inform", "area", "west"]]
+    dialog_acts = [
+        ["inform", "pricerange", "cheap"],
+        ["inform", "area", "west"],
+    ]
     print(dialog_acts)
 
     # system model for manual, auto, auto_manual

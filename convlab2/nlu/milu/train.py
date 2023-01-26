@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
@@ -14,16 +15,16 @@ import os
 from allennlp.common import Params
 from allennlp.common.checks import check_for_gpu
 from allennlp.common.util import (
-    prepare_environment,
-    prepare_global_logging,
     cleanup_global_logging,
     dump_metrics,
+    prepare_environment,
+    prepare_global_logging,
 )
-from allennlp.models.archival import archive_model, CONFIG_NAME
-from allennlp.models.model import Model, _DEFAULT_WEIGHTS
+from allennlp.models.archival import CONFIG_NAME, archive_model
+from allennlp.models.model import _DEFAULT_WEIGHTS, Model
 from allennlp.training.trainer import Trainer
-from allennlp.training.trainer_pieces import TrainerPieces
 from allennlp.training.trainer_base import TrainerBase
+from allennlp.training.trainer_pieces import TrainerPieces
 from allennlp.training.util import create_serialization_dir, evaluate
 
 from convlab2.nlu.milu import dataset_reader, model
@@ -119,7 +120,9 @@ def train_model_from_file(
     """
     # Load the experiment config from a file and pass it to ``train_model``.
     params = Params.from_file(parameter_filename, overrides)
-    return train_model(params, serialization_dir, file_friendly_logging, recover, force)
+    return train_model(
+        params, serialization_dir, file_friendly_logging, recover, force
+    )
 
 
 def train_model(
@@ -156,7 +159,9 @@ def train_model(
     """
     prepare_environment(params)
     create_serialization_dir(params, serialization_dir, recover, force)
-    stdout_handler = prepare_global_logging(serialization_dir, file_friendly_logging)
+    stdout_handler = prepare_global_logging(
+        serialization_dir, file_friendly_logging
+    )
 
     cuda_device = params.params.get("trainer").get("cuda_device", -1)
     check_for_gpu(cuda_device)
@@ -200,17 +205,23 @@ def train_model(
                 "Training interrupted by the user. Attempting to create "
                 "a model archive using the current best epoch weights."
             )
-            archive_model(serialization_dir, files_to_archive=params.files_to_archive)
+            archive_model(
+                serialization_dir, files_to_archive=params.files_to_archive
+            )
         raise
 
     # Evaluate
     if evaluation_dataset and evaluate_on_test:
-        logger.info("The model will be evaluated using the best epoch weights.")
+        logger.info(
+            "The model will be evaluated using the best epoch weights."
+        )
         test_metrics = evaluate(
             trainer.model,
             evaluation_dataset,
             evaluation_iterator,
-            cuda_device=trainer._cuda_devices[0],  # pylint: disable=protected-access,
+            cuda_device=trainer._cuda_devices[
+                0
+            ],  # pylint: disable=protected-access,
             # TODO(brendanr): Pass in an arg following Joel's trainer refactor.
             batch_weight_key="",
         )
@@ -228,7 +239,9 @@ def train_model(
 
     # Now tar up results
     archive_model(serialization_dir, files_to_archive=params.files_to_archive)
-    dump_metrics(os.path.join(serialization_dir, "metrics.json"), metrics, log=True)
+    dump_metrics(
+        os.path.join(serialization_dir, "metrics.json"), metrics, log=True
+    )
 
     # We count on the trainer to have the model with best weights
     return trainer.model

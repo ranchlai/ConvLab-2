@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 
 
@@ -67,7 +68,9 @@ class HTMLWriter:
         self.index.write(
             '<td><img src="%s" width=600 border=0/></td>' % domain_freq_path
         )
-        self.index.write('<td><img src="%s" width=600 border=0/></td>' % perform_path)
+        self.index.write(
+            '<td><img src="%s" width=600 border=0/></td>' % perform_path
+        )
         self.index.write("</tr></table>")
 
     def write_dialog_loop_png(self, modelname):
@@ -101,7 +104,9 @@ class HTMLWriter:
             "<p> (Precision, Recall, F1)   :   (%.3f,  %.3f,  %.3f) </p>"
             % (pre, rec, f1)
         )
-        self.index.write("<p> Average Dialog Turn (Succ): %.3f </p>" % turn_suc)
+        self.index.write(
+            "<p> Average Dialog Turn (Succ): %.3f </p>" % turn_suc
+        )
         self.index.write("<p> Average Dialog Turn (All): %.3f </p>" % turn)
 
     def write_domain(
@@ -142,7 +147,9 @@ if __name__ == "__main__":
     writer.write_title("Test Report")
     writer.write_line("Time: %s" % time)
     writer.write_line("Model Name:")
-    writer.write_table(["pre", "rec", "f1"], [["attr", 123, "2", "3"], ["wd", 2, 4, 6]])
+    writer.write_table(
+        ["pre", "rec", "f1"], [["attr", 123, "2", "3"], ["wd", 2, 4, 6]]
+    )
     writer.write_line("Domain Attraction")
     writer.index.write("<div>")
     tmp = ["da1", 0.7, [("fda1", 0.4), ("fda2", 0.5), ("fda3", 0.1)]]

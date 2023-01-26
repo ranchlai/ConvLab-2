@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sqlite3
 
 import numpy as np
@@ -140,9 +141,13 @@ def queryResultVenues(domain, turn, real_belief=False):
                     val2 = val.replace("'", "''")
                     val2 = normalize(val2)
                     if key == "leaveAt":
-                        sql_query += r" and " + key + " > " + r"'" + val2 + r"'"
+                        sql_query += (
+                            r" and " + key + " > " + r"'" + val2 + r"'"
+                        )
                     elif key == "arriveBy":
-                        sql_query += r" and " + key + " < " + r"'" + val2 + r"'"
+                        sql_query += (
+                            r" and " + key + " < " + r"'" + val2 + r"'"
+                        )
                     else:
                         sql_query += r" and " + key + "=" + r"'" + val2 + r"'"
 

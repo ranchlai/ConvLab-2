@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import copy
 import json
 import random
@@ -103,7 +104,9 @@ class RuleBasedCamrestBot(Policy):
                 if len(kb_result) > 0:
                     kb_slot_name = slot[0]
                     if kb_slot_name in kb_result[0]:
-                        DA["inform"].append([slot[0], kb_result[0][kb_slot_name]])
+                        DA["inform"].append(
+                            [slot[0], kb_result[0][kb_slot_name]]
+                        )
                     else:
                         DA["inform"].append([slot[0], "unknown"])
                 # DA[domain + "-Inform"].append([slot_name, state['kb_results_dict'][0][slot[0].lower()]])
@@ -121,7 +124,9 @@ class RuleBasedCamrestBot(Policy):
                         and state["belief_state"][slot] != "dontcare"
                     ):
                         slot_name = slot
-                        DA["nooffer"].append([slot_name, state["belief_state"][slot]])
+                        DA["nooffer"].append(
+                            [slot_name, state["belief_state"][slot]]
+                        )
 
             # There's exactly one result matching user's constraint
             # elif len(state['kb_results_dict']) == 1:
@@ -140,7 +145,9 @@ class RuleBasedCamrestBot(Policy):
                     for i in range(info_num):
                         slot_name = props[i]
                         # DA[domain + "-Inform"].append([slot_name, state['kb_results_dict'][0][props[i]]])
-                        DA["inform"].append([slot_name, kb_result[0][props[i]]])
+                        DA["inform"].append(
+                            [slot_name, kb_result[0][props[i]]]
+                        )
 
             # There are multiple resultes matching user's constraint
             else:
@@ -173,8 +180,12 @@ def check_diff(last_state, state):
             if state["belief_state"][slot] != "":
                 if ("inform") not in user_action:
                     user_action["inform"] = []
-                if [slot, state["belief_state"][slot]] not in user_action["inform"]:
-                    user_action["inform"].append([slot, state["belief_state"][slot]])
+                if [slot, state["belief_state"][slot]] not in user_action[
+                    "inform"
+                ]:
+                    user_action["inform"].append(
+                        [slot, state["belief_state"][slot]]
+                    )
 
     else:
         for slot in last_state["belief_state"]:

@@ -1,10 +1,13 @@
+# -*- coding: utf-8 -*-
+import json
+
 import numpy as np
-from convlab2.policy.larl.multiwoz.latent_dialog.utils import Pack
+
 from convlab2.policy.larl.multiwoz.latent_dialog.base_data_loaders import (
     BaseDataLoaders,
 )
-from convlab2.policy.larl.multiwoz.latent_dialog.corpora import USR, SYS
-import json
+from convlab2.policy.larl.multiwoz.latent_dialog.corpora import SYS, USR
+from convlab2.policy.larl.multiwoz.latent_dialog.utils import Pack
 
 
 class DealDataLoaders(BaseDataLoaders):
@@ -30,9 +33,13 @@ class DealDataLoaders(BaseDataLoaders):
                 )
                 context = []
                 for turn in dlg.dlg[s_idx:e_idx]:
-                    turn["utt"] = self.pad_to(self.max_utt_len, turn.utt, do_pad=False)
+                    turn["utt"] = self.pad_to(
+                        self.max_utt_len, turn.utt, do_pad=False
+                    )
                     context.append(turn)
-                results.append(Pack(context=context, response=response, goal=goal))
+                results.append(
+                    Pack(context=context, response=response, goal=goal)
+                )
         return results
 
     def epoch_init(self, config, shuffle=True, verbose=True, fix_batch=False):
@@ -53,7 +60,9 @@ class DealDataLoaders(BaseDataLoaders):
             # source context
             batch_ctx = []
             for turn in in_row:
-                batch_ctx.append(self.pad_to(self.max_utt_len, turn.utt, do_pad=True))
+                batch_ctx.append(
+                    self.pad_to(self.max_utt_len, turn.utt, do_pad=True)
+                )
             ctx_utts.append(batch_ctx)
             ctx_lens.append(len(batch_ctx))
 
@@ -72,7 +81,9 @@ class DealDataLoaders(BaseDataLoaders):
             (self.batch_size, max_ctx_len, self.max_utt_len), dtype=np.int32
         )
         # confs is used to add some hand-crafted features
-        vec_ctx_confs = np.ones((self.batch_size, max_ctx_len), dtype=np.float32)
+        vec_ctx_confs = np.ones(
+            (self.batch_size, max_ctx_len), dtype=np.float32
+        )
         vec_out_lens = np.array(out_lens)  # (batch_size, ), number of tokens
         max_out_len = np.max(vec_out_lens)
         vec_out_utts = np.zeros((self.batch_size, max_out_len), dtype=np.int32)
@@ -138,10 +149,14 @@ class BeliefDbDataLoaders(BaseDataLoaders):
                 resp_set.add(json.dumps(response.utt))
                 context = []
                 for turn in dlg.dlg[s_idx:e_idx]:
-                    turn["utt"] = self.pad_to(self.max_utt_len, turn.utt, do_pad=False)
+                    turn["utt"] = self.pad_to(
+                        self.max_utt_len, turn.utt, do_pad=False
+                    )
                     context.append(turn)
                 results.append(
-                    Pack(context=context, response=response, goal=goal, key=key)
+                    Pack(
+                        context=context, response=response, goal=goal, key=key
+                    )
                 )
                 indexes.append(len(indexes))
                 batch_index.append(indexes[-1])
@@ -161,7 +176,9 @@ class BeliefDbDataLoaders(BaseDataLoaders):
             self.batch_indexes = []
             for i in range(self.num_batch):
                 self.batch_indexes.append(
-                    self.indexes[i * self.batch_size : (i + 1) * self.batch_size]
+                    self.indexes[
+                        i * self.batch_size : (i + 1) * self.batch_size
+                    ]
                 )
             if verbose:
                 print(
@@ -194,7 +211,9 @@ class BeliefDbDataLoaders(BaseDataLoaders):
             keys.append(row.key)
             batch_ctx = []
             for turn in in_row:
-                batch_ctx.append(self.pad_to(self.max_utt_len, turn.utt, do_pad=True))
+                batch_ctx.append(
+                    self.pad_to(self.max_utt_len, turn.utt, do_pad=True)
+                )
             ctx_utts.append(batch_ctx)
             ctx_lens.append(len(batch_ctx))
 

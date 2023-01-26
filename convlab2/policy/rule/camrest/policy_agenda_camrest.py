@@ -7,9 +7,9 @@
 __time__ = "2019/1/31 10:24"
 
 import json
+import logging
 import os
 import random
-import logging
 
 from convlab2.policy.policy import Policy
 from convlab2.task.camrest.goal_generator import GoalGenerator
@@ -36,7 +36,9 @@ class UserPolicyAgendaCamrest(Policy):
             corpus_path=os.path.join(
                 os.path.dirname(
                     os.path.dirname(
-                        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                        os.path.dirname(
+                            os.path.dirname(os.path.abspath(__file__))
+                        )
                     )
                 ),
                 "data/camrest/CamRest676_v2.json",
@@ -175,7 +177,10 @@ class Goal(object):
                 key for (key, val) in requests.items() if val in NOT_SURE_VALS
             ]
             if len(unknow_reqts) > 0:
-                return "reqt", ["name"] if "name" in unknow_reqts else unknow_reqts
+                return (
+                    "reqt",
+                    ["name"] if "name" in unknow_reqts else unknow_reqts,
+                )
 
         return None, None
 
@@ -197,7 +202,10 @@ class Agenda(object):
 
         def random_sample(data, minimum=0, maximum=1000):
             return random.sample(
-                data, random.randint(min(len(data), minimum), min(len(data), maximum))
+                data,
+                random.randint(
+                    min(len(data), minimum), min(len(data), maximum)
+                ),
             )
 
         self.__cur_push_num = 0
@@ -207,7 +215,8 @@ class Agenda(object):
         # inform
         if "info" in goal.domain_goals:
             for slot in random_sample(
-                goal.domain_goals["info"].keys(), len(goal.domain_goals["info"])
+                goal.domain_goals["info"].keys(),
+                len(goal.domain_goals["info"]),
             ):
                 self.__push("inform", slot, goal.domain_goals["info"][slot])
 
@@ -372,7 +381,9 @@ class Agenda(object):
 
         p_diaact, p_slot = self.__check_next_diaact_slot()
         if p_diaact == "inform":
-            for _ in range(10 if self.__cur_push_num == 0 else self.__cur_push_num):
+            for _ in range(
+                10 if self.__cur_push_num == 0 else self.__cur_push_num
+            ):
                 try:
                     item = self.__stack.pop(-1)
                     diaacts.append(item["diaact"])

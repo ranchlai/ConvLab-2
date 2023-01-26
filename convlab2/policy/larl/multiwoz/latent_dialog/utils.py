@@ -1,10 +1,12 @@
+# -*- coding: utf-8 -*-
+import logging
 import os
+import sys
+
 import numpy as np
 import torch as th
 from nltk import RegexpTokenizer
 from nltk.tokenize.treebank import TreebankWordDetokenizer
-import logging
-import sys
 
 INT = 0
 LONG = 1
@@ -90,7 +92,9 @@ def prepare_dirs_loggers(config, script=""):
     if hasattr(config, "forward_only") and config.forward_only:
         return
 
-    fileHandler = logging.FileHandler(os.path.join(config.saved_path, "session.log"))
+    fileHandler = logging.FileHandler(
+        os.path.join(config.saved_path, "session.log")
+    )
     fileHandler.setLevel(logging.DEBUG)
     fileHandler.setFormatter(logFormatter)
     rootLogger.addHandler(fileHandler)

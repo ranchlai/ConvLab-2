@@ -1,9 +1,13 @@
+# -*- coding: utf-8 -*-
+import numpy as np
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
-import numpy as np
-from convlab2.policy.larl.multiwoz.latent_dialog.enc2dec.base_modules import BaseRNN
+
+from convlab2.policy.larl.multiwoz.latent_dialog.enc2dec.base_modules import (
+    BaseRNN,
+)
 
 
 class EncoderRNN(BaseRNN):
@@ -30,7 +34,9 @@ class EncoderRNN(BaseRNN):
         self.variable_lengths = variable_lengths
         self.output_size = hidden_size * 2 if bidirectional else hidden_size
 
-    def forward(self, input_var, init_state=None, input_lengths=None, goals=None):
+    def forward(
+        self, input_var, init_state=None, input_lengths=None, goals=None
+    ):
         # add goals
         if goals is not None:
             batch_size, max_ctx_len, ctx_nhid = input_var.size()
@@ -51,7 +57,9 @@ class EncoderRNN(BaseRNN):
         else:
             output, hidden = self.rnn(embedded)
         if self.variable_lengths:
-            output, _ = nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
+            output, _ = nn.utils.rnn.pad_packed_sequence(
+                output, batch_first=True
+            )
 
         return output, hidden
 
@@ -136,7 +144,9 @@ class RnnUttEncoder(nn.Module):
             # (batch_size*max_ctx_len, max_utt_len, 1)
             attn = F.softmax(attn, attn.dim() - 1)
             attn = attn * flat_mask
-            attn = (attn / (th.sum(attn, dim=1, keepdim=True) + 1e-10)).unsqueeze(2)
+            attn = (
+                attn / (th.sum(attn, dim=1, keepdim=True) + 1e-10)
+            ).unsqueeze(2)
             # (batch_size*max_ctx_len, max_utt_len, num_directions*utt_cell_size)
             utt_embedded = attn * enc_outs
             # (batch_size*max_ctx_len, num_directions*utt_cell_size)
@@ -149,13 +159,17 @@ class RnnUttEncoder(nn.Module):
             # (batch_size*max_ctx_len*num_layers, num_directions*utt_cell_size)
             utt_embedded = utt_embedded.view(-1, self.output_size)
 
-        utt_embedded = utt_embedded.view(batch_size, max_ctx_len, self.output_size)
+        utt_embedded = utt_embedded.view(
+            batch_size, max_ctx_len, self.output_size
+        )
         return (
             utt_embedded,
             word_embeddings.contiguous().view(
                 batch_size, max_ctx_len * max_utt_len, -1
             ),
-            enc_outs.contiguous().view(batch_size, max_ctx_len * max_utt_len, -1),
+            enc_outs.contiguous().view(
+                batch_size, max_ctx_len * max_utt_len, -1
+            ),
         )
 
 
@@ -236,7 +250,8 @@ class TaskMlpGoalEncoder(nn.Module):
     def forward(self, goals_list):
         # goals_list: list of tensor, 7*(batch_size, goal_len), goal_len varies among differnet domains
         outs = [
-            encoder.forward(goal) for goal, encoder in zip(goals_list, self.encoder)
+            encoder.forward(goal)
+            for goal, encoder in zip(goals_list, self.encoder)
         ]  # 7*(batch_size, goal_nhid)
         outs = th.sum(th.stack(outs), dim=0)  # (batch_size, goal_nhid)
         return outs

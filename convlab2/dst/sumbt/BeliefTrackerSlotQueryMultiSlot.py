@@ -1,12 +1,11 @@
+# -*- coding: utf-8 -*-
 import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 from torch.nn import CrossEntropyLoss
-
-from transformers import BertModel
-from transformers import BertPreTrainedModel
+from transformers import BertModel, BertPreTrainedModel
 
 
 class BertForUtteranceEncoding(BertPreTrainedModel):
@@ -17,7 +16,11 @@ class BertForUtteranceEncoding(BertPreTrainedModel):
         self.bert = BertModel(config)
 
     def forward(
-        self, input_ids, token_type_ids, attention_mask, output_all_encoded_layers=False
+        self,
+        input_ids,
+        token_type_ids,
+        attention_mask,
+        output_all_encoded_layers=False,
     ):
         return self.bert(
             input_ids,
@@ -103,7 +106,9 @@ class BeliefTracker(nn.Module):
         )
         self.utterance_encoder.train()
         self.bert_output_dim = self.utterance_encoder.config.hidden_size
-        self.hidden_dropout_prob = self.utterance_encoder.config.hidden_dropout_prob
+        self.hidden_dropout_prob = (
+            self.utterance_encoder.config.hidden_dropout_prob
+        )
         if args.fix_utterance_encoder:
             for p in self.utterance_encoder.bert.pooler.parameters():
                 p.requires_grad = False
@@ -118,11 +123,16 @@ class BeliefTracker(nn.Module):
 
         self.slot_lookup = nn.Embedding(self.num_slots, self.bert_output_dim)
         self.value_lookup = nn.ModuleList(
-            [nn.Embedding(num_label, self.bert_output_dim) for num_label in num_labels]
+            [
+                nn.Embedding(num_label, self.bert_output_dim)
+                for num_label in num_labels
+            ]
         )
 
         ### Attention layer
-        self.attn = MultiHeadAttention(self.attn_head, self.bert_output_dim, dropout=0)
+        self.attn = MultiHeadAttention(
+            self.attn_head, self.bert_output_dim, dropout=0
+        )
 
         ### RNN Belief Tracker
         self.nbt = None
@@ -159,7 +169,9 @@ class BeliefTracker(nn.Module):
         if self.distance_metric == "cosine":
             self.metric = torch.nn.CosineSimilarity(dim=-1, eps=1e-08)
         elif self.distance_metric == "euclidean":
-            self.metric = torch.nn.PairwiseDistance(p=2.0, eps=1e-06, keepdim=False)
+            self.metric = torch.nn.PairwiseDistance(
+                p=2.0, eps=1e-06, keepdim=False
+            )
 
         ### Classifier
         self.nll = CrossEntropyLoss(ignore_index=-1)
@@ -175,7 +187,9 @@ class BeliefTracker(nn.Module):
         self.sv_encoder.eval()
 
         # Slot encoding
-        slot_type_ids = torch.zeros(slot_ids.size(), dtype=torch.long).to(self.device)
+        slot_type_ids = torch.zeros(slot_ids.size(), dtype=torch.long).to(
+            self.device
+        )
         slot_mask = slot_ids > 0
 
         hid_slot, _ = self.sv_encoder(
@@ -201,13 +215,17 @@ class BeliefTracker(nn.Module):
             )
             hid_label = hid_label[:, 0, :]
             hid_label = hid_label.detach()
-            self.value_lookup[s] = nn.Embedding.from_pretrained(hid_label, freeze=True)
+            self.value_lookup[s] = nn.Embedding.from_pretrained(
+                hid_label, freeze=True
+            )
             self.value_lookup[s].padding_idx = -1
 
         print("Complete initialization of slot and value lookup")
 
     def _make_aux_tensors(self, ids, len):
-        token_type_ids = torch.zeros(ids.size(), dtype=torch.long).to(self.device)
+        token_type_ids = torch.zeros(ids.size(), dtype=torch.long).to(
+            self.device
+        )
         for i in range(len.size(0)):
             for j in range(len.size(1)):
                 if len[i, j, 0] == 0:  # padding
@@ -231,7 +249,9 @@ class BeliefTracker(nn.Module):
         slot_dim = len(target_slot)
 
         # Utterance encoding
-        token_type_ids, attention_mask = self._make_aux_tensors(input_ids, input_len)
+        token_type_ids, attention_mask = self._make_aux_tensors(
+            input_ids, input_len
+        )
 
         hidden, _ = self.utterance_encoder(
             input_ids.view(-1, self.max_seq_length),
@@ -245,7 +265,9 @@ class BeliefTracker(nn.Module):
             .expand(hidden.size())
             .float(),
         )
-        hidden = hidden.repeat(slot_dim, 1, 1)  # [(slot_dim*ds*ts), bert_seq, hid_size]
+        hidden = hidden.repeat(
+            slot_dim, 1, 1
+        )  # [(slot_dim*ds*ts), bert_seq, hid_size]
 
         hid_slot = self.slot_lookup.weight[
             target_slot, :
@@ -259,15 +281,21 @@ class BeliefTracker(nn.Module):
             hid_slot,
             hidden,
             hidden,
-            mask=attention_mask.view(-1, 1, self.max_seq_length).repeat(slot_dim, 1, 1),
+            mask=attention_mask.view(-1, 1, self.max_seq_length).repeat(
+                slot_dim, 1, 1
+            ),
         )
         hidden = hidden.squeeze()  # [slot_dim*ds*ts, bert_dim]
-        hidden = hidden.view(slot_dim, ds, ts, -1).view(-1, ts, self.bert_output_dim)
+        hidden = hidden.view(slot_dim, ds, ts, -1).view(
+            -1, ts, self.bert_output_dim
+        )
 
         # NBT
         if self.zero_init_rnn:
             h = torch.zeros(
-                self.rnn_num_layers, input_ids.shape[0] * slot_dim, self.hidden_dim
+                self.rnn_num_layers,
+                input_ids.shape[0] * slot_dim,
+                self.hidden_dim,
             ).to(
                 self.device
             )  # [1, slot_dim*ds, hidden]
@@ -279,11 +307,15 @@ class BeliefTracker(nn.Module):
             rnn_out, _ = self.nbt(hidden, h)  # [slot_dim*ds, turn, hidden]
         elif isinstance(self.nbt, nn.LSTM):
             c = torch.zeros(
-                self.rnn_num_layers, input_ids.shape[0] * slot_dim, self.hidden_dim
+                self.rnn_num_layers,
+                input_ids.shape[0] * slot_dim,
+                self.hidden_dim,
             ).to(
                 self.device
             )  # [1, slot_dim*ds, hidden]
-            rnn_out, _ = self.nbt(hidden, (h, c))  # [slot_dim*ds, turn, hidden]
+            rnn_out, _ = self.nbt(
+                hidden, (h, c)
+            )  # [slot_dim*ds, turn, hidden]
         rnn_out = self.layer_norm(self.linear(self.dropout(rnn_out)))
 
         hidden = rnn_out.view(slot_dim, ds, ts, -1)
@@ -293,7 +325,9 @@ class BeliefTracker(nn.Module):
         loss_slot = []
         pred_slot = []
         output = []
-        for s, slot_id in enumerate(target_slot):  ## note: target_slots are successive
+        for s, slot_id in enumerate(
+            target_slot
+        ):  ## note: target_slots are successive
             # loss calculation
             hid_label = self.value_lookup[slot_id].weight
             num_slot_labels = hid_label.size(0)
@@ -310,7 +344,9 @@ class BeliefTracker(nn.Module):
                 .repeat(1, 1, num_slot_labels, 1)
                 .view(ds * ts * num_slot_labels, -1)
             )
-            _dist = self.metric(_hid_label, _hidden).view(ds, ts, num_slot_labels)
+            _dist = self.metric(_hid_label, _hidden).view(
+                ds, ts, num_slot_labels
+            )
 
             if self.distance_metric == "euclidean":
                 _dist = -_dist
@@ -319,7 +355,9 @@ class BeliefTracker(nn.Module):
             output.append(_dist)
 
             if labels is not None:
-                _loss = self.nll(_dist.view(ds * ts, -1), labels[:, :, s].view(-1))
+                _loss = self.nll(
+                    _dist.view(ds * ts, -1), labels[:, :, s].view(-1)
+                )
                 loss_slot.append(_loss.item())
                 loss += _loss
 

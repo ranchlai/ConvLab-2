@@ -1,9 +1,12 @@
+# -*- coding: utf-8 -*-
 import argparse
-import os
 import json
+import os
 import random
+
 import numpy as np
 import torch
+
 from convlab2.nlu.jointBERT.dataloader import Dataloader
 from convlab2.nlu.jointBERT.jointBERT import JointBERT
 
@@ -31,22 +34,22 @@ if __name__ == "__main__":
     if "multiwoz" in data_dir:
         print("-" * 20 + "dataset:multiwoz" + "-" * 20)
         from convlab2.nlu.jointBERT.multiwoz.postprocess import (
-            is_slot_da,
             calculateF1,
+            is_slot_da,
             recover_intent,
         )
     elif "camrest" in data_dir:
         print("-" * 20 + "dataset:camrest" + "-" * 20)
         from convlab2.nlu.jointBERT.camrest.postprocess import (
-            is_slot_da,
             calculateF1,
+            is_slot_da,
             recover_intent,
         )
     elif "crosswoz" in data_dir:
         print("-" * 20 + "dataset:crosswoz" + "-" * 20)
         from convlab2.nlu.jointBERT.crosswoz.postprocess import (
-            is_slot_da,
             calculateF1,
+            is_slot_da,
             recover_intent,
         )
 
@@ -61,12 +64,16 @@ if __name__ == "__main__":
     print("tag num:", len(tag_vocab))
     for data_key in ["val", "test"]:
         dataloader.load_data(
-            json.load(open(os.path.join(data_dir, "{}_data.json".format(data_key)))),
+            json.load(
+                open(os.path.join(data_dir, "{}_data.json".format(data_key)))
+            ),
             data_key,
             cut_sen_len=0,
             use_bert_tokenizer=config["use_bert_tokenizer"],
         )
-        print("{} set size: {}".format(data_key, len(dataloader.data[data_key])))
+        print(
+            "{} set size: {}".format(data_key, len(dataloader.data[data_key]))
+        )
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -131,7 +138,9 @@ if __name__ == "__main__":
             )
             labels = ori_batch[j][3]
 
-            predict_golden["overall"].append({"predict": predicts, "golden": labels})
+            predict_golden["overall"].append(
+                {"predict": predicts, "golden": labels}
+            )
             predict_golden["slot"].append(
                 {
                     "predict": [x for x in predicts if is_slot_da(x)],

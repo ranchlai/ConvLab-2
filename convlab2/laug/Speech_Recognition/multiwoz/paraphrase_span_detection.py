@@ -44,7 +44,9 @@ def phrase_idx_utt(value_list, utt_list):
         if i == 0:
             continue
         for j in range(len(utt_list) - i + 1):
-            score = fuzz.ratio(" ".join(utt_list[j : j + i]), " ".join(value_list))
+            score = fuzz.ratio(
+                " ".join(utt_list[j : j + i]), " ".join(value_list)
+            )
             if score > threshold:
                 candidates.append((score, j, j + i - 1))
     return (
@@ -76,9 +78,13 @@ def preprocess(utt, da):
                     if span is not None:
                         if slot.lower() in ["name", "dest", "depart"]:
                             tokens[span[0] : span[1] + 1] = value_tokens
-                            tags[span[0] : span[1] + 1] = ["O"] * len(value_tokens)
+                            tags[span[0] : span[1] + 1] = ["O"] * len(
+                                value_tokens
+                            )
                             tags[span[0]] = "B-" + slot
-                            for i in range(span[0] + 1, span[0] + len(value_tokens)):
+                            for i in range(
+                                span[0] + 1, span[0] + len(value_tokens)
+                            ):
                                 tags[i] = "I-" + slot
                         else:
                             # tags[span[0]] = "B-" + da[1] + '-' + da[0] + "+" + da[2]

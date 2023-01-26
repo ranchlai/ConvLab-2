@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import configparser
 import os
 import zipfile
@@ -5,13 +6,17 @@ from copy import deepcopy
 
 import torch
 
-from convlab2.util.file_util import cached_path
-from convlab2.nlg.sclstm.multiwoz.loader.dataset_woz import SimpleDatasetWoz
-from convlab2.nlg.sclstm.model.lm_deep import LMDeep
 from convlab2.nlg.nlg import NLG
+from convlab2.nlg.sclstm.model.lm_deep import LMDeep
+from convlab2.nlg.sclstm.multiwoz.loader.dataset_woz import SimpleDatasetWoz
+from convlab2.util.file_util import cached_path
 
-DEFAULT_DIRECTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
-DEFAULT_ARCHIVE_FILE = os.path.join(DEFAULT_DIRECTORY, "nlg-sclstm-multiwoz.zip")
+DEFAULT_DIRECTORY = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "models"
+)
+DEFAULT_ARCHIVE_FILE = os.path.join(
+    DEFAULT_DIRECTORY, "nlg-sclstm-multiwoz.zip"
+)
 
 
 def parse(is_user):
@@ -24,7 +29,8 @@ def parse(is_user):
     if is_user:
         config.read(
             os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), "config/config_usr.cfg"
+                os.path.dirname(os.path.abspath(__file__)),
+                "config/config_usr.cfg",
             )
         )
     else:

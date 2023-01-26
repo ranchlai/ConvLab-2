@@ -1,15 +1,21 @@
 # -*- coding: utf-8 -*-
-import torch
-import os
 import json
+import os
+
+import torch
+
 from convlab2.policy.mle.mle import MLEAbstract
 from convlab2.policy.rlmodule import MultiDiscretePolicy
 from convlab2.policy.vector.vector_multiwoz import MultiWozVector
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-DEFAULT_DIRECTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
-DEFAULT_ARCHIVE_FILE = os.path.join(DEFAULT_DIRECTORY, "mle_policy_multiwoz.zip")
+DEFAULT_DIRECTORY = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "models"
+)
+DEFAULT_ARCHIVE_FILE = os.path.join(
+    DEFAULT_DIRECTORY, "mle_policy_multiwoz.zip"
+)
 
 
 class MLE(MLEAbstract):
@@ -23,7 +29,10 @@ class MLE(MLEAbstract):
         )
 
         with open(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json"), "r"
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "config.json"
+            ),
+            "r",
         ) as f:
             cfg = json.load(f)
 
@@ -42,7 +51,10 @@ class MLE(MLEAbstract):
         model_file="https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/mle_policy_multiwoz.zip",
     ):
         with open(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json"), "r"
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "config.json"
+            ),
+            "r",
         ) as f:
             cfg = json.load(f)
         model = cls()
@@ -59,7 +71,9 @@ class MLEPolicy(MLE):
         super().__init__()
         if model_file:
             with open(
-                os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json"),
+                os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)), "config.json"
+                ),
                 "r",
             ) as f:
                 cfg = json.load(f)

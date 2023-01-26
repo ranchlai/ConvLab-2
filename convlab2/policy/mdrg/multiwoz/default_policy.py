@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import torch
 import torch.nn as nn
 
@@ -18,7 +19,9 @@ class DefaultPolicy(nn.Module):
             hidden = encodings
 
         # Network based
-        output = self.W_u(hidden[0]) + self.W_db(db_tensor) + self.W_bs(bs_tensor)
+        output = (
+            self.W_u(hidden[0]) + self.W_db(db_tensor) + self.W_bs(bs_tensor)
+        )
         output = torch.tanh(output)
 
         if isinstance(encodings, tuple):  # return LSTM tuple

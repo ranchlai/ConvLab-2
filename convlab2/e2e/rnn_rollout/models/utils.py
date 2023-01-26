@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2019-present, Facebook, Inc.
 # All rights reserved.
 #
@@ -7,9 +8,10 @@
 A set of useful tools.
 """
 
+import math
+
 import torch
 import torch.nn as nn
-import math
 
 
 def init_rnn(rnn, init_range, weights=None, biases=None):
@@ -35,7 +37,9 @@ def init_rnn(rnn, init_range, weights=None, biases=None):
 
 def init_rnn_cell(rnn, init_range):
     """Orthogonal initialization of RNNCell."""
-    init_rnn(rnn, init_range, ["weight_ih", "weight_hh"], ["bias_ih", "bias_hh"])
+    init_rnn(
+        rnn, init_range, ["weight_ih", "weight_hh"], ["bias_ih", "bias_hh"]
+    )
 
 
 def init_linear(linear, init_range):

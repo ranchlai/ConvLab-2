@@ -1,8 +1,12 @@
-from pathlib import Path
-import zipfile
+# -*- coding: utf-8 -*-
 import json
 import os
-from convlab2.util.allennlp_file_utils import cached_path as allennlp_cached_path
+import zipfile
+from pathlib import Path
+
+from convlab2.util.allennlp_file_utils import (
+    cached_path as allennlp_cached_path,
+)
 
 
 def cached_path(file_path, cached_dir=None):
@@ -20,7 +24,10 @@ def read_zipped_json(zip_path, filepath):
 
 def dump_json(content, filepath):
     json.dump(
-        content, open(filepath, "w", encoding="utf-8"), indent=2, ensure_ascii=False
+        content,
+        open(filepath, "w", encoding="utf-8"),
+        indent=2,
+        ensure_ascii=False,
     )
 
 

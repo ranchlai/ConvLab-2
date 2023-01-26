@@ -1,10 +1,12 @@
+# -*- coding: utf-8 -*-
+import json
+
 from .detection_utils import (
+    replacer,
+    span_typer,
     translateNumberToEnglish,
     translateTimeToEnglish,
-    span_typer,
-    replacer,
 )
-import json
 from .paraphrase_span_detection import phrase_idx_utt
 
 

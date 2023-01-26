@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
     evaluate output file
 """
@@ -6,11 +7,11 @@ import json
 import os
 
 from convlab2.dst.dstc9.utils import (
-    prepare_data,
-    extract_gt,
-    eval_states,
-    get_subdir,
     dump_result,
+    eval_states,
+    extract_gt,
+    get_subdir,
+    prepare_data,
 )
 
 
@@ -75,12 +76,16 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("subtask", type=str, choices=["multiwoz", "crosswoz"])
     parser.add_argument(
-        "split", type=str, choices=["train", "val", "test", "human_val", "dstc9-250"]
+        "split",
+        type=str,
+        choices=["train", "val", "test", "human_val", "dstc9-250"],
     )
     parser.add_argument("correct_name_label", action="store_true")
     args = parser.parse_args()
     subtask = args.subtask
     split = args.split
     dump_example(subtask, split)
-    test_data = prepare_data(subtask, split, correct_name_label=args.correct_name_label)
+    test_data = prepare_data(
+        subtask, split, correct_name_label=args.correct_name_label
+    )
     gt = extract_gt(test_data)

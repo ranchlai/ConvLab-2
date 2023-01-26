@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
 """
 extract all value appear in dialog act and state, for translation.
 """
 import json
-import zipfile
 import re
+import zipfile
 from pprint import pprint
 
 
@@ -65,14 +66,19 @@ def extract_ontology(data):
                                     print((domain, slot, value))
                                 for dish in v.split():
                                     value_set[domain][slot].add(dish)
-                            elif slot == "selectedResults" and domain in ["地铁", "出租"]:
+                            elif slot == "selectedResults" and domain in [
+                                "地铁",
+                                "出租",
+                            ]:
                                 if domain == "地铁":
                                     v = v[5:]
                                     value_set[domain][slot].add(v.strip())
                                 if domain == "出租":
                                     v = v[4:-1]
                                     for item in v.split(" - "):
-                                        value_set[domain][slot].add(item.strip())
+                                        value_set[domain][slot].add(
+                                            item.strip()
+                                        )
                             else:
                                 value_set[domain][slot].add(v)
                     else:
@@ -88,7 +94,10 @@ def extract_ontology(data):
                                 print((domain, slot, value))
                             for dish in value.split():
                                 value_set[domain][slot].add(dish)
-                        elif slot == "selectedResults" and domain in ["地铁", "出租"]:
+                        elif slot == "selectedResults" and domain in [
+                            "地铁",
+                            "出租",
+                        ]:
                             if domain == "地铁":
                                 value = value[5:]
                                 value_set[domain][slot].add(value.strip())
@@ -111,19 +120,30 @@ def extract_ontology(data):
                                     elif slot not in value_set[domain]:
                                         value_set[domain][slot] = set()
                                     elif slot in ["推荐菜", "名称", "酒店设施"]:
-                                        if slot == "名称" and len(value.split()) > 1:
-                                            multi_name.add((domain, slot, value))
+                                        if (
+                                            slot == "名称"
+                                            and len(value.split()) > 1
+                                        ):
+                                            multi_name.add(
+                                                (domain, slot, value)
+                                            )
                                         elif slot == "推荐菜" and "-" in value:
                                             print((domain, slot, value))
                                         for dish in v.split():
                                             value_set[domain][slot].add(dish)
-                                    elif slot == "selectedResults" and domain in [
-                                        "地铁",
-                                        "出租",
-                                    ]:
+                                    elif (
+                                        slot == "selectedResults"
+                                        and domain
+                                        in [
+                                            "地铁",
+                                            "出租",
+                                        ]
+                                    ):
                                         if domain == "地铁":
                                             v = v[5:]
-                                            value_set[domain][slot].add(v.strip())
+                                            value_set[domain][slot].add(
+                                                v.strip()
+                                            )
                                         if domain == "出租":
                                             v = v[4:-1]
                                             for item in v.split(" - "):
@@ -151,11 +171,15 @@ def extract_ontology(data):
                                 ]:
                                     if domain == "地铁":
                                         value = value[5:]
-                                        value_set[domain][slot].add(value.strip())
+                                        value_set[domain][slot].add(
+                                            value.strip()
+                                        )
                                     if domain == "出租":
                                         value = value[4:-1]
                                         for v in value.split(" - "):
-                                            value_set[domain][slot].add(v.strip())
+                                            value_set[domain][slot].add(
+                                                v.strip()
+                                            )
                                 else:
                                     value_set[domain][slot].add(value)
     return intent_set, domain_set, slot_set, value_set

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2017-present, Facebook, Inc.
 # All rights reserved.
 #
@@ -154,7 +155,8 @@ class ChunkedAttention(nn.Module):
             reversed(fwd_inpts), reversed(fwd_lens), reversed(rev_idxs)
         ):
             bwd_inpt = inpt.gather(
-                0, rev_idx.expand(rev_idx.size(0), rev_idx.size(1), inpt.size(2))
+                0,
+                rev_idx.expand(rev_idx.size(0), rev_idx.size(1), inpt.size(2)),
             )
             bwd_inpts.append(bwd_inpt)
             bwd_lens.append(ln)
@@ -197,7 +199,8 @@ class BiRnnAttention(ChunkedAttention):
             out, _ = rnn(inpt, h)
             hs.append(out)
             h = out.gather(
-                0, hid_idx.expand(hid_idx.size(0), hid_idx.size(1), out.size(2))
+                0,
+                hid_idx.expand(hid_idx.size(0), hid_idx.size(1), out.size(2)),
             )
         return hs
 
@@ -206,7 +209,9 @@ class BiRnnAttention(ChunkedAttention):
         bwd_inpts, bwd_lens = self.reverse(fwd_inpts, fwd_lens, rev_idxs)
 
         fwd_hs = self.forward_rnn(self.fwd_rnn, fwd_inpts, fwd_lens, hid_idxs)
-        bwd_hs = self.forward_rnn(self.bwd_rnn, bwd_inpts, bwd_lens, reversed(hid_idxs))
+        bwd_hs = self.forward_rnn(
+            self.bwd_rnn, bwd_inpts, bwd_lens, reversed(hid_idxs)
+        )
 
         # reverse them back to align with fwd_inpts
         bwd_hs, _ = self.reverse(bwd_hs, bwd_lens, list(reversed(rev_idxs)))
@@ -227,10 +232,16 @@ class HierarchicalAttention(ChunkedAttention):
 
         self.fwd_word_rnn = nn.GRU(value_size, hid_size, bias=True)
         self.bwd_word_rnn = nn.GRU(value_size, hid_size, bias=True)
-        self.word_attn = Attention(query_size, 2 * hid_size, hid_size, init_range)
+        self.word_attn = Attention(
+            query_size, 2 * hid_size, hid_size, init_range
+        )
 
-        self.sent_rnn = nn.GRU(2 * hid_size, hid_size, bidirectional=True, bias=True)
-        self.sent_attn = Attention(query_size, 2 * hid_size, hid_size, init_range)
+        self.sent_rnn = nn.GRU(
+            2 * hid_size, hid_size, bidirectional=True, bias=True
+        )
+        self.sent_attn = Attention(
+            query_size, 2 * hid_size, hid_size, init_range
+        )
 
         init_rnn(self.fwd_word_rnn, init_range)
         init_rnn(self.bwd_word_rnn, init_range)
@@ -241,10 +252,15 @@ class HierarchicalAttention(ChunkedAttention):
         self.bwd_word_rnn.flatten_parameters()
         self.sent_rnn.flatten_parameters()
 
-    def forward_word_attn(self, query, fwd_word_hs, bwd_word_hs, ln, rev_idx, hid_idx):
+    def forward_word_attn(
+        self, query, fwd_word_hs, bwd_word_hs, ln, rev_idx, hid_idx
+    ):
         # reverse bwd_word_h
         bwd_word_hs = bwd_word_hs.gather(
-            0, rev_idx.expand(rev_idx.size(0), rev_idx.size(1), bwd_word_hs.size(2))
+            0,
+            rev_idx.expand(
+                rev_idx.size(0), rev_idx.size(1), bwd_word_hs.size(2)
+            ),
         )
 
         word_hs = torch.cat([fwd_word_hs, bwd_word_hs], 2)
@@ -292,7 +308,9 @@ class HierarchicalAttention(ChunkedAttention):
             reversed(hid_idxs),
         )
 
-        iterator = zip(fwd_word_hs, reversed(bwd_word_hs), fwd_lens, rev_idxs, hid_idxs)
+        iterator = zip(
+            fwd_word_hs, reversed(bwd_word_hs), fwd_lens, rev_idxs, hid_idxs
+        )
         word_hs, word_ps = [], []
         for fwd_word_h, bwd_word_h, ln, rev_idx, hid_idx in iterator:
             word_h, word_p = self.forward_word_attn(
@@ -318,7 +336,9 @@ class SentenceAttention(ChunkedAttention):
 
         self.fwd_word_rnn = nn.GRU(value_size, hid_size, bias=True)
         self.bwd_word_rnn = nn.GRU(value_size, hid_size, bias=True)
-        self.word_attn = Attention(query_size, 2 * hid_size, hid_size, init_range)
+        self.word_attn = Attention(
+            query_size, 2 * hid_size, hid_size, init_range
+        )
 
         init_rnn(self.fwd_word_rnn, init_range)
         init_rnn(self.bwd_word_rnn, init_range)
@@ -327,10 +347,15 @@ class SentenceAttention(ChunkedAttention):
         self.fwd_word_rnn.flatten_parameters()
         self.bwd_word_rnn.flatten_parameters()
 
-    def forward_word_attn(self, query, fwd_word_hs, bwd_word_hs, ln, rev_idx, hid_idx):
+    def forward_word_attn(
+        self, query, fwd_word_hs, bwd_word_hs, ln, rev_idx, hid_idx
+    ):
         # reverse bwd_word_h
         bwd_word_hs = bwd_word_hs.gather(
-            0, rev_idx.expand(rev_idx.size(0), rev_idx.size(1), bwd_word_hs.size(2))
+            0,
+            rev_idx.expand(
+                rev_idx.size(0), rev_idx.size(1), bwd_word_hs.size(2)
+            ),
         )
 
         word_hs = torch.cat([fwd_word_hs, bwd_word_hs], 2)

@@ -1,21 +1,36 @@
-import time
+# -*- coding: utf-8 -*-
 import os
 import sys
+import time
 
 sys.path.append("../")
 import json
+
 import torch as th
+
+from convlab2.policy.larl.multiwoz.experiments_woz.dialog_utils import (
+    task_generate,
+)
+from convlab2.policy.larl.multiwoz.latent_dialog.agent_task import (
+    OfflineRlAgent,
+)
+from convlab2.policy.larl.multiwoz.latent_dialog.corpora import (
+    NormMultiWozCorpus,
+)
+from convlab2.policy.larl.multiwoz.latent_dialog.main import (
+    OfflineTaskReinforce,
+)
+from convlab2.policy.larl.multiwoz.latent_dialog.models_task import (
+    SysPerfectBD2Word,
+)
 from convlab2.policy.larl.multiwoz.latent_dialog.utils import Pack, set_seed
-from convlab2.policy.larl.multiwoz.latent_dialog.corpora import NormMultiWozCorpus
-from convlab2.policy.larl.multiwoz.latent_dialog.models_task import SysPerfectBD2Word
-from convlab2.policy.larl.multiwoz.latent_dialog.agent_task import OfflineRlAgent
-from convlab2.policy.larl.multiwoz.latent_dialog.main import OfflineTaskReinforce
-from convlab2.policy.larl.multiwoz.experiments_woz.dialog_utils import task_generate
 
 
 def main():
 
-    start_time = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime(time.time()))
+    start_time = time.strftime(
+        "%Y-%m-%d-%H-%M-%S", time.localtime(time.time())
+    )
     print("[START]", start_time, "=" * 30)
 
     env = "gpu"
@@ -80,7 +95,10 @@ def main():
     if sv_config.use_gpu:
         sys_model.cuda()
     sys_model.load_state_dict(
-        th.load(rl_config.sv_model_path, map_location=lambda storage, location: storage)
+        th.load(
+            rl_config.sv_model_path,
+            map_location=lambda storage, location: storage,
+        )
     )
     sys_model.eval()
     sys = OfflineRlAgent(

@@ -1,10 +1,14 @@
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-import numpy as np
-from collections import Counter
-from convlab2.policy.larl.multiwoz.latent_dialog.utils import Pack
+
 import json
-from nltk.tokenize import WordPunctTokenizer
 import logging
+from collections import Counter
+
+import numpy as np
+from nltk.tokenize import WordPunctTokenizer
+
+from convlab2.policy.larl.multiwoz.latent_dialog.utils import Pack
 
 PAD = "<pad>"
 UNK = "<unk>"
@@ -213,13 +217,14 @@ class NormMultiWozCorpus(object):
         vocab_count = Counter(all_words).most_common()
         raw_vocab_size = len(vocab_count)
         keep_vocab_size = min(self.config.max_vocab_size, raw_vocab_size)
-        oov_rate = np.sum([c for t, c in vocab_count[0:keep_vocab_size]]) / float(
-            len(all_words)
-        )
+        oov_rate = np.sum(
+            [c for t, c in vocab_count[0:keep_vocab_size]]
+        ) / float(len(all_words))
 
         self.logger.info(
             "cut off at word {} with frequency={},\n".format(
-                vocab_count[keep_vocab_size - 1][0], vocab_count[keep_vocab_size - 1][1]
+                vocab_count[keep_vocab_size - 1][0],
+                vocab_count[keep_vocab_size - 1][1],
             )
             + "OOV rate = {:.2f}%".format(100.0 - oov_rate * 100)
         )
@@ -245,7 +250,9 @@ class NormMultiWozCorpus(object):
                 for info_type in self.info_types:
                     sv_info = d_goal.get(info_type, dict())
                     if info_type == "reqt" and isinstance(sv_info, list):
-                        all_words.extend([info_type + "|" + item for item in sv_info])
+                        all_words.extend(
+                            [info_type + "|" + item for item in sv_info]
+                        )
                     elif isinstance(sv_info, dict):
                         all_words.extend(
                             [

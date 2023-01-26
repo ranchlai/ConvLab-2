@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
+import random
+from collections import namedtuple
+
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
-
-from collections import namedtuple
-import random
 
 
 class DiscretePolicy(nn.Module):
@@ -191,7 +191,10 @@ class ContinuousPolicy(nn.Module):
         super(ContinuousPolicy, self).__init__()
 
         self.net = nn.Sequential(
-            nn.Linear(s_dim, h_dim), nn.ReLU(), nn.Linear(h_dim, h_dim), nn.ReLU()
+            nn.Linear(s_dim, h_dim),
+            nn.ReLU(),
+            nn.Linear(h_dim, h_dim),
+            nn.ReLU(),
         )
         self.net_mean = nn.Linear(h_dim, a_dim)
         self.net_std = nn.Linear(h_dim, a_dim)
@@ -240,7 +243,9 @@ class ContinuousPolicy(nn.Module):
             std = log_std.exp()
             var = std.pow(2)
             log_density = (
-                -(x - mean).pow(2) / (2 * var) - 0.5 * np.log(2 * np.pi) - log_std
+                -(x - mean).pow(2) / (2 * var)
+                - 0.5 * np.log(2 * np.pi)
+                - log_std
             )
 
             return log_density.sum(-1, keepdim=True)

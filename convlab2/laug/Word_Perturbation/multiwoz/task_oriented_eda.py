@@ -1,10 +1,11 @@
+# -*- coding: utf-8 -*-
 import random
-import string
 import re
-from functools import lru_cache
-from typing import List, Optional, Tuple, Sequence
+import string
 from collections import defaultdict
+from functools import lru_cache
 from random import shuffle
+from typing import List, Optional, Sequence, Tuple
 
 random.seed(1)
 
@@ -160,7 +161,9 @@ def get_only_chars(line):
 from nltk.corpus import wordnet
 
 
-def random_replacement(words, n, excluding_indexes: Optional[Sequence[int]] = None):
+def random_replacement(
+    words, n, excluding_indexes: Optional[Sequence[int]] = None
+):
     """
     randomly replace n words with synonyms
 
@@ -194,7 +197,9 @@ def random_replacement(words, n, excluding_indexes: Optional[Sequence[int]] = No
         synonyms = get_synonyms(random_word)
         if len(synonyms) >= 1:
             synonym = random.choice(synonyms)
-            synonym_tokens = [token for token in synonym.split() if token.strip()]
+            synonym_tokens = [
+                token for token in synonym.split() if token.strip()
+            ]
             if len(synonym_tokens) == 1:
                 for i in word2index[random_word]:
                     new_words[i] = synonym_tokens[0]
@@ -232,7 +237,12 @@ def replacement(words, index: int):
             return new_words, index, index, synonym_tokens
         else:
             new_words[index : index + 1] = synonym_tokens
-            return new_words, index, index + len(synonym_tokens) - 1, synonym_tokens
+            return (
+                new_words,
+                index,
+                index + len(synonym_tokens) - 1,
+                synonym_tokens,
+            )
     else:
         return None
 
@@ -259,7 +269,9 @@ def get_synonyms(word):
 ########################################################################
 
 
-def random_deletion(words, p, excluding_indexes: Optional[Sequence[int]] = None):
+def random_deletion(
+    words, p, excluding_indexes: Optional[Sequence[int]] = None
+):
     """
     remove each word with probability p.
 
@@ -349,7 +361,9 @@ def swap_word(new_words, indexes, allow_indexes):
 ########################################################################
 
 
-def random_insertion(words, n, excluding_indexes: Optional[Sequence[int]] = None):
+def random_insertion(
+    words, n, excluding_indexes: Optional[Sequence[int]] = None
+):
     """
     randomly insert n words.
     """
@@ -394,7 +408,9 @@ def add_word(new_words, indexes, forbidden):
             # new_words.insert(idx, random_synonym)
             # indexes.insert(idx, None)
             new_words[idx:idx] = random_synonym_tokens
-            indexes[idx:idx] = [None for _ in range(len(random_synonym_tokens))]
+            indexes[idx:idx] = [
+                None for _ in range(len(random_synonym_tokens))
+            ]
             return
 
 

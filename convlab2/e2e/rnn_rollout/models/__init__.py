@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2019-present, Facebook, Inc.
 # All rights reserved.
 #
@@ -5,16 +6,13 @@
 # LICENSE file in the root directory of this source tree.
 
 from convlab2.e2e.rnn_rollout.models.latent_clustering_model import (
-    LatentClusteringModel,
-    LatentClusteringLanguageModel,
-)
-from convlab2.e2e.rnn_rollout.models.latent_clustering_model import (
-    LatentClusteringPredictionModel,
     BaselineClusteringModel,
+    LatentClusteringLanguageModel,
+    LatentClusteringModel,
+    LatentClusteringPredictionModel,
 )
-from convlab2.e2e.rnn_rollout.models.selection_model import SelectionModel
 from convlab2.e2e.rnn_rollout.models.rnn_model import RnnModel
-
+from convlab2.e2e.rnn_rollout.models.selection_model import SelectionModel
 
 MODELS = {
     "latent_clustering_model": LatentClusteringModel,

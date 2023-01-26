@@ -1,20 +1,24 @@
-import os
-import torch
-import logging
+# -*- coding: utf-8 -*-
 import json
+import logging
+import os
 import sys
+
+import torch
 
 root_dir = os.path.dirname(
     os.path.dirname(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        )
     )
 )
 sys.path.append(root_dir)
 
+from convlab2.policy.mle.multiwoz.loader import ActPolicyDataLoaderCamrest
+from convlab2.policy.mle.train import MLE_Trainer_Abstract
 from convlab2.policy.rlmodule import MultiDiscretePolicy
 from convlab2.policy.vector.vector_camrest import CamrestVector
-from convlab2.policy.mle.train import MLE_Trainer_Abstract
-from convlab2.policy.mle.multiwoz.loader import ActPolicyDataLoaderCamrest
 from convlab2.util.train_util import init_logging_handler
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -30,7 +34,9 @@ class MLE_Trainer(MLE_Trainer_Abstract):
             vector.state_dim, cfg["h_dim"], vector.da_dim
         ).to(device=DEVICE)
         self.policy.eval()
-        self.policy_optim = torch.optim.Adam(self.policy.parameters(), lr=cfg["lr"])
+        self.policy_optim = torch.optim.Adam(
+            self.policy.parameters(), lr=cfg["lr"]
+        )
 
 
 if __name__ == "__main__":

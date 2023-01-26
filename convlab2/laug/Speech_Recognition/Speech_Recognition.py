@@ -1,10 +1,12 @@
-# coding: UTF-8
-from convlab2.laug.Speech_Recognition.ASR import wav2text
-from convlab2.laug.Speech_Recognition.TTS import text2wav
-from convlab2.laug.Speech_Recognition.multiwoz.span_detection import span_detect
-
+# -*- coding: utf-8 -*-
 import os
 import time
+
+from convlab2.laug.Speech_Recognition.ASR import wav2text
+from convlab2.laug.Speech_Recognition.multiwoz.span_detection import (
+    span_detect,
+)
+from convlab2.laug.Speech_Recognition.TTS import text2wav
 
 
 class Speech_Recognition:

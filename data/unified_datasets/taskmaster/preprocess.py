@@ -1,11 +1,14 @@
+# -*- coding: utf-8 -*-
+import copy
 import json
 import os
-import copy
-import zipfile
-from tqdm import tqdm
 import re
-from convlab2.util.file_util import read_zipped_json, write_zipped_json
+import zipfile
 from pprint import pprint
+
+from tqdm import tqdm
+
+from convlab2.util.file_util import read_zipped_json, write_zipped_json
 
 descriptions = {
     "uber_lyft": {
@@ -303,12 +306,17 @@ def log_ontology(acts, ontology, ori_ontology):
 def preprocess():
     self_dir = os.path.dirname(os.path.abspath(__file__))
     processed_dialogue = []
-    ontology = {"domains": {}, "intents": {}, "binary_dialogue_act": [], "state": {}}
+    ontology = {
+        "domains": {},
+        "intents": {},
+        "binary_dialogue_act": [],
+        "state": {},
+    }
     original_zipped_path = os.path.join(self_dir, "original_data.zip")
     new_dir = os.path.join(self_dir, "original_data")
-    if not os.path.exists(os.path.join(self_dir, "data.zip")) or not os.path.exists(
-        os.path.join(self_dir, "ontology.json")
-    ):
+    if not os.path.exists(
+        os.path.join(self_dir, "data.zip")
+    ) or not os.path.exists(os.path.join(self_dir, "ontology.json")):
         print("unzip to", new_dir)
         print("This may take several minutes")
         archive = zipfile.ZipFile(original_zipped_path, "r")
@@ -344,7 +352,9 @@ def preprocess():
                     for slot in item["required"] + item["optional"]:
                         ori_ontology[item["id"]][slot] = 0
             else:
-                domain = normalize_domain_name(filename.split("/")[-1].split(".")[0])
+                domain = normalize_domain_name(
+                    filename.split("/")[-1].split(".")[0]
+                )
                 ori_ontology[domain] = {}
                 for _, item in json.load(
                     open(os.path.join(new_dir, ontology_filename))
@@ -394,7 +404,8 @@ def preprocess():
                 }
                 idx_count += 1
                 assert (
-                    turns[0]["speaker"] == "user" and turns[-1]["speaker"] == "user"
+                    turns[0]["speaker"] == "user"
+                    and turns[-1]["speaker"] == "user"
                 ), print(turns)
                 for utt_idx, uttr in enumerate(turns):
                     speaker = uttr["speaker"]
@@ -428,7 +439,9 @@ def preprocess():
                                 # if item['name'].split('.', 1)[0] != domain:
                                 #     print(domain, item['name'].split('.', 1), dialogue["original_id"])
                                 slot = item["name"].split(".", 1)[-1]
-                                if slot.endswith(".accept") or slot.endswith(".reject"):
+                                if slot.endswith(".accept") or slot.endswith(
+                                    ".reject"
+                                ):
                                     slot = slot[:-7]
                                 if slot not in ori_ontology[domain]:
                                     # print(domain, item['name'].split('.', 1), dialogue["original_id"])
@@ -445,7 +458,9 @@ def preprocess():
                                     print()
                                 assert (
                                     turn["utterance"][
-                                        segment["start_index"] : segment["end_index"]
+                                        segment["start_index"] : segment[
+                                            "end_index"
+                                        ]
                                     ]
                                     == segment["text"]
                                 )
@@ -469,7 +484,9 @@ def preprocess():
             # pprint(ori_ontology)
         # save ontology json
         json.dump(
-            ontology, open(os.path.join(self_dir, "ontology.json"), "w"), indent=2
+            ontology,
+            open(os.path.join(self_dir, "ontology.json"), "w"),
+            indent=2,
         )
         json.dump(processed_dialogue, open("data.json", "w"), indent=2)
         write_zipped_json(os.path.join(self_dir, "data.zip"), "data.json")

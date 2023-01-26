@@ -1,11 +1,13 @@
+# -*- coding: utf-8 -*-
 """
 """
 import json
 import os
 import random
-from fuzzywuzzy import fuzz
-from itertools import chain
 from copy import deepcopy
+from itertools import chain
+
+from fuzzywuzzy import fuzz
 
 
 class Database(object):
@@ -27,7 +29,9 @@ class Database(object):
                 os.path.join(
                     os.path.dirname(
                         os.path.dirname(
-                            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                            os.path.dirname(
+                                os.path.dirname(os.path.abspath(__file__))
+                            )
                         )
                     ),
                     "data/multiwoz/db/{}_db.json".format(domain),
@@ -49,8 +53,12 @@ class Database(object):
         if domain == "taxi":
             return [
                 {
-                    "taxi_colors": random.choice(self.dbs[domain]["taxi_colors"]),
-                    "taxi_types": random.choice(self.dbs[domain]["taxi_types"]),
+                    "taxi_colors": random.choice(
+                        self.dbs[domain]["taxi_colors"]
+                    ),
+                    "taxi_types": random.choice(
+                        self.dbs[domain]["taxi_types"]
+                    ),
                     "taxi_phone": "".join(
                         [str(random.randint(1, 9)) for _ in range(11)]
                     ),
@@ -104,33 +112,44 @@ class Database(object):
                         if key.lower() not in record_keys:
                             continue
                         if key == "leaveAt":
-                            val1 = int(val.split(":")[0]) * 100 + int(val.split(":")[1])
-                            val2 = int(record["leaveAt"].split(":")[0]) * 100 + int(
-                                record["leaveAt"].split(":")[1]
+                            val1 = int(val.split(":")[0]) * 100 + int(
+                                val.split(":")[1]
                             )
+                            val2 = int(
+                                record["leaveAt"].split(":")[0]
+                            ) * 100 + int(record["leaveAt"].split(":")[1])
                             if val1 > val2:
                                 break
                         elif key == "arriveBy":
-                            val1 = int(val.split(":")[0]) * 100 + int(val.split(":")[1])
-                            val2 = int(record["arriveBy"].split(":")[0]) * 100 + int(
-                                record["arriveBy"].split(":")[1]
+                            val1 = int(val.split(":")[0]) * 100 + int(
+                                val.split(":")[1]
                             )
+                            val2 = int(
+                                record["arriveBy"].split(":")[0]
+                            ) * 100 + int(record["arriveBy"].split(":")[1])
                             if val1 < val2:
                                 break
                         # elif ignore_open and key in ['destination', 'departure', 'name']:
-                        elif ignore_open and key in ["destination", "departure"]:
+                        elif ignore_open and key in [
+                            "destination",
+                            "departure",
+                        ]:
                             continue
                         elif record[key].strip() == "?":
                             # '?' matches any constraint
                             continue
                         else:
                             if not fuzzy_match:
-                                if val.strip().lower() != record[key].strip().lower():
+                                if (
+                                    val.strip().lower()
+                                    != record[key].strip().lower()
+                                ):
                                     break
                             else:
                                 if (
                                     fuzz.partial_ratio(
-                                        val.strip().lower(), record[key].strip().lower()
+                                        val.strip().lower(),
+                                        record[key].strip().lower(),
                                     )
                                     < fuzzy_match_ratio
                                 ):

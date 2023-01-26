@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
 import json
 import zipfile
 from collections import Counter
-from pprint import pprint
-from convlab2.policy.rule.crosswoz.rule_simulator import Simulator
 from copy import deepcopy
+from pprint import pprint
+
+from convlab2.policy.rule.crosswoz.rule_simulator import Simulator
 
 
 def read_zipped_json(filepath, filename):
@@ -119,7 +121,9 @@ def eval_begin_da_predict(data):
                         da.append(["Inform", domain, slot, v])
                 else:
                     assert 0
-            predict_golden.append({"predict": sorted(da), "golden": turn["dialog_act"]})
+            predict_golden.append(
+                {"predict": sorted(da), "golden": turn["dialog_act"]}
+            )
             break
     print(
         "First turn da prediction given state precision/recall/f1",
@@ -140,16 +144,22 @@ def eval_simulator_performance(data, goal_type=None):
                 if i == 0:
                     simulator.init_session(goal=item["goal"])
                     begin_da_predict_golden.append(
-                        {"predict": simulator.begin_da(), "golden": turn["dialog_act"]}
+                        {
+                            "predict": simulator.begin_da(),
+                            "golden": turn["dialog_act"],
+                        }
                     )
                 else:
                     last_turn = item["messages"][i - 2]
                     usr_da = item["messages"][i - 2]["dialog_act"]
                     sys_da = item["messages"][i - 1]["dialog_act"]
                     simulator.init_session(
-                        goal=item["goal"], state=deepcopy(last_turn["user_state"])
+                        goal=item["goal"],
+                        state=deepcopy(last_turn["user_state"]),
                     )
-                    simulator.state_update(prev_user_da=usr_da, prev_sys_da=sys_da)
+                    simulator.state_update(
+                        prev_user_da=usr_da, prev_sys_da=sys_da
+                    )
                     cur_da = simulator.state_predict()
                     new_state = deepcopy(simulator.state)
                     state_da_predict_golden.append(
@@ -161,7 +171,10 @@ def eval_simulator_performance(data, goal_type=None):
 
     print("begin da", calculateF1(begin_da_predict_golden))
     print("state da", calculateF1(state_da_predict_golden))
-    print("all da", calculateF1(begin_da_predict_golden + state_da_predict_golden))
+    print(
+        "all da",
+        calculateF1(begin_da_predict_golden + state_da_predict_golden),
+    )
     print("joint state", calculateJointState(state_predict_golden))
     print("slot state", calculateSlotState(state_predict_golden))
 
@@ -205,7 +218,9 @@ def eval_state_predict(data):
                 print("predict state update:")
                 pprint(state_update(last_turn["user_state"], new_state))
                 print("golden state:")
-                pprint(state_update(last_turn["user_state"], turn["user_state"]))
+                pprint(
+                    state_update(last_turn["user_state"], turn["user_state"])
+                )
                 print("predict usr da")
                 pprint(cur_da)
                 print("golden usr da")

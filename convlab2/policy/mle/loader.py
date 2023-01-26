@@ -1,11 +1,14 @@
+# -*- coding: utf-8 -*-
 import os
 import pickle
+
 import torch
 import torch.utils.data as data
-from convlab2.util.multiwoz.state import default_state
+
 from convlab2.policy.vector.dataset import ActDataset
 from convlab2.util.dataloader.dataset_dataloader import MultiWOZDataloader
 from convlab2.util.dataloader.module_dataloader import ActPolicyDataloader
+from convlab2.util.multiwoz.state import default_state
 
 
 class ActMLEPolicyDataLoader:
@@ -14,12 +17,19 @@ class ActMLEPolicyDataLoader:
 
     def _build_data(self, root_dir, processed_dir):
         self.data = {}
-        data_loader = ActPolicyDataloader(dataset_dataloader=MultiWOZDataloader())
+        data_loader = ActPolicyDataloader(
+            dataset_dataloader=MultiWOZDataloader()
+        )
         for part in ["train", "val", "test"]:
             self.data[part] = []
             raw_data = data_loader.load_data(data_key=part, role="sys")[part]
 
-            for belief_state, context_dialog_act, terminated, dialog_act in zip(
+            for (
+                belief_state,
+                context_dialog_act,
+                terminated,
+                dialog_act,
+            ) in zip(
                 raw_data["belief_state"],
                 raw_data["context_dialog_act"],
                 raw_data["terminated"],
@@ -29,7 +39,9 @@ class ActMLEPolicyDataLoader:
                 state["belief_state"] = belief_state
                 state["user_action"] = context_dialog_act[-1]
                 state["system_action"] = (
-                    context_dialog_act[-2] if len(context_dialog_act) > 1 else {}
+                    context_dialog_act[-2]
+                    if len(context_dialog_act) > 1
+                    else {}
                 )
                 state["terminated"] = terminated
                 action = dialog_act
@@ -42,13 +54,17 @@ class ActMLEPolicyDataLoader:
 
         os.makedirs(processed_dir)
         for part in ["train", "val", "test"]:
-            with open(os.path.join(processed_dir, "{}.pkl".format(part)), "wb") as f:
+            with open(
+                os.path.join(processed_dir, "{}.pkl".format(part)), "wb"
+            ) as f:
                 pickle.dump(self.data[part], f)
 
     def _load_data(self, processed_dir):
         self.data = {}
         for part in ["train", "val", "test"]:
-            with open(os.path.join(processed_dir, "{}.pkl".format(part)), "rb") as f:
+            with open(
+                os.path.join(processed_dir, "{}.pkl".format(part)), "rb"
+            ) as f:
                 self.data[part] = pickle.load(f)
 
     def create_dataset(self, part, batchsz):

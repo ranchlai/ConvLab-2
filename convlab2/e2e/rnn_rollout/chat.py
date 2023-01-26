@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2017-present, Facebook, Inc.
 # All rights reserved.
 #
@@ -6,17 +7,20 @@
 
 import argparse
 import itertools
-import convlab2.e2e.rnn_rollout.domain as domain
 
+import convlab2.e2e.rnn_rollout.domain as domain
 import convlab2.e2e.rnn_rollout.utils as utils
-from convlab2.e2e.rnn_rollout.utils import ContextGenerator, ManualContextGenerator
 from convlab2.e2e.rnn_rollout.agent import (
-    RnnAgent,
-    HumanAgent,
-    RnnRolloutAgent,
     HierarchicalAgent,
+    HumanAgent,
+    RnnAgent,
+    RnnRolloutAgent,
 )
 from convlab2.e2e.rnn_rollout.dialog import Dialog, DialogLogger
+from convlab2.e2e.rnn_rollout.utils import (
+    ContextGenerator,
+    ManualContextGenerator,
+)
 
 
 class Chat(object):
@@ -41,10 +45,17 @@ def main():
     parser = argparse.ArgumentParser(description="chat utility")
     parser.add_argument("--model_file", type=str, help="model file")
     parser.add_argument(
-        "--domain", type=str, default="object_division", help="domain for the dialogue"
+        "--domain",
+        type=str,
+        default="object_division",
+        help="domain for the dialogue",
     )
-    parser.add_argument("--context_file", type=str, default="", help="context file")
-    parser.add_argument("--temperature", type=float, default=1.0, help="temperature")
+    parser.add_argument(
+        "--context_file", type=str, default="", help="context file"
+    )
+    parser.add_argument(
+        "--temperature", type=float, default=1.0, help="temperature"
+    )
     parser.add_argument(
         "--num_types", type=int, default=3, help="number of object types"
     )
@@ -62,7 +73,10 @@ def main():
     )
     parser.add_argument("--seed", type=int, default=1, help="random seed")
     parser.add_argument(
-        "--smart_ai", action="store_true", default=False, help="make AI smart again"
+        "--smart_ai",
+        action="store_true",
+        default=False,
+        help="make AI smart again",
     )
     parser.add_argument(
         "--ai_starts",
@@ -70,8 +84,12 @@ def main():
         default=False,
         help="allow AI to start the dialog",
     )
-    parser.add_argument("--ref_text", type=str, help="file with the reference text")
-    parser.add_argument("--cuda", action="store_true", default=False, help="use CUDA")
+    parser.add_argument(
+        "--ref_text", type=str, help="file with the reference text"
+    )
+    parser.add_argument(
+        "--cuda", action="store_true", default=False, help="use CUDA"
+    )
     args = parser.parse_args()
 
     utils.use_cuda(args.cuda)

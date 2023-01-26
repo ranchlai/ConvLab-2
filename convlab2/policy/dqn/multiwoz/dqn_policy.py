@@ -1,6 +1,8 @@
-from convlab2.policy.dqn import DQN
-import os
+# -*- coding: utf-8 -*-
 import json
+import os
+
+from convlab2.policy.dqn import DQN
 
 
 class DQNPolicy(DQN):
@@ -13,7 +15,10 @@ class DQNPolicy(DQN):
     ):
         super().__init__(is_train=is_train, dataset=dataset)
         with open(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json"), "r"
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "config.json"
+            ),
+            "r",
         ) as f:
             cfg = json.load(f)
         self.load(cfg["load"])

@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
 import os
 import sys
-from convlab2.policy.hdsa.multiwoz.predictor import HDSA_predictor
-from convlab2.policy.hdsa.multiwoz.generator import HDSA_generator
+
 from convlab2.policy import Policy
+from convlab2.policy.hdsa.multiwoz.generator import HDSA_generator
+from convlab2.policy.hdsa.multiwoz.predictor import HDSA_predictor
 
 DEFAULT_DIRECTORY = "model"
 DEFAULT_ARCHIVE_FILE = os.path.join(DEFAULT_DIRECTORY, "hdsa.zip")

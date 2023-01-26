@@ -1,10 +1,12 @@
+# -*- coding: utf-8 -*-
+import json
+
+import numpy as np
 import torch
 import torch.autograd as autograd
 import torch.nn as nn
 import torch.optim as optim
-import json
 from LSTMCRF2 import BiLSTM_CRF
-import numpy as np
 from progressbar import progressbar
 
 
@@ -54,7 +56,9 @@ weights = torch.stack(weights, 0).float()
 
 tag_to_ix = {"O": 0, "F": 1, "R": 2, START_TAG: 3, STOP_TAG: 4}
 
-model = BiLSTM_CRF(len(word_to_ix), tag_to_ix, EMBEDDING_DIM, HIDDEN_DIM, weights)
+model = BiLSTM_CRF(
+    len(word_to_ix), tag_to_ix, EMBEDDING_DIM, HIDDEN_DIM, weights
+)
 model
 
 optimizer = optim.Adam(model.parameters(), lr=0.001)
@@ -84,7 +88,8 @@ for epoch in range(30):
     print("loss:" + str(losses / n))
     with torch.no_grad():
         precheck_sent = prepare_sequence(
-            "okay , i like to do , weight training and cycling .".split(), word_to_ix
+            "okay , i like to do , weight training and cycling .".split(),
+            word_to_ix,
         )
         print(model(precheck_sent))
         precheck_sent = prepare_sequence(training_data[1][0], word_to_ix)

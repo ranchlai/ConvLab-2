@@ -1,7 +1,8 @@
+# -*- coding: utf-8 -*-
 import os
 import zipfile
-import torch
 
+import torch
 from pytorch_pretrained_bert.file_utils import PYTORCH_PRETRAINED_BERT_CACHE
 from pytorch_pretrained_bert.modeling import BertForSequenceClassification
 from pytorch_pretrained_bert.tokenization import BertTokenizer
@@ -75,7 +76,9 @@ def truncate_seq_pair(tokens_a, tokens_b, max_length):
 class InputExample(object):
     """A single training/test example for simple sequence classification."""
 
-    def __init__(self, file, turn, guid, text_m, text_a, text_b=None, label=None):
+    def __init__(
+        self, file, turn, guid, text_m, text_a, text_b=None, label=None
+    ):
         """Constructs a InputExample.
 
         Args:
@@ -99,7 +102,9 @@ class InputExample(object):
 class InputFeatures(object):
     """A single set of features of data."""
 
-    def __init__(self, file, turn, input_ids, input_mask, segment_ids, label_id):
+    def __init__(
+        self, file, turn, input_ids, input_mask, segment_ids, label_id
+    ):
         self.file = file
         self.turn = turn
         self.input_ids = input_ids
@@ -119,7 +124,9 @@ class HDSA_predictor:
             archive = zipfile.ZipFile(archive_file, "r")
             archive.extractall(model_dir)
 
-        load_dir = os.path.join(model_dir, "checkpoints/predictor/save_step_23926")
+        load_dir = os.path.join(
+            model_dir, "checkpoints/predictor/save_step_23926"
+        )
         self.db = Database()
         if not os.path.exists(load_dir):
             archive = zipfile.ZipFile("{}.zip".format(load_dir), "r")
@@ -175,7 +182,9 @@ class HDSA_predictor:
         usr = state["history"][-1][-1]
         sys = state["history"][-2][-1] if len(state["history"]) > 1 else None
 
-        example = InputExample(file, turn, guid, src, usr, sys, hierarchical_act_vecs)
+        example = InputExample(
+            file, turn, guid, src, usr, sys, hierarchical_act_vecs
+        )
         kb["domain"] = self.domain
         return example, kb
 
@@ -233,7 +242,9 @@ class HDSA_predictor:
         example, kb = self.gen_example(state)
         feature = self.gen_feature(example)
 
-        input_ids = torch.tensor([feature.input_ids], dtype=torch.long).to(self.device)
+        input_ids = torch.tensor([feature.input_ids], dtype=torch.long).to(
+            self.device
+        )
         input_masks = torch.tensor([feature.input_mask], dtype=torch.long).to(
             self.device
         )
@@ -242,7 +253,9 @@ class HDSA_predictor:
         )
 
         with torch.no_grad():
-            logits = self.model(input_ids, segment_ids, input_masks, labels=None)
+            logits = self.model(
+                input_ids, segment_ids, input_masks, labels=None
+            )
             logits = torch.sigmoid(logits)
         preds = (logits > 0.4).float()
         preds_numpy = preds.cpu().nonzero().squeeze().numpy()

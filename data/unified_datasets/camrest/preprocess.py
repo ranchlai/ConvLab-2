@@ -1,14 +1,17 @@
-import zipfile
-import json
-import os
+# -*- coding: utf-8 -*-
 import copy
+import json
 import logging
+import os
+import zipfile
 
 logging.basicConfig(level=logging.INFO)
 import sys
 
 sys.path.append(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
 )
 # print(sys.path[-1])
 
@@ -39,7 +42,15 @@ camrest_desc = {
     },
 }
 
-all_slots = ["food", "area", "name", "pricerange", "phone", "address", "postcode"]
+all_slots = [
+    "food",
+    "area",
+    "name",
+    "pricerange",
+    "phone",
+    "address",
+    "postcode",
+]
 
 
 def convert_da(utt, da, all_intent, all_binary_das):
@@ -51,7 +62,12 @@ def convert_da(utt, da, all_intent, all_binary_das):
 
         if _intent == "nooffer":
             converted_da["binary"].append(
-                {"intent": _intent, "domain": "restaurant", "slot": "", "value": ""}
+                {
+                    "intent": _intent,
+                    "domain": "restaurant",
+                    "slot": "",
+                    "value": "",
+                }
             )
 
             if {
@@ -61,7 +77,12 @@ def convert_da(utt, da, all_intent, all_binary_das):
                 "value": "",
             } not in all_binary_das:
                 all_binary_das.append(
-                    {"intent": _intent, "domain": "restaurant", "slot": "", "value": ""}
+                    {
+                        "intent": _intent,
+                        "domain": "restaurant",
+                        "slot": "",
+                        "value": "",
+                    }
                 )
             continue
 
@@ -72,7 +93,12 @@ def convert_da(utt, da, all_intent, all_binary_das):
             v = v.lower()
             if _intent == "request":
                 converted_da["binary"].append(
-                    {"intent": _intent, "domain": "restaurant", "slot": s, "value": ""}
+                    {
+                        "intent": _intent,
+                        "domain": "restaurant",
+                        "slot": s,
+                        "value": "",
+                    }
                 )
 
                 if {
@@ -94,7 +120,12 @@ def convert_da(utt, da, all_intent, all_binary_das):
             if s in cat_slot_values:
                 assert v in cat_slot_values[s] + ["dontcare"]
                 converted_da["categorical"].append(
-                    {"intent": _intent, "domain": "restaurant", "slot": s, "value": v}
+                    {
+                        "intent": _intent,
+                        "domain": "restaurant",
+                        "slot": s,
+                        "value": v,
+                    }
                 )
 
             else:
@@ -158,7 +189,9 @@ def convert_state(state, state_slots):
     return ret_state
 
 
-def get_state_update(prev_state, cur_state, prev_turns, cur_user_da, dialog_id):
+def get_state_update(
+    prev_state, cur_state, prev_turns, cur_user_da, dialog_id
+):
     # cur_user_da: List of non-categorical slot-values
     diff_state = {}
     state_update = {"categorical": [], "non-categorical": []}
@@ -243,9 +276,9 @@ def preprocess():
     original_zipped_path = os.path.join(self_dir, "original_data.zip")
     if not os.path.exists(original_zipped_path):
         raise FileNotFoundError(original_zipped_path)
-    if not os.path.exists(os.path.join(self_dir, "data.zip")) or not os.path.exists(
-        os.path.join(self_dir, "ontology.json")
-    ):
+    if not os.path.exists(
+        os.path.join(self_dir, "data.zip")
+    ) or not os.path.exists(os.path.join(self_dir, "ontology.json")):
         # print('unzip to', new_dir)
         # print('This may take several minutes')
         archive = zipfile.ZipFile(original_zipped_path, "r")
@@ -264,7 +297,11 @@ def preprocess():
         dialog_id = 1
         for data_split in data_splits:
             data = json.load(
-                open(os.path.join(self_dir, extract_dir, "{}.json".format(data_split)))
+                open(
+                    os.path.join(
+                        self_dir, extract_dir, "{}.json".format(data_split)
+                    )
+                )
             )
 
             for i, d in enumerate(data):
@@ -287,7 +324,9 @@ def preprocess():
                     sys_text = turn["sys"]["sent"].lower()
                     sys_da = turn["sys"]["dialog_act"]
 
-                    cur_state = convert_state(turn["usr"]["slu"], all_state_slots)
+                    cur_state = convert_state(
+                        turn["usr"]["slu"], all_state_slots
+                    )
                     cur_user_da = convert_da(
                         usr_text, usr_da, all_intent, all_binary_das
                     )
@@ -329,7 +368,12 @@ def preprocess():
         write_zipped_json(os.path.join(self_dir, "data.zip"), "data.json")
         os.remove("data.json")
 
-        new_ont = {"domains": {}, "intents": {}, "binary_dialogue_act": [], "state": {}}
+        new_ont = {
+            "domains": {},
+            "intents": {},
+            "binary_dialogue_act": [],
+            "state": {},
+        }
 
         new_ont["state"]["restaurant"] = {}
         for ss in all_state_slots:
@@ -349,15 +393,23 @@ def preprocess():
             new_ont["domains"]["restaurant"]["slots"][s] = {
                 "description": camrest_desc["restaurant"][s],
                 "is_categorical": True if s in cat_slot_values else False,
-                "possible_values": cat_slot_values[s] if s in cat_slot_values else [],
+                "possible_values": cat_slot_values[s]
+                if s in cat_slot_values
+                else [],
             }
         json.dump(
-            new_ont, open(os.path.join(self_dir, "./ontology.json"), "w"), indent=4
+            new_ont,
+            open(os.path.join(self_dir, "./ontology.json"), "w"),
+            indent=4,
         )
 
     else:
-        all_data = read_zipped_json(os.path.join(self_dir, "./data.zip"), "data.json")
-        new_ont = json.load(open(os.path.join(self_dir, "./ontology.json"), "r"))
+        all_data = read_zipped_json(
+            os.path.join(self_dir, "./data.zip"), "data.json"
+        )
+        new_ont = json.load(
+            open(os.path.join(self_dir, "./ontology.json"), "r")
+        )
 
     return all_data, new_ont
 

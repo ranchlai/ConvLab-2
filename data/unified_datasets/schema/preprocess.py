@@ -1,13 +1,16 @@
-import zipfile
+# -*- coding: utf-8 -*-
 import json
 import os
-from pprint import pprint
-from copy import deepcopy
-from collections import Counter
-from tqdm import tqdm
-import numpy as np
-from convlab2.util.file_util import read_zipped_json, write_zipped_json
 import re
+import zipfile
+from collections import Counter
+from copy import deepcopy
+from pprint import pprint
+
+import numpy as np
+from tqdm import tqdm
+
+from convlab2.util.file_util import read_zipped_json, write_zipped_json
 
 self_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -105,17 +108,17 @@ def pharse_in_sen(phrase, sen):
 
 def number_in_sen(word, sen):
     if " " + word + " " in sen:
-        return sen.index(" " + word + " ") + 1, sen.index(" " + word + " ") + 1 + len(
-            word
-        )
+        return sen.index(" " + word + " ") + 1, sen.index(
+            " " + word + " "
+        ) + 1 + len(word)
     elif " " + word + "." in sen:
-        return sen.index(" " + word + ".") + 1, sen.index(" " + word + ".") + 1 + len(
-            word
-        )
+        return sen.index(" " + word + ".") + 1, sen.index(
+            " " + word + "."
+        ) + 1 + len(word)
     elif " " + word + "," in sen:
-        return sen.index(" " + word + ",") + 1, sen.index(" " + word + ",") + 1 + len(
-            word
-        )
+        return sen.index(" " + word + ",") + 1, sen.index(
+            " " + word + ","
+        ) + 1 + len(word)
     elif (
         sen.startswith(word + " ")
         or sen.startswith(word + ".")
@@ -153,20 +156,28 @@ def number_in_sen(word, sen):
 def sys_intent():
     return {
         "inform": {"description": "Inform the value for a slot to the user."},
-        "request": {"description": "Request the value of a slot from the user."},
+        "request": {
+            "description": "Request the value of a slot from the user."
+        },
         "confirm": {
             "description": "Confirm the value of a slot before making a transactional service call."
         },
-        "offer": {"description": "Offer a certain value for a slot to the user."},
+        "offer": {
+            "description": "Offer a certain value for a slot to the user."
+        },
         "notify_success": {
             "description": "Inform the user that their request was successful."
         },
-        "notify_failure": {"description": "Inform the user that their request failed."},
+        "notify_failure": {
+            "description": "Inform the user that their request failed."
+        },
         "inform_count": {
             "description": "Inform the number of items found that satisfy the user's request."
         },
         "offer_intent": {"description": "Offer a new intent to the user."},
-        "req_more": {"description": "Asking the user if they need anything else."},
+        "req_more": {
+            "description": "Asking the user if they need anything else."
+        },
         "goodbye": {"description": "End the dialogue."},
     }
 
@@ -183,10 +194,14 @@ def usr_intent():
             "description": "Agree to the intent which has been offered by the system."
         },
         "inform": {"description": "Inform the value of a slot to the system."},
-        "request": {"description": "Request the value of a slot from the system."},
+        "request": {
+            "description": "Request the value of a slot from the system."
+        },
         "affirm": {"description": "Agree to the system's proposition. "},
         "negate": {"description": "Deny the system's proposal."},
-        "select": {"description": "Select a result being offered by the system."},
+        "select": {
+            "description": "Select a result being offered by the system."
+        },
         "request_alts": {
             "description": "Ask for more results besides the ones offered by the system."
         },
@@ -203,16 +218,22 @@ def get_intent():
         "confirm": {
             "description": "Confirm the value of a slot before making a transactional service call."
         },
-        "offer": {"description": "Offer a certain value for a slot to the user."},
+        "offer": {
+            "description": "Offer a certain value for a slot to the user."
+        },
         "notify_success": {
             "description": "Inform the user that their request was successful."
         },
-        "notify_failure": {"description": "Inform the user that their request failed."},
+        "notify_failure": {
+            "description": "Inform the user that their request failed."
+        },
         "inform_count": {
             "description": "Inform the number of items found that satisfy the user's request."
         },
         "offer_intent": {"description": "Offer a new intent to the user."},
-        "req_more": {"description": "Asking the user if they need anything else."},
+        "req_more": {
+            "description": "Asking the user if they need anything else."
+        },
         "goodbye": {"description": "End the dialogue."},
         "inform_intent": {
             "description": "Express the desire to perform a certain task to the system."
@@ -225,7 +246,9 @@ def get_intent():
         },
         "affirm": {"description": "Agree to the system's proposition. "},
         "negate": {"description": "Deny the system's proposal."},
-        "select": {"description": "Select a result being offered by the system."},
+        "select": {
+            "description": "Select a result being offered by the system."
+        },
         "request_alts": {
             "description": "Ask for more results besides the ones offered by the system."
         },
@@ -235,16 +258,21 @@ def get_intent():
 
 def preprocess():
     processed_dialogue = []
-    ontology = {"domains": {}, "intents": {}, "binary_dialogue_act": [], "state": {}}
+    ontology = {
+        "domains": {},
+        "intents": {},
+        "binary_dialogue_act": [],
+        "state": {},
+    }
     ontology["intents"].update(get_intent())
     numerical_slots = {}
     original_zipped_path = os.path.join(self_dir, "original_data.zip")
     new_dir = os.path.join(self_dir, "original_data")
     if not os.path.exists(original_zipped_path):
         raise FileNotFoundError(original_zipped_path)
-    if not os.path.exists(os.path.join(self_dir, "data.zip")) or not os.path.exists(
-        os.path.join(self_dir, "ontology.json")
-    ):
+    if not os.path.exists(
+        os.path.join(self_dir, "data.zip")
+    ) or not os.path.exists(os.path.join(self_dir, "ontology.json")):
         print("unzip to", new_dir)
         print("This may take several minutes")
         archive = zipfile.ZipFile(original_zipped_path, "r")
@@ -264,7 +292,9 @@ def preprocess():
             for schema in data:
                 domain = service2domain(schema["service_name"])
                 ontology["domains"].setdefault(domain, {})
-                ontology["domains"][domain]["description"] = schema["description"]
+                ontology["domains"][domain]["description"] = schema[
+                    "description"
+                ]
                 ontology["domains"][domain].setdefault("slots", {})
                 ontology["state"].setdefault(domain, {})
                 for slot in schema["slots"]:
@@ -277,7 +307,9 @@ def preprocess():
                     # if is_numerical:
                     #     numerical_slots.setdefault(slot['name'].lower(), 1)
                     lower_values = [x.lower() for x in slot["possible_values"]]
-                    ontology["domains"][domain]["slots"][slot["name"].lower()] = {
+                    ontology["domains"][domain]["slots"][
+                        slot["name"].lower()
+                    ] = {
                         "description": slot["description"],
                         "is_categorical": slot["is_categorical"],
                         "possible_values": lower_values,
@@ -303,10 +335,14 @@ def preprocess():
                     for d in data:
                         dialogue = {
                             "dataset": dataset_name,
-                            "data_split": data_split if data_split != "dev" else "val",
+                            "data_split": data_split
+                            if data_split != "dev"
+                            else "val",
                             "dialogue_id": dataset_name + "_" + str(cnt),
                             "original_id": d["dialogue_id"],
-                            "domains": [service2domain(s) for s in d["services"]],
+                            "domains": [
+                                service2domain(s) for s in d["services"]
+                            ],
                             "turns": [],
                         }
                         # if d['dialogue_id'] != '84_00008':
@@ -338,7 +374,9 @@ def preprocess():
                                 domain = service2domain(frame["service"])
                                 for action in frame["actions"]:
                                     intent = action["act"].lower()
-                                    assert intent in ontology["intents"], [intent]
+                                    assert intent in ontology["intents"], [
+                                        intent
+                                    ]
                                     slot = action["slot"].lower()
                                     value_list = action["values"]
                                     if action["act"] in [
@@ -404,7 +442,10 @@ def preprocess():
                                         # always has "count" as the slot, and a single element in values for the number of results obtained by the system.
                                         value = value_list[0]
                                         assert (
-                                            slot in ontology["domains"][domain]["slots"]
+                                            slot
+                                            in ontology["domains"][domain][
+                                                "slots"
+                                            ]
                                         )
                                         (start, end), num = pharse_in_sen(
                                             value, t["utterance"]
@@ -412,9 +453,13 @@ def preprocess():
                                         if num:
                                             assert (
                                                 value.lower()
-                                                == t["utterance"][start:end].lower()
+                                                == t["utterance"][
+                                                    start:end
+                                                ].lower()
                                                 or digit2word[value].lower()
-                                                == t["utterance"][start:end].lower()
+                                                == t["utterance"][
+                                                    start:end
+                                                ].lower()
                                             )
                                             turn["dialogue_act"][
                                                 "non-categorical"
@@ -432,21 +477,25 @@ def preprocess():
                                             )
                                     else:
                                         # have slot & value
-                                        if ontology["domains"][domain]["slots"][slot][
-                                            "is_categorical"
-                                        ]:
+                                        if ontology["domains"][domain][
+                                            "slots"
+                                        ][slot]["is_categorical"]:
                                             for value in value_list:
                                                 value = value.lower()
                                                 if (
                                                     value
-                                                    not in ontology["domains"][domain][
-                                                        "slots"
-                                                    ][slot]["possible_values"]
+                                                    not in ontology["domains"][
+                                                        domain
+                                                    ]["slots"][slot][
+                                                        "possible_values"
+                                                    ]
                                                     and value != "dontcare"
                                                 ):
-                                                    ontology["domains"][domain][
-                                                        "slots"
-                                                    ][slot]["possible_values"].append(
+                                                    ontology["domains"][
+                                                        domain
+                                                    ]["slots"][slot][
+                                                        "possible_values"
+                                                    ].append(
                                                         value
                                                     )
                                                     print(
@@ -457,9 +506,11 @@ def preprocess():
                                                     )
                                                 assert (
                                                     value
-                                                    in ontology["domains"][domain][
-                                                        "slots"
-                                                    ][slot]["possible_values"]
+                                                    in ontology["domains"][
+                                                        domain
+                                                    ]["slots"][slot][
+                                                        "possible_values"
+                                                    ]
                                                     or value == "dontcare"
                                                 )
                                                 turn["dialogue_act"][
@@ -480,9 +531,15 @@ def preprocess():
                                             if num:
                                                 assert (
                                                     value.lower()
-                                                    == t["utterance"][start:end].lower()
-                                                    or digit2word[value].lower()
-                                                    == t["utterance"][start:end].lower()
+                                                    == t["utterance"][
+                                                        start:end
+                                                    ].lower()
+                                                    or digit2word[
+                                                        value
+                                                    ].lower()
+                                                    == t["utterance"][
+                                                        start:end
+                                                    ].lower()
                                                 )
                                                 turn["dialogue_act"][
                                                     "non-categorical"
@@ -491,9 +548,9 @@ def preprocess():
                                                         "intent": intent,
                                                         "domain": domain,
                                                         "slot": slot.lower(),
-                                                        "value": t["utterance"][
-                                                            start:end
-                                                        ].lower(),
+                                                        "value": t[
+                                                            "utterance"
+                                                        ][start:end].lower(),
                                                         "start": start,
                                                         "end": end,
                                                     }
@@ -501,12 +558,19 @@ def preprocess():
                                         else:
                                             # span info in frame['slots']
                                             for value in value_list:
-                                                for slot_info in frame["slots"]:
+                                                for slot_info in frame[
+                                                    "slots"
+                                                ]:
                                                     start = slot_info["start"]
-                                                    end = slot_info["exclusive_end"]
+                                                    end = slot_info[
+                                                        "exclusive_end"
+                                                    ]
                                                     if (
-                                                        slot_info["slot"] == slot
-                                                        and t["utterance"][start:end]
+                                                        slot_info["slot"]
+                                                        == slot
+                                                        and t["utterance"][
+                                                            start:end
+                                                        ]
                                                         == value
                                                     ):
                                                         turn["dialogue_act"][
@@ -574,9 +638,11 @@ def preprocess():
                                                     frame["service"]
                                                 ),
                                                 "slot": slot,
-                                                "value": d["turns"][utt_idx - 1][
-                                                    "utterance"
-                                                ][start:end].lower(),
+                                                "value": d["turns"][
+                                                    utt_idx - 1
+                                                ]["utterance"][
+                                                    start:end
+                                                ].lower(),
                                                 "utt_idx": utt_idx - 1,
                                                 "start": start,
                                                 "end": end,
@@ -612,13 +678,17 @@ def preprocess():
                                         )
                                         assert slot in state[domain]
                                         value_list = list(
-                                            set([x.lower() for x in value_list])
+                                            set(
+                                                [x.lower() for x in value_list]
+                                            )
                                         )
                                         if state[domain][slot] in value_list:
                                             continue
                                         # new value
                                         candidate_values = value_list
-                                        for prev_user_frame in prev_user_frames:
+                                        for (
+                                            prev_user_frame
+                                        ) in prev_user_frames:
                                             prev_domain = service2domain(
                                                 prev_user_frame["service"]
                                             )
@@ -631,23 +701,26 @@ def preprocess():
                                             ):
                                                 prev_value_list = [
                                                     x.lower()
-                                                    for x in prev_user_frame["state"][
-                                                        "slot_values"
-                                                    ][slot]
+                                                    for x in prev_user_frame[
+                                                        "state"
+                                                    ]["slot_values"][slot]
                                                 ]
                                                 candidate_values = list(
                                                     set(value_list)
                                                     - set(prev_value_list)
                                                 )
                                         assert (
-                                            state[domain][slot] not in candidate_values
+                                            state[domain][slot]
+                                            not in candidate_values
                                         )
                                         assert candidate_values
 
-                                        if ontology["domains"][domain]["slots"][slot][
-                                            "is_categorical"
-                                        ]:
-                                            state_cnt.setdefault("cate_slot_update", 0)
+                                        if ontology["domains"][domain][
+                                            "slots"
+                                        ][slot]["is_categorical"]:
+                                            state_cnt.setdefault(
+                                                "cate_slot_update", 0
+                                            )
                                             state_cnt["cate_slot_update"] += 1
                                             value = candidate_values[0]
                                             state_update["categorical"].append(
@@ -662,35 +735,56 @@ def preprocess():
                                             state_cnt.setdefault(
                                                 "non_cate_slot_update", 0
                                             )
-                                            state_cnt["non_cate_slot_update"] += 1
+                                            state_cnt[
+                                                "non_cate_slot_update"
+                                            ] += 1
                                             span_priority = []
                                             slot_spans_len = len(slot_spans)
                                             all_slot_spans = (
-                                                slot_spans + all_slot_spans_from_da
+                                                slot_spans
+                                                + all_slot_spans_from_da
                                             )
-                                            for span_idx, slot_span in enumerate(
-                                                all_slot_spans
-                                            ):
+                                            for (
+                                                span_idx,
+                                                slot_span,
+                                            ) in enumerate(all_slot_spans):
                                                 priority = 0
-                                                span_domain = slot_span["domain"]
+                                                span_domain = slot_span[
+                                                    "domain"
+                                                ]
                                                 span_slot = slot_span["slot"]
                                                 span_value = slot_span["value"]
                                                 if domain == span_domain:
                                                     priority += 1
                                                 if slot == span_slot:
                                                     priority += 10
-                                                if span_value in candidate_values:
+                                                if (
+                                                    span_value
+                                                    in candidate_values
+                                                ):
                                                     priority += 100
-                                                if span_idx + 1 <= slot_spans_len:
+                                                if (
+                                                    span_idx + 1
+                                                    <= slot_spans_len
+                                                ):
                                                     priority += 0.5
                                                 span_priority.append(priority)
-                                                if span_idx + 1 <= slot_spans_len:
+                                                if (
+                                                    span_idx + 1
+                                                    <= slot_spans_len
+                                                ):
                                                     # slot_spans not run out
-                                                    if max(span_priority) >= 111.5:
+                                                    if (
+                                                        max(span_priority)
+                                                        >= 111.5
+                                                    ):
                                                         break
                                                 else:
                                                     # search in previous da
-                                                    if max(span_priority) >= 111:
+                                                    if (
+                                                        max(span_priority)
+                                                        >= 111
+                                                    ):
                                                         break
                                             if (
                                                 span_priority
@@ -703,30 +797,42 @@ def preprocess():
                                                 #  100.5: 642,
                                                 #  110.5: 125,
                                                 #  101: 24}
-                                                max_priority = max(span_priority)
+                                                max_priority = max(
+                                                    span_priority
+                                                )
                                                 state_cnt.setdefault(
                                                     "max_priority", Counter()
                                                 )
                                                 state_cnt["max_priority"][
                                                     max_priority
                                                 ] += 1
-                                                span_idx = np.argmax(span_priority)
+                                                span_idx = np.argmax(
+                                                    span_priority
+                                                )
                                                 ele = all_slot_spans[span_idx]
-                                                state_update["non-categorical"].append(
+                                                state_update[
+                                                    "non-categorical"
+                                                ].append(
                                                     {
                                                         "domain": domain,
                                                         "slot": slot,
                                                         "value": ele["value"],
-                                                        "utt_idx": ele["utt_idx"],
+                                                        "utt_idx": ele[
+                                                            "utt_idx"
+                                                        ],
                                                         "start": ele["start"],
                                                         "end": ele["end"],
                                                     }
                                                 )
-                                                state[domain][slot] = ele["value"]
+                                                state[domain][slot] = ele[
+                                                    "value"
+                                                ]
                                             else:
                                                 # not found
                                                 value = candidate_values[0]
-                                                state_update["non-categorical"].append(
+                                                state_update[
+                                                    "non-categorical"
+                                                ].append(
                                                     {
                                                         "domain": domain,
                                                         "slot": slot,
@@ -735,7 +841,9 @@ def preprocess():
                                                 )
                                                 state[domain][slot] = value
                                                 # print(t['utterance'])
-                                                non_cate_slot_update_fail_cnt += 1
+                                                non_cate_slot_update_fail_cnt += (
+                                                    1
+                                                )
                                             non_cate_slot_update_cnt += 1
                                 turn["state"] = deepcopy(state)
                                 turn["state_update"] = state_update
@@ -745,7 +853,9 @@ def preprocess():
 
                             for da in turn["dialogue_act"]["binary"]:
                                 if da not in ontology["binary_dialogue_act"]:
-                                    ontology["binary_dialogue_act"].append(deepcopy(da))
+                                    ontology["binary_dialogue_act"].append(
+                                        deepcopy(da)
+                                    )
                             dialogue["turns"].append(deepcopy(turn))
                         assert len(dialogue["turns"]) % 2 == 0
                         dialogue["turns"].pop()
@@ -757,7 +867,9 @@ def preprocess():
             ontology["binary_dialogue_act"], key=lambda x: x["intent"]
         )
         json.dump(
-            ontology, open(os.path.join(self_dir, "ontology.json"), "w"), indent=2
+            ontology,
+            open(os.path.join(self_dir, "ontology.json"), "w"),
+            indent=2,
         )
         json.dump(processed_dialogue, open("data.json", "w"), indent=2)
         write_zipped_json(os.path.join(self_dir, "data.zip"), "data.json")
@@ -767,7 +879,9 @@ def preprocess():
                 num_train_dialog, num_train_utt
             )
         )
-        print(non_cate_slot_update_fail_cnt, non_cate_slot_update_cnt)  # 395 162399
+        print(
+            non_cate_slot_update_fail_cnt, non_cate_slot_update_cnt
+        )  # 395 162399
 
     else:
         # read from file

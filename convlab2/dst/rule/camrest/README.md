@@ -10,7 +10,7 @@ from convlab2.dst.rule.camrest import RuleDST
 
 dst = RuleDST()
 
-# Action is a dict. Its keys are strings(type) and its values are list of lists. 
+# Action is a dict. Its keys are strings(type) and its values are list of lists.
 # The type may be one of ('inform', 'request', 'nooffer').
 
 # For example, the action below has a key "inform".

@@ -1,7 +1,8 @@
-# coding: UTF-8
+# -*- coding: utf-8 -*-
+import os
+
 from gtts import gTTS
 from pydub.audio_segment import AudioSegment
-import os
 
 
 def text2wav(text, language="en", filename="temp", tld="cn"):

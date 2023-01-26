@@ -5,10 +5,11 @@ Created on Mon Sep 14 11:38:53 2020
 @author: truthless
 """
 
-import os
 import json
-from convlab2.nlg.scgpt.utils import dict2dict, dict2seq
+import os
 import zipfile
+
+from convlab2.nlg.scgpt.utils import dict2dict, dict2seq
 
 
 def read_zipped_json(filepath, filename):
@@ -19,7 +20,9 @@ def read_zipped_json(filepath, filename):
 
 cur_dir = os.path.dirname(os.path.abspath(__file__))
 data_dir = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(cur_dir)))),
+    os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.dirname(cur_dir)))
+    ),
     "data/multiwoz/",
 )
 
@@ -101,9 +104,15 @@ def write_file(name, data):
             for turn in sess:
                 if not turn["usr_da"]:
                     continue
-                turn["usr_da"] = eval(str(turn["usr_da"]).replace("Bus", "Train"))
-                da_seq = dict2seq(dict2dict(turn["usr_da"])).replace("&", "and")
-                domains = set([key.split("-")[0] for key in turn["usr_da"].keys()])
+                turn["usr_da"] = eval(
+                    str(turn["usr_da"]).replace("Bus", "Train")
+                )
+                da_seq = dict2seq(dict2dict(turn["usr_da"])).replace(
+                    "&", "and"
+                )
+                domains = set(
+                    [key.split("-")[0] for key in turn["usr_da"].keys()]
+                )
                 for domain in domains:
                     if (
                         domain not in ["general", "Booking"]
@@ -113,7 +122,9 @@ def write_file(name, data):
                             domain.lower(), domain.lower() + " *", 1
                         )
                         sess_domains[domain] = True
-                da_uttr = turn["usr"].replace(" bus ", " train ").replace("&", "and")
+                da_uttr = (
+                    turn["usr"].replace(" bus ", " train ").replace("&", "and")
+                )
                 f.write(f"{da_seq} & {da_uttr}\n")
 
 

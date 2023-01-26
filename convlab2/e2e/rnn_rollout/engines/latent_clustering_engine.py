@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2017-present, Facebook, Inc.
 # All rights reserved.
 #
@@ -8,12 +9,12 @@ import time
 
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 import torch.nn.functional as F
 from torch import optim
+from torch.autograd import Variable
 
-from convlab2.e2e.rnn_rollout.engines import EngineBase, Criterion
 import convlab2.e2e.rnn_rollout.utils as utils
+from convlab2.e2e.rnn_rollout.engines import Criterion, EngineBase
 
 
 class LatentClusteringEngine(EngineBase):
@@ -40,9 +41,15 @@ class LatentClusteringEngine(EngineBase):
             sel_tgt_probs.append(F.softmax(sel_prob.detach(), dim=1))
         return sel_tgt_probs
 
-    def _append_pad(self, inpts, tgts, sel_tgt_probs, lens, rev_idxs, hid_idxs):
+    def _append_pad(
+        self, inpts, tgts, sel_tgt_probs, lens, rev_idxs, hid_idxs
+    ):
         bsz = inpts[0].size(1)
-        pad = torch.Tensor(bsz).fill_(self.model.word_dict.get_idx("<pad>")).long()
+        pad = (
+            torch.Tensor(bsz)
+            .fill_(self.model.word_dict.get_idx("<pad>"))
+            .long()
+        )
         inpts.append(Variable(pad.unsqueeze(0)))
         tgts.append(Variable(pad))
         sel_tgt_probs.append(sel_tgt_probs[-1].clone())
@@ -59,10 +66,19 @@ class LatentClusteringEngine(EngineBase):
         tgts = [Variable(tgt) for tgt in tgts]
         rev_idxs = [Variable(idx) for idx in rev_idxs]
         hid_idxs = [Variable(idx) for idx in hid_idxs]
-        sel_tgt_probs = self._make_sel_tgt_probs(inpts, lens, rev_idxs, hid_idxs, ctx)
+        sel_tgt_probs = self._make_sel_tgt_probs(
+            inpts, lens, rev_idxs, hid_idxs, ctx
+        )
         sel_tgt = Variable(sel_tgt)
 
-        inpts, tgts, sel_tgt_probs, lens, rev_idxs, hid_idxs = self._append_pad(
+        (
+            inpts,
+            tgts,
+            sel_tgt_probs,
+            lens,
+            rev_idxs,
+            hid_idxs,
+        ) = self._append_pad(
             inpts, tgts, sel_tgt_probs, lens, rev_idxs, hid_idxs
         )
 
@@ -85,7 +101,9 @@ class LatentClusteringEngine(EngineBase):
 
         kldiv_loss, n = 0, 0
         for sel_out, sel_tgt_prob in zip(sel_outs, sel_tgt_probs[1:]):
-            kldiv_loss += self.kldiv(F.log_softmax(sel_out, dim=1), sel_tgt_prob)
+            kldiv_loss += self.kldiv(
+                F.log_softmax(sel_out, dim=1), sel_tgt_prob
+            )
             n += sel_out.size(0)
         kldiv_loss /= n
 
@@ -233,12 +251,19 @@ class LatentClusteringEngine(EngineBase):
             "avg_top3_prob": total_top3_prob,
         }
 
-        return total_valid_loss, total_select_loss, total_partner_ctx_loss, extra
+        return (
+            total_valid_loss,
+            total_select_loss,
+            total_partner_ctx_loss,
+            extra,
+        )
 
 
 class LatentClusteringPredictionEngine(EngineBase):
     def __init__(self, model, args, verbose=False):
-        super(LatentClusteringPredictionEngine, self).__init__(model, args, verbose)
+        super(LatentClusteringPredictionEngine, self).__init__(
+            model, args, verbose
+        )
         self.crit = nn.CrossEntropyLoss(reduction="sum")
         self.model.train()
 
@@ -262,7 +287,9 @@ class LatentClusteringPredictionEngine(EngineBase):
         tgts = [Variable(tgt) for tgt in tgts]
         rev_idxs = [Variable(idx) for idx in rev_idxs]
         hid_idxs = [Variable(idx) for idx in hid_idxs]
-        sel_tgt_probs = self._make_sel_tgt_probs(inpts, lens, rev_idxs, hid_idxs, ctx)
+        sel_tgt_probs = self._make_sel_tgt_probs(
+            inpts, lens, rev_idxs, hid_idxs, ctx
+        )
 
         losses, stats = self.model.forward(inpts, tgts, hid_idxs, ctx, cnt)
 
@@ -374,12 +401,19 @@ class LatentClusteringPredictionEngine(EngineBase):
             "avg_top3_prob": total_top3_prob,
         }
 
-        return total_valid_loss, total_select_loss, total_partner_ctx_loss, extra
+        return (
+            total_valid_loss,
+            total_select_loss,
+            total_partner_ctx_loss,
+            extra,
+        )
 
 
 class LatentClusteringLanguageEngine(EngineBase):
     def __init__(self, model, args, verbose=False):
-        super(LatentClusteringLanguageEngine, self).__init__(model, args, verbose)
+        super(LatentClusteringLanguageEngine, self).__init__(
+            model, args, verbose
+        )
         self.crit = nn.CrossEntropyLoss(reduction="sum")
         self.cluster_crit = nn.NLLLoss(reduction="sum")
 
@@ -395,9 +429,15 @@ class LatentClusteringLanguageEngine(EngineBase):
             sel_tgt_probs.append(F.softmax(sel_prob.detach(), dim=1))
         return sel_tgt_probs
 
-    def _append_pad(self, inpts, tgts, sel_tgt_probs, lens, rev_idxs, hid_idxs):
+    def _append_pad(
+        self, inpts, tgts, sel_tgt_probs, lens, rev_idxs, hid_idxs
+    ):
         bsz = inpts[0].size(1)
-        pad = torch.Tensor(bsz).fill_(self.model.word_dict.get_idx("<pad>")).long()
+        pad = (
+            torch.Tensor(bsz)
+            .fill_(self.model.word_dict.get_idx("<pad>"))
+            .long()
+        )
         inpts.append(Variable(pad.unsqueeze(0)))
         tgts.append(Variable(pad))
         sel_tgt_probs.append(sel_tgt_probs[-1].clone())
@@ -414,9 +454,18 @@ class LatentClusteringLanguageEngine(EngineBase):
         tgts = [Variable(tgt) for tgt in tgts]
         rev_idxs = [Variable(idx) for idx in rev_idxs]
         hid_idxs = [Variable(idx) for idx in hid_idxs]
-        sel_tgt_probs = self._make_sel_tgt_probs(inpts, lens, rev_idxs, hid_idxs, ctx)
+        sel_tgt_probs = self._make_sel_tgt_probs(
+            inpts, lens, rev_idxs, hid_idxs, ctx
+        )
 
-        inpts, tgts, sel_tgt_probs, lens, rev_idxs, hid_idxs = self._append_pad(
+        (
+            inpts,
+            tgts,
+            sel_tgt_probs,
+            lens,
+            rev_idxs,
+            hid_idxs,
+        ) = self._append_pad(
             inpts, tgts, sel_tgt_probs, lens, rev_idxs, hid_idxs
         )
 
@@ -573,4 +622,9 @@ class BaselineClusteringEngine(EngineBase):
             "avg_top3_prob": total_top3_prob,
         }
 
-        return total_valid_loss, total_select_loss, total_partner_ctx_loss, extra
+        return (
+            total_valid_loss,
+            total_select_loss,
+            total_partner_ctx_loss,
+            extra,
+        )

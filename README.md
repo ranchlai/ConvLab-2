@@ -155,7 +155,7 @@ By running `convlab2/nlu/evaluate.py MultiWOZ $model all`:
 | MILU    | 80.29     | 83.63  | 81.92 |
 | SVMNLU  | 74.96     | 50.74  | 60.52 |
 
-### DST 
+### DST
 
 By running `convlab2/dst/evaluate.py MultiWOZ $model`:
 
@@ -230,7 +230,7 @@ evaluation of our pre-trained models are: (joint acc.)
 | test  | 12.4%       | 46.0%       |
 | human_val | 10.6%       | 47.4%       |
 
-`human_val` option will make the model evaluate on the validation set translated by human. 
+`human_val` option will make the model evaluate on the validation set translated by human.
 
 Note: You may want to download pre-traiend BERT models and translation-train SUMBT models provided by us.
 
@@ -247,7 +247,7 @@ Without modifying any code, you could:
 
   - [trained on CrossWOZ-en](https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/crosswoz_en-pytorch_model.bin.zip)
   - [trained on MultiWOZ-zh](https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/multiwoz_zh-pytorch_model.bin.zip)
-  - Say the data set is CrossWOZ (English), (after extraction) just save the pre-trained model under `./convlab2/dst/sumbt/crosswoz_en/pre-trained` and name it with `pytorch_model.bin`. 
+  - Say the data set is CrossWOZ (English), (after extraction) just save the pre-trained model under `./convlab2/dst/sumbt/crosswoz_en/pre-trained` and name it with `pytorch_model.bin`.
 
 ## Issues
 

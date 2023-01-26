@@ -19,4 +19,3 @@ data/camrest/[train/val/test].json
 |Dialog act accuracy|
 |-|
 |0.7459|
-

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2019-present, Facebook, Inc.
 # All rights reserved.
 #
@@ -13,7 +14,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init
 from torch.autograd import Variable
-import torch.nn.functional as F
 
 from convlab2.e2e.rnn_rollout.models.utils import *
 
@@ -21,12 +21,18 @@ from convlab2.e2e.rnn_rollout.models.utils import *
 class MlpContextEncoder(nn.Module):
     """Simple encoder for the dialogue context. Encoder counts and values via MLP."""
 
-    def __init__(self, n, k, nembed, nhid, dropout, init_range, skip_values=False):
+    def __init__(
+        self, n, k, nembed, nhid, dropout, init_range, skip_values=False
+    ):
         super(MlpContextEncoder, self).__init__()
 
         # embeddings for counts and values
-        self.cnt_enc = nn.Sequential(nn.Embedding(n, nembed), nn.Dropout(dropout))
-        self.val_enc = nn.Sequential(nn.Embedding(n, nembed), nn.Dropout(dropout))
+        self.cnt_enc = nn.Sequential(
+            nn.Embedding(n, nembed), nn.Dropout(dropout)
+        )
+        self.val_enc = nn.Sequential(
+            nn.Embedding(n, nembed), nn.Dropout(dropout)
+        )
 
         self.encoder = nn.Sequential(nn.Linear(k * nembed, nhid), nn.Tanh())
 

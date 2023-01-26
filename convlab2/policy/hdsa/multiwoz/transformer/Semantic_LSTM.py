@@ -1,15 +1,18 @@
+# -*- coding: utf-8 -*-
+import copy
+import json
+import math
+import operator
 import sys
+from queue import PriorityQueue
+
 import numpy as np
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
+
 from . import Constants
 from .LSTM import BeamSearchNode
-from queue import PriorityQueue
-import operator
-import json
-import math
-import copy
 
 USE_CUDA = True
 
@@ -37,8 +40,12 @@ class SCLSTM(nn.Module):
                 self.w2h.append(nn.Linear(d_word_vec, d_model * 4).cuda())
                 self.w2h_r.append(nn.Linear(d_word_vec, act_size).cuda())
             else:
-                self.w2h.append(nn.Linear(d_word_vec + i * d_model, d_model * 4).cuda())
-                self.w2h_r.append(nn.Linear(d_word_vec + i * d_model, act_size).cuda())
+                self.w2h.append(
+                    nn.Linear(d_word_vec + i * d_model, d_model * 4).cuda()
+                )
+                self.w2h_r.append(
+                    nn.Linear(d_word_vec + i * d_model, act_size).cuda()
+                )
 
             self.h2h.append(nn.Linear(d_model, d_model * 4).cuda())
             self.h2h_r.append(nn.Linear(d_model, act_size).cuda())
@@ -63,7 +70,9 @@ class SCLSTM(nn.Module):
         """
         # get all gates
         w2h = self.w2h[layer_idx](last_emb)  # (batch_size, hidden_size*4)
-        w2h = torch.split(w2h, self.hidden_size, dim=1)  # (batch_size, hidden_size) * 4
+        w2h = torch.split(
+            w2h, self.hidden_size, dim=1
+        )  # (batch_size, hidden_size) * 4
         h2h = self.h2h[layer_idx](last_hidden[layer_idx])
         h2h = torch.split(h2h, self.hidden_size, dim=1)
 
@@ -83,7 +92,9 @@ class SCLSTM(nn.Module):
 
         cell_hat = torch.tanh(w2h[3] + h2h[3])
         cell = (
-            gate_f * last_cell + gate_i * cell_hat + torch.tanh(self.dc[layer_idx](dt))
+            gate_f * last_cell
+            + gate_i * cell_hat
+            + torch.tanh(self.dc[layer_idx](dt))
         )
         hidden = gate_o * torch.tanh(cell)
 
@@ -129,7 +140,13 @@ class SCLSTM(nn.Module):
         return output, last_hidden, last_cell, last_dt
 
     def forward(
-        self, tgt_seq, enc_output, act_vecs=None, gen=False, sample_size=1, **kwargs
+        self,
+        tgt_seq,
+        enc_output,
+        act_vecs=None,
+        gen=False,
+        sample_size=1,
+        **kwargs
     ):
         """
         Args:
@@ -181,13 +198,17 @@ class SCLSTM(nn.Module):
         """
         batch_size = output.size(0)
         if sample_size == 1:  # take argmax directly w/o sampling
-            topv, topi = F.softmax(output, dim=1).data.topk(1)  # both (batch_size, 1)
+            topv, topi = F.softmax(output, dim=1).data.topk(
+                1
+            )  # both (batch_size, 1)
         else:  # sample over word distribution
             topv, topi = [], []
             word_dis = F.softmax(output, dim=1)  # (batch_size, output_size)
             # sample from part of the output distribution for word variations
             n_candidate = 3
-            word_dis_sort, idx_of_idx = torch.sort(word_dis, dim=1, descending=True)
+            word_dis_sort, idx_of_idx = torch.sort(
+                word_dis, dim=1, descending=True
+            )
             word_dis_sort = word_dis_sort[:, :n_candidate]
             idx_of_idx = idx_of_idx[:, :n_candidate]
             sample_idx = torch.multinomial(word_dis_sort, 1)  # (batch_size,)
@@ -205,7 +226,9 @@ class SCLSTM(nn.Module):
         for b in range(batch_size):
             decoded_words_t[b] = topi[b][0]
 
-        decoded_words_t = Variable(torch.from_numpy(decoded_words_t.astype(np.long)))
+        decoded_words_t = Variable(
+            torch.from_numpy(decoded_words_t.astype(np.long))
+        )
 
         if USE_CUDA:
             decoded_words_t = decoded_words_t.cuda()
@@ -229,15 +252,23 @@ class SCLSTM(nn.Module):
             batch_size = src_enc.size(0)
             decoder_hiddens = src_enc[:, 0, :]
             for idx in range(batch_size):
-                decoder_hidden = decoder_hiddens[idx, :].unsqueeze(0).unsqueeze(1)
-                decoder_cell = decoder_hiddens[idx, :].unsqueeze(0).unsqueeze(1)
+                decoder_hidden = (
+                    decoder_hiddens[idx, :].unsqueeze(0).unsqueeze(1)
+                )
+                decoder_cell = (
+                    decoder_hiddens[idx, :].unsqueeze(0).unsqueeze(1)
+                )
                 decoder_act = act_vecs
 
                 # Beam start
                 self.topk = 1
                 endnodes = []  # stored end nodes
-                number_required = min((self.topk + 1), self.topk - len(endnodes))
-                decoder_input = torch.LongTensor([Constants.SOS]).to(src_enc.device)
+                number_required = min(
+                    (self.topk + 1), self.topk - len(endnodes)
+                )
+                decoder_input = torch.LongTensor([Constants.SOS]).to(
+                    src_enc.device
+                )
 
                 # starting node hidden vector, prevNode, wordid, logp, leng,
                 node = BeamSearchNode(
@@ -279,7 +310,11 @@ class SCLSTM(nn.Module):
                         decoder_cell,
                         decoder_act,
                     ) = self.rnn_step(
-                        decoder_input, decoder_hidden, decoder_cell, decoder_act, None
+                        decoder_input,
+                        decoder_hidden,
+                        decoder_cell,
+                        decoder_act,
+                        None,
                     )
 
                     log_prob, indexes = torch.topk(decoder_output, n_bm)

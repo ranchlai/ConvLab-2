@@ -1,9 +1,11 @@
-from convlab2.dst.dst import DST
-from convlab2.util.crosswoz.state import default_state
-from convlab2.util.crosswoz.dbquery import Database
-from copy import deepcopy
+# -*- coding: utf-8 -*-
 from collections import Counter
+from copy import deepcopy
 from pprint import pprint
+
+from convlab2.dst.dst import DST
+from convlab2.util.crosswoz.dbquery import Database
+from convlab2.util.crosswoz.state import default_state
 
 
 class RuleDST(DST):
@@ -34,7 +36,9 @@ class RuleDST(DST):
         select_domains = Counter([x[1] for x in usr_da if x[0] == "Select"])
         request_domains = Counter([x[1] for x in usr_da if x[0] == "Request"])
         inform_domains = Counter([x[1] for x in usr_da if x[0] == "Inform"])
-        sys_domains = Counter([x[1] for x in sys_da if x[0] in ["Inform", "Recommend"]])
+        sys_domains = Counter(
+            [x[1] for x in sys_da if x[0] in ["Inform", "Recommend"]]
+        )
         if len(select_domains) > 0:
             self.state["cur_domain"] = select_domains.most_common(1)[0][0]
         elif len(request_domains) > 0:
@@ -55,7 +59,9 @@ class RuleDST(DST):
 
         if NoOffer:
             if self.state["cur_domain"]:
-                self.state["belief_state"][self.state["cur_domain"]] = deepcopy(
+                self.state["belief_state"][
+                    self.state["cur_domain"]
+                ] = deepcopy(
                     default_state()["belief_state"][self.state["cur_domain"]]
                 )
 
@@ -105,14 +111,18 @@ class RuleDST(DST):
                         if not self.state["belief_state"][domain]["酒店设施"]:
                             self.state["belief_state"][domain]["酒店设施"] = faci
                         else:
-                            self.state["belief_state"][domain]["酒店设施"] += " " + faci
+                            self.state["belief_state"][domain]["酒店设施"] += (
+                                " " + faci
+                            )
             elif intent == "Request":
                 self.state["request_slots"].append([domain, slot])
 
         return self.state
 
     def query(self):
-        return self.database.query(self.state["belief_state"], self.state["cur_domain"])
+        return self.database.query(
+            self.state["belief_state"], self.state["cur_domain"]
+        )
 
 
 if __name__ == "__main__":

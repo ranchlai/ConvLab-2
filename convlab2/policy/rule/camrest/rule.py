@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
 import torch
+
 from convlab2.policy.policy import Policy
-from convlab2.policy.rule.camrest.rule_based_camrest_bot import RuleBasedCamrestBot
-from convlab2.policy.rule.camrest.policy_agenda_camrest import UserPolicyAgendaCamrest
+from convlab2.policy.rule.camrest.policy_agenda_camrest import (
+    UserPolicyAgendaCamrest,
+)
+from convlab2.policy.rule.camrest.rule_based_camrest_bot import (
+    RuleBasedCamrestBot,
+)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

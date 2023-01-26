@@ -1,6 +1,7 @@
+# -*- coding: utf-8 -*-
+import os
 import pickle
 import re
-import os
 
 import simplejson as json
 
@@ -40,7 +41,10 @@ def prepareSlotValuesIndependent():
         try:
             fin = open(
                 os.path.join(
-                    os.path.dirname(__file__), os.pardir, "db", domain + "_db.json"
+                    os.path.dirname(__file__),
+                    os.pardir,
+                    "db",
+                    domain + "_db.json",
                 )
             )
             db_json = json.load(fin)
@@ -52,75 +56,121 @@ def prepareSlotValuesIndependent():
                         pass
                     elif key == "address":
                         dic.append(
-                            (normalize(val), "[" + domain + "_" + "address" + "]")
+                            (
+                                normalize(val),
+                                "[" + domain + "_" + "address" + "]",
+                            )
                         )
                         if "road" in val:
                             val = val.replace("road", "rd")
                             dic.append(
-                                (normalize(val), "[" + domain + "_" + "address" + "]")
+                                (
+                                    normalize(val),
+                                    "[" + domain + "_" + "address" + "]",
+                                )
                             )
                         elif "rd" in val:
                             val = val.replace("rd", "road")
                             dic.append(
-                                (normalize(val), "[" + domain + "_" + "address" + "]")
+                                (
+                                    normalize(val),
+                                    "[" + domain + "_" + "address" + "]",
+                                )
                             )
                         elif "st" in val:
                             val = val.replace("st", "street")
                             dic.append(
-                                (normalize(val), "[" + domain + "_" + "address" + "]")
+                                (
+                                    normalize(val),
+                                    "[" + domain + "_" + "address" + "]",
+                                )
                             )
                         elif "street" in val:
                             val = val.replace("street", "st")
                             dic.append(
-                                (normalize(val), "[" + domain + "_" + "address" + "]")
+                                (
+                                    normalize(val),
+                                    "[" + domain + "_" + "address" + "]",
+                                )
                             )
                     elif key == "name":
-                        dic.append((normalize(val), "[" + domain + "_" + "name" + "]"))
+                        dic.append(
+                            (normalize(val), "[" + domain + "_" + "name" + "]")
+                        )
                         if "b & b" in val:
                             val = val.replace("b & b", "bed and breakfast")
                             dic.append(
-                                (normalize(val), "[" + domain + "_" + "name" + "]")
+                                (
+                                    normalize(val),
+                                    "[" + domain + "_" + "name" + "]",
+                                )
                             )
                         elif "bed and breakfast" in val:
                             val = val.replace("bed and breakfast", "b & b")
                             dic.append(
-                                (normalize(val), "[" + domain + "_" + "name" + "]")
+                                (
+                                    normalize(val),
+                                    "[" + domain + "_" + "name" + "]",
+                                )
                             )
                         elif "hotel" in val and "gonville" not in val:
                             val = val.replace("hotel", "")
                             dic.append(
-                                (normalize(val), "[" + domain + "_" + "name" + "]")
+                                (
+                                    normalize(val),
+                                    "[" + domain + "_" + "name" + "]",
+                                )
                             )
                         elif "restaurant" in val:
                             val = val.replace("restaurant", "")
                             dic.append(
-                                (normalize(val), "[" + domain + "_" + "name" + "]")
+                                (
+                                    normalize(val),
+                                    "[" + domain + "_" + "name" + "]",
+                                )
                             )
                     elif key == "postcode":
                         dic.append(
-                            (normalize(val), "[" + domain + "_" + "postcode" + "]")
+                            (
+                                normalize(val),
+                                "[" + domain + "_" + "postcode" + "]",
+                            )
                         )
                     elif key == "phone":
                         dic.append((val, "[" + domain + "_" + "phone" + "]"))
                     elif key == "trainID":
-                        dic.append((normalize(val), "[" + domain + "_" + "id" + "]"))
+                        dic.append(
+                            (normalize(val), "[" + domain + "_" + "id" + "]")
+                        )
                     elif key == "department":
                         dic.append(
-                            (normalize(val), "[" + domain + "_" + "department" + "]")
+                            (
+                                normalize(val),
+                                "[" + domain + "_" + "department" + "]",
+                            )
                         )
 
                     # NORMAL DELEX
                     elif key == "area":
                         dic_area.append(
-                            (normalize(val), "[" + "value" + "_" + "area" + "]")
+                            (
+                                normalize(val),
+                                "[" + "value" + "_" + "area" + "]",
+                            )
                         )
                     elif key == "food":
                         dic_food.append(
-                            (normalize(val), "[" + "value" + "_" + "food" + "]")
+                            (
+                                normalize(val),
+                                "[" + "value" + "_" + "food" + "]",
+                            )
                         )
                     elif key == "pricerange":
                         dic_price.append(
-                            (normalize(val), "[" + "value" + "_" + "pricerange" + "]")
+                            (
+                                normalize(val),
+                                "[" + "value" + "_" + "pricerange" + "]",
+                            )
                         )
                     else:
                         pass
@@ -129,19 +179,32 @@ def prepareSlotValuesIndependent():
             pass
 
         if domain == "hospital":
-            dic.append((normalize("Hills Rd"), "[" + domain + "_" + "address" + "]"))
-            dic.append((normalize("Hills Road"), "[" + domain + "_" + "address" + "]"))
-            dic.append((normalize("CB20QQ"), "[" + domain + "_" + "postcode" + "]"))
+            dic.append(
+                (normalize("Hills Rd"), "[" + domain + "_" + "address" + "]")
+            )
+            dic.append(
+                (normalize("Hills Road"), "[" + domain + "_" + "address" + "]")
+            )
+            dic.append(
+                (normalize("CB20QQ"), "[" + domain + "_" + "postcode" + "]")
+            )
             dic.append(("01223245151", "[" + domain + "_" + "phone" + "]"))
             dic.append(("1223245151", "[" + domain + "_" + "phone" + "]"))
             dic.append(("0122324515", "[" + domain + "_" + "phone" + "]"))
             dic.append(
-                (normalize("Addenbrookes Hospital"), "[" + domain + "_" + "name" + "]")
+                (
+                    normalize("Addenbrookes Hospital"),
+                    "[" + domain + "_" + "name" + "]",
+                )
             )
 
         elif domain == "police":
-            dic.append((normalize("Parkside"), "[" + domain + "_" + "address" + "]"))
-            dic.append((normalize("CB11JG"), "[" + domain + "_" + "postcode" + "]"))
+            dic.append(
+                (normalize("Parkside"), "[" + domain + "_" + "address" + "]")
+            )
+            dic.append(
+                (normalize("CB11JG"), "[" + domain + "_" + "postcode" + "]")
+            )
             dic.append(("01223358966", "[" + domain + "_" + "phone" + "]"))
             dic.append(("1223358966", "[" + domain + "_" + "phone" + "]"))
             dic.append(
@@ -172,7 +235,9 @@ def prepareSlotValuesIndependent():
     for ent in db_json:
         for key, val in ent.items():
             if key == "departure" or key == "destination":
-                dic.append((normalize(val), "[" + "value" + "_" + "place" + "]"))
+                dic.append(
+                    (normalize(val), "[" + "value" + "_" + "place" + "]")
+                )
 
     # add specific values:
     for key in [

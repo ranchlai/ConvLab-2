@@ -10,7 +10,7 @@ from convlab2.dst.rule.multiwoz import RuleDST
 
 dst = RuleDST()
 
-# Action is a dict. Its keys are strings(domain-type pairs, both uppercase and lowercase is OK) and its values are list of lists. 
+# Action is a dict. Its keys are strings(domain-type pairs, both uppercase and lowercase is OK) and its values are list of lists.
 # The domain may be one of ('Attraction', 'Hospital', 'Booking', 'Hotel', 'Restaurant', 'Taxi', 'Train', 'Police').
 # The type may be "inform" or "request".
 

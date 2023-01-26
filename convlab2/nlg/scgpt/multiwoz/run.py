@@ -1,31 +1,39 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
+# -*- coding: utf-8 -*-
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import argparse
 import logging
-from tqdm import trange
-
-import torch
-import torch.nn.functional as F
-import numpy as np
-
 import sys
 
+import numpy as np
+import torch
+import torch.nn.functional as F
+from tqdm import trange
 from transformers import (
-    GPT2Config,
-    OpenAIGPTConfig,
-    XLNetConfig,
-    TransfoXLConfig,
-    XLMConfig,
     CTRLConfig,
+    CTRLLMHeadModel,
+    CTRLTokenizer,
+    GPT2Config,
+    GPT2LMHeadModel,
+    GPT2Tokenizer,
+    OpenAIGPTConfig,
+    OpenAIGPTLMHeadModel,
+    OpenAIGPTTokenizer,
+    TransfoXLConfig,
+    TransfoXLLMHeadModel,
+    TransfoXLTokenizer,
+    XLMConfig,
+    XLMTokenizer,
+    XLMWithLMHeadModel,
+    XLNetConfig,
+    XLNetLMHeadModel,
+    XLNetTokenizer,
 )
-
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
-from transformers import OpenAIGPTLMHeadModel, OpenAIGPTTokenizer
-from transformers import XLNetLMHeadModel, XLNetTokenizer
-from transformers import TransfoXLLMHeadModel, TransfoXLTokenizer
-from transformers import CTRLLMHeadModel, CTRLTokenizer
-from transformers import XLMWithLMHeadModel, XLMTokenizer
-
 
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
@@ -89,7 +97,8 @@ def main():
         default=None,
         type=str,
         required=True,
-        help="Model type selected in the list: " + ", ".join(MODEL_CLASSES.keys()),
+        help="Model type selected in the list: "
+        + ", ".join(MODEL_CLASSES.keys()),
     )
     parser.add_argument(
         "--model_name_or_path",
@@ -118,7 +127,9 @@ def main():
     parser.add_argument("--top_k", type=int, default=50)
     parser.add_argument("--top_p", type=float, default=0.9)
     parser.add_argument(
-        "--no_cuda", action="store_true", help="Avoid using CUDA when available"
+        "--no_cuda",
+        action="store_true",
+        help="Avoid using CUDA when available",
     )
     parser.add_argument(
         "--seed", type=int, default=42, help="random seed for initialization"
@@ -188,17 +199,20 @@ def main():
         encoding_inputs = tokenizer.batch_encode_plus(
             raw_inputs, pad_to_max_length=True, add_special_tokens=False
         )
-        context_tokens = torch.LongTensor(encoding_inputs["input_ids"]).to(args.device)
-        max_length = len(context_tokens[0])
-        attention_mask = torch.LongTensor(encoding_inputs["attention_mask"]).to(
+        context_tokens = torch.LongTensor(encoding_inputs["input_ids"]).to(
             args.device
         )
+        max_length = len(context_tokens[0])
+        attention_mask = torch.LongTensor(
+            encoding_inputs["attention_mask"]
+        ).to(args.device)
         position_ids = attention_mask.cumsum(-1) - 1
         position_ids.masked_fill_(attention_mask == 0, 0)
 
         if args.model_type == "ctrl":
             if not any(
-                context_tokens[0] == x for x in tokenizer.control_codes.values()
+                context_tokens[0] == x
+                for x in tokenizer.control_codes.values()
             ):
                 logger.info(
                     "WARNING! You are not starting your generation from a control code so you won't get good results"
@@ -223,7 +237,9 @@ def main():
             examples = [inputs[j]]
             for o in out:
                 text = tokenizer.decode(o, clean_up_tokenization_spaces=True)
-                text = text[: text.find(args.stop_token) if args.stop_token else None]
+                text = text[
+                    : text.find(args.stop_token) if args.stop_token else None
+                ]
                 examples.append(text)
             output_tests.append(examples)
         # break

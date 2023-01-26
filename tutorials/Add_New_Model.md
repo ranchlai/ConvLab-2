@@ -21,7 +21,7 @@ class NLU(Module):
 
     def predict(self, utterance, context=list()):
         """Predict the dialog act of a natural language utterance.
-        
+
         Args:
             utterance (str):
                 A natural language utterance.
@@ -37,7 +37,7 @@ class NLU(Module):
 
 ### Add New Model
 
-In order to add new Model to **ConvLab-2**, we should inherit the `NLU` class above. Here is a piece from BERTNLU. 
+In order to add new Model to **ConvLab-2**, we should inherit the `NLU` class above. Here is a piece from BERTNLU.
 
 
 ```python
@@ -80,7 +80,7 @@ class DST(Module):
 
 ### Add New Model
 
-In order to add new Model to **ConvLab-2**, we should inherit the `DST` class above. 
+In order to add new Model to **ConvLab-2**, we should inherit the `DST` class above.
 
 
 ```python
@@ -94,7 +94,7 @@ class RuleDST(DST):
     def update(self, user_act=None):
         # modify self.state
         return copy.deepcopy(self.state)
-    
+
     def init_session(self):
         """Initialize ``self.state`` with a default state, which ``tatk.util.camrest.state.default_state`` returns."""
         self.state = default_state()
@@ -108,7 +108,7 @@ we will take RulePolicy as an example to show how to add new Policy model to **C
 
 ### Policy interface
 
-To make the new model consistent with **ConvLab-2**, we should follow the Policy interface definition in `convlab2/policy/policy.py`. The key function is `predict` which takes state(dict) as input and outputs dialog act. The state format is depended on specific dataset. For MultiWOZ dataset, it is defined in `convlab2/util/multiwoz/state.py`. 
+To make the new model consistent with **ConvLab-2**, we should follow the Policy interface definition in `convlab2/policy/policy.py`. The key function is `predict` which takes state(dict) as input and outputs dialog act. The state format is depended on specific dataset. For MultiWOZ dataset, it is defined in `convlab2/util/multiwoz/state.py`.
 
 
 ```python
@@ -132,7 +132,7 @@ class Policy(Module):
 
 ### Add New Model
 
-In order to add new Model to **ConvLab-2**, we should inherit the `Policy` class above. 
+In order to add new Model to **ConvLab-2**, we should inherit the `Policy` class above.
 
 
 ```python
@@ -140,7 +140,7 @@ class RulePolicy(Policy):
     def __init__(self, is_train=False, character='sys'):
         ## model initialization here, feel free to change the arguments
         self.policy = UserPolicyAgendaMultiWoz()
-        
+
     def predict(self, state):
         action = self.policy.predict(state)
         return action
@@ -166,7 +166,7 @@ class NLG(Module):
 
     def generate(self, action):
         """Generate a natural language utterance conditioned on the dialog act.
-        
+
         Args:
             action (list of list):
                 The dialog action produced by dialog policy module, which is in dialog act format.
@@ -179,7 +179,7 @@ class NLG(Module):
 
 ### Add New Model
 
-In order to add new Model to **ConvLab-2**, we should inherit the `NLG` class above. 
+In order to add new Model to **ConvLab-2**, we should inherit the `NLG` class above.
 
 
 ```python
@@ -200,7 +200,7 @@ we will take Sequicity as an example to show how to add new End-to-End model to 
 
 ### End2End interface
 
-To make the new model consistent with **ConvLab-2**, we should follow the `Agent` interface definition in `convlab2/dialog_agent/agent.py`. The key function is `response` which takes an utterance(str) as input and return an utterance(str). 
+To make the new model consistent with **ConvLab-2**, we should follow the `Agent` interface definition in `convlab2/dialog_agent/agent.py`. The key function is `response` which takes an utterance(str) as input and return an utterance(str).
 
 
 ```python
@@ -235,17 +235,17 @@ class Agent(ABC):
 
 ### Add New Model
 
-In order to add new Model to **ConvLab-2**, we should inherit the `Agent` class above. 
+In order to add new Model to **ConvLab-2**, we should inherit the `Agent` class above.
 
 
 ```python
 class Sequicity(Agent):
     def __init__(self, model_file=None):
         self.init_session()
-        
+
     def response(self, usr):
         return self.generate(usr)
-        
+
     def init_session(self):
         self.belief_span = init()
 ```

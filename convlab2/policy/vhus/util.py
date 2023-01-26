@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 from copy import deepcopy
+
 import numpy as np
 import torch
 
@@ -53,7 +55,9 @@ def padding_data(data):
         sen_length = [len(sen) for sen in sess]
         for j in range(len(sen_length)):
             if j == 0:
-                posts_length.append(np.array([1] + [0] * (max_sentence_num - 1)))
+                posts_length.append(
+                    np.array([1] + [0] * (max_sentence_num - 1))
+                )
             else:
                 posts_length.append(
                     np.array(sen_length[:j] + [0] * (max_sentence_num - j))
@@ -64,7 +68,9 @@ def padding_data(data):
         sen_padded = padding(sess, max_post_length)
         for j, sen in enumerate(sess):
             if j == 0:
-                post_single = np.zeros([max_sentence_num, max_post_length], np.int)
+                post_single = np.zeros(
+                    [max_sentence_num, max_post_length], np.int
+                )
             else:
                 post_single = posts[-1].copy()
                 post_single[j - 1, :] = sen_padded[j - 1]
@@ -72,7 +78,9 @@ def padding_data(data):
             posts.append(post_single)
     """ end padding """
 
-    batch_input["origin_responses"] = torch.LongTensor(origin_responses)  # [B, R]
+    batch_input["origin_responses"] = torch.LongTensor(
+        origin_responses
+    )  # [B, R]
     batch_input["origin_responses_length"] = torch.LongTensor(
         origin_responses_length
     )  # [B]

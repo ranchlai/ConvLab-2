@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 import torch
 import torch.nn as nn
@@ -36,11 +37,15 @@ class DecoderDeep(nn.Module):
         if use_cuda:
             for i in range(n_layer):
                 if i == 0:
-                    self.w2h.append(nn.Linear(input_size, hidden_size * 4).cuda())
+                    self.w2h.append(
+                        nn.Linear(input_size, hidden_size * 4).cuda()
+                    )
                     self.w2h_r.append(nn.Linear(input_size, d_size).cuda())
                 else:
                     self.w2h.append(
-                        nn.Linear(input_size + i * hidden_size, hidden_size * 4).cuda()
+                        nn.Linear(
+                            input_size + i * hidden_size, hidden_size * 4
+                        ).cuda()
                     )
                     self.w2h_r.append(
                         nn.Linear(input_size + i * hidden_size, d_size).cuda()
@@ -48,7 +53,9 @@ class DecoderDeep(nn.Module):
 
                 self.h2h.append(nn.Linear(hidden_size, hidden_size * 4).cuda())
                 self.h2h_r.append(nn.Linear(hidden_size, d_size).cuda())
-                self.dc.append(nn.Linear(d_size, hidden_size, bias=False).cuda())
+                self.dc.append(
+                    nn.Linear(d_size, hidden_size, bias=False).cuda()
+                )
         else:
             for i in range(n_layer):
                 if i == 0:
@@ -56,9 +63,13 @@ class DecoderDeep(nn.Module):
                     self.w2h_r.append(nn.Linear(input_size, d_size))
                 else:
                     self.w2h.append(
-                        nn.Linear(input_size + i * hidden_size, hidden_size * 4)
+                        nn.Linear(
+                            input_size + i * hidden_size, hidden_size * 4
+                        )
                     )
-                    self.w2h_r.append(nn.Linear(input_size + i * hidden_size, d_size))
+                    self.w2h_r.append(
+                        nn.Linear(input_size + i * hidden_size, d_size)
+                    )
 
                 self.h2h.append(nn.Linear(hidden_size, hidden_size * 4))
                 self.h2h_r.append(nn.Linear(hidden_size, d_size))
@@ -78,7 +89,9 @@ class DecoderDeep(nn.Module):
         """
         # get all gates
         w2h = self.w2h[layer_idx](input_t)  # (batch_size, hidden_size*4)
-        w2h = torch.split(w2h, self.hidden_size, dim=1)  # (batch_size, hidden_size) * 4
+        w2h = torch.split(
+            w2h, self.hidden_size, dim=1
+        )  # (batch_size, hidden_size) * 4
         h2h = self.h2h[layer_idx](last_hidden[layer_idx])
         h2h = torch.split(h2h, self.hidden_size, dim=1)
 
@@ -97,7 +110,11 @@ class DecoderDeep(nn.Module):
         dt = gate_r * last_dt
 
         cell_hat = F.tanh(w2h[3] + h2h[3])
-        cell = gate_f * last_cell + gate_i * cell_hat + F.tanh(self.dc[layer_idx](dt))
+        cell = (
+            gate_f * last_cell
+            + gate_i * cell_hat
+            + F.tanh(self.dc[layer_idx](dt))
+        )
         hidden = gate_o * F.tanh(cell)
 
         return hidden, cell, dt
@@ -116,7 +133,9 @@ class DecoderDeep(nn.Module):
             else:
                 pre_hidden = torch.cat(output_hidden, dim=1)
                 input_t = torch.cat((vocab_t, pre_hidden), dim=1)
-                assert input_t.size(1) == self.input_size + i * self.hidden_size
+                assert (
+                    input_t.size(1) == self.input_size + i * self.hidden_size
+                )
 
             _hidden, _cell, _dt = self._step(
                 input_t, last_hidden, last_cell[i], last_dt[i], i
@@ -160,7 +179,9 @@ class DecoderDeep(nn.Module):
         batch_size = input_var.size(0)
         max_len = 55 if gen else input_var.size(1)
 
-        self.output_prob = Variable(torch.zeros(batch_size, max_len, self.output_size))
+        self.output_prob = Variable(
+            torch.zeros(batch_size, max_len, self.output_size)
+        )
         if self.USE_CUDA:
             self.output_prob = self.output_prob.cuda()
 
@@ -221,7 +242,9 @@ class DecoderDeep(nn.Module):
         """
         batch_size = output.size(0)
         if sample_size == 1:  # take argmax directly w/o sampling
-            topv, topi = F.softmax(output, dim=1).data.topk(1)  # both (batch_size, 1)
+            topv, topi = F.softmax(output, dim=1).data.topk(
+                1
+            )  # both (batch_size, 1)
 
         else:  # sample over word distribution
             topv, topi = [], []
@@ -229,7 +252,9 @@ class DecoderDeep(nn.Module):
 
             # sample from part of the output distribution for word variations
             n_candidate = 3
-            word_dis_sort, idx_of_idx = torch.sort(word_dis, dim=1, descending=True)
+            word_dis_sort, idx_of_idx = torch.sort(
+                word_dis, dim=1, descending=True
+            )
             word_dis_sort = word_dis_sort[:, :n_candidate]
             idx_of_idx = idx_of_idx[:, :n_candidate]
             sample_idx = torch.multinomial(word_dis_sort, 1)  # (batch_size,)
@@ -249,7 +274,9 @@ class DecoderDeep(nn.Module):
             word = dataset.index2word[idx.item()]
             decoded_words[b] += word + " "
             decoded_words_t[b][idx] = 1
-        decoded_words_t = Variable(torch.from_numpy(decoded_words_t.astype(np.float32)))
+        decoded_words_t = Variable(
+            torch.from_numpy(decoded_words_t.astype(np.float32))
+        )
 
         if self.USE_CUDA:
             decoded_words_t = decoded_words_t.cuda()
@@ -289,7 +316,9 @@ class DecoderDeep(nn.Module):
             },
         }
 
-        dec_words = [[init_x for _ in range(beam_size)] for _ in range(batch_size)]
+        dec_words = [
+            [init_x for _ in range(beam_size)] for _ in range(batch_size)
+        ]
         """
 		bs_idx=0 => [ { 'history': ['SOS', 'B', 'EOS'], logProb: [0, -0.01, -0.01] }, lastStates: {} ...] (beam_size)
 		bs_idx=1 => [ { 'history': ['SOS', 'B', 'EOS'], logProb: [0, -0.01, -0.01] }, lastStates: {} ...] (beam_size)
@@ -320,10 +349,16 @@ class DecoderDeep(nn.Module):
                             last_word, dataset, batch_size=1
                         )
                         dis, cur_hid, cur_cell, cur_dt = self.rnn_step(
-                            last_word_dis, last_hid, last_cell, last_dt, gen=True
+                            last_word_dis,
+                            last_hid,
+                            last_cell,
+                            last_dt,
+                            gen=True,
                         )
 
-                        dis = dis.squeeze(0)  # (bs=1, output_size) => (output_size)
+                        dis = dis.squeeze(
+                            0
+                        )  # (bs=1, output_size) => (output_size)
                         dis = torch.log(
                             F.softmax(dis, dim=0)
                         )  # + sum(beam['logProb'])) / math.pow(1+len(beam['logProb']), alpha)
@@ -332,8 +367,14 @@ class DecoderDeep(nn.Module):
                         )  # size: (beam_size)
                         # iter over candidate beams for each history
                         for cand_idx in range(beam_size):
-                            cand_word = dataset.index2word[vocab_idx[cand_idx].item()]
-                            cand_beam = {"history": [], "logProb": [], "lastStates": {}}
+                            cand_word = dataset.index2word[
+                                vocab_idx[cand_idx].item()
+                            ]
+                            cand_beam = {
+                                "history": [],
+                                "logProb": [],
+                                "lastStates": {},
+                            }
                             cand_beam["history"] += beam["history"]
                             cand_beam["history"].append(cand_word)
                             cand_beam["logProb"] += beam["logProb"]
@@ -353,7 +394,8 @@ class DecoderDeep(nn.Module):
                 # length normalization (-1 in len if for no need to consider init logProb 0)
                 cand_pool = sorted(
                     cand_pool,
-                    key=lambda x: sum(x["logProb"]) / pow(len(x["logProb"]) - 1, alpha),
+                    key=lambda x: sum(x["logProb"])
+                    / pow(len(x["logProb"]) - 1, alpha),
                     reverse=True,
                 )
                 dec_words[batch_idx] = cand_pool[:beam_size]

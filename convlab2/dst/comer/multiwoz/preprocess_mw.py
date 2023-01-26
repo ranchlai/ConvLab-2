@@ -1,8 +1,11 @@
+# -*- coding: utf-8 -*-
 import argparse
-import torch
-from convlab2.dst.comer.multiwoz.dataloader import dataset
 import json
 import os
+
+import torch
+
+from convlab2.dst.comer.multiwoz.dataloader import dataset
 
 parser = argparse.ArgumentParser(description="preprocess.py")
 from convlab2.dst.comer.multiwoz.convert_mw import bert, tokenizer
@@ -30,7 +33,9 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "-save_data", default="data/save_data", help="Output file for the prepared data"
+    "-save_data",
+    default="data/save_data",
+    help="Output file for the prepared data",
 )
 
 parser.add_argument("-shuffle", type=int, default=0, help="Shuffle data")
@@ -87,7 +92,9 @@ def makeData(srcFile, tgtDicts):
             tv = [[tgtDicts[w] for w in ws] for ws in tWords]
             tgt_vtmp += [tv]
 
-            tpv = [[[tgtDicts[w] for w in ws] for ws in wss] for wss in tvWords]
+            tpv = [
+                [[tgtDicts[w] for w in ws] for ws in wss] for wss in tvWords
+            ]
             src_vtmp += [tpv]
 
         count += 1

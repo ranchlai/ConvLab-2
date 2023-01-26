@@ -1,17 +1,23 @@
 # -*- coding: utf-8 -*-
-import torch
-import os
 import json
+import os
 import zipfile
-from convlab2.util.file_util import cached_path
+
+import torch
+
 from convlab2.policy.mle.mle import MLEAbstract
 from convlab2.policy.rlmodule import MultiDiscretePolicy
 from convlab2.policy.vector.vector_crosswoz import CrossWozVector
+from convlab2.util.file_util import cached_path
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-DEFAULT_DIRECTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
-DEFAULT_ARCHIVE_FILE = os.path.join(DEFAULT_DIRECTORY, "mle_policy_crosswoz.zip")
+DEFAULT_DIRECTORY = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "models"
+)
+DEFAULT_ARCHIVE_FILE = os.path.join(
+    DEFAULT_DIRECTORY, "mle_policy_crosswoz.zip"
+)
 
 
 class MLE(MLEAbstract):
@@ -29,7 +35,10 @@ class MLE(MLEAbstract):
         )
 
         with open(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json"), "r"
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "config.json"
+            ),
+            "r",
         ) as f:
             cfg = json.load(f)
 
@@ -47,7 +56,9 @@ class MLE(MLEAbstract):
             if not model_file:
                 raise Exception("No model for MLE Policy is specified!")
             archive_file = cached_path(model_file)
-        model_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "save")
+        model_dir = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "save"
+        )
         if not os.path.exists(model_dir):
             os.mkdir(model_dir)
         if not os.path.exists(os.path.join(model_dir, "best_mle.pol.mdl")):

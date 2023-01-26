@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
 import json
 import os
 import random
 import zipfile
+
 from convlab2.util.file_util import cached_path
 
 
@@ -28,7 +30,15 @@ def auto_download():
 
 
 # loading databases
-domains = ["restaurant", "hotel", "attraction", "train", "hospital", "taxi", "police"]
+domains = [
+    "restaurant",
+    "hotel",
+    "attraction",
+    "train",
+    "hospital",
+    "taxi",
+    "police",
+]
 dbs = {}
 auto_download()
 for domain in domains:
@@ -75,14 +85,18 @@ def query(domain, constraints, ignore_open=True):
                 if key not in record:
                     continue
                 if key == "leaveAt":
-                    val1 = int(val.split(":")[0]) * 100 + int(val.split(":")[1])
+                    val1 = int(val.split(":")[0]) * 100 + int(
+                        val.split(":")[1]
+                    )
                     val2 = int(record["leaveAt"].split(":")[0]) * 100 + int(
                         record["leaveAt"].split(":")[1]
                     )
                     if val1 > val2:
                         break
                 elif key == "arriveBy":
-                    val1 = int(val.split(":")[0]) * 100 + int(val.split(":")[1])
+                    val1 = int(val.split(":")[0]) * 100 + int(
+                        val.split(":")[1]
+                    )
                     val2 = int(record["arriveBy"].split(":")[0]) * 100 + int(
                         record["arriveBy"].split(":")[1]
                     )

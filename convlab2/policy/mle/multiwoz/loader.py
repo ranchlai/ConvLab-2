@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 import os
-from convlab2.policy.vector.vector_multiwoz import MultiWozVector
+
 from convlab2.policy.mle.loader import ActMLEPolicyDataLoader
+from convlab2.policy.vector.vector_multiwoz import MultiWozVector
 
 
 class ActMLEPolicyDataLoaderMultiWoz(ActMLEPolicyDataLoader):

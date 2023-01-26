@@ -4,6 +4,7 @@
 Control the invocation of all modules
 """
 import copy
+
 from deploy.ctrl.model import ModelCtrl
 from deploy.utils import DeployError
 

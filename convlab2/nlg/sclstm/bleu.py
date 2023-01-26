@@ -1,9 +1,9 @@
+# -*- coding: utf-8 -*-
 import argparse
 import sys
 import time
 
-from nltk.translate.bleu_score import corpus_bleu, SmoothingFunction
-
+from nltk.translate.bleu_score import SmoothingFunction, corpus_bleu
 
 # def delexicalise(sent,dact): # for domain4
 # 	feat = SoftDActFormatter().parse(dact,keepValues=True)
@@ -91,7 +91,11 @@ def score_woz(res_file, ignore=False):
                 feat = line.strip().split(":")[1][1:]
 
                 if feat not in feat2content:
-                    feat2content[feat] = [[], [], []]  # [ [refs], [bases], [gens] ]
+                    feat2content[feat] = [
+                        [],
+                        [],
+                        [],
+                    ]  # [ [refs], [bases], [gens] ]
                 continue
 
             if "Target" in line:
@@ -119,7 +123,10 @@ def get_bleu(feat2content, template=False, ignore=False):
     print("Start", test_type, file=sys.stderr)
 
     gen_count = 0
-    list_of_references, hypotheses = {"gen": [], "base": []}, {"gen": [], "base": []}
+    list_of_references, hypotheses = {"gen": [], "base": []}, {
+        "gen": [],
+        "base": [],
+    }
     for feat in feat2content:
         refs, bases, gens = feat2content[feat]
         gen_count += len(gens)
@@ -169,9 +176,14 @@ def get_bleu(feat2content, template=False, ignore=False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train dialogue generator")
     parser.add_argument("--res_file", type=str, help="result file")
-    parser.add_argument("--dataset", type=str, default="woz", help="result file")
     parser.add_argument(
-        "--template", type=bool, default=False, help="test on template-based words"
+        "--dataset", type=str, default="woz", help="result file"
+    )
+    parser.add_argument(
+        "--template",
+        type=bool,
+        default=False,
+        help="test on template-based words",
     )
     parser.add_argument(
         "--ignore",

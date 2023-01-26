@@ -1,29 +1,38 @@
+# -*- coding: utf-8 -*-
 import pprint
 import sys
 
 sys.path.append("/root/NeuralDialog-LaRL")
-import logging
-import torch as th
 import json
+import logging
 import os
 import time
+
+import torch
+import torch as th
+from numpy import array
+
+import convlab2.policy.larl.multiwoz.latent_dialog.corpora as corpora
+import convlab2.policy.larl.multiwoz.latent_dialog.domain as domain
+from convlab2.policy.larl.multiwoz.experiments_woz.dialog_utils import (
+    task_generate,
+)
+from convlab2.policy.larl.multiwoz.latent_dialog.corpora import EOS, PAD
+from convlab2.policy.larl.multiwoz.latent_dialog.data_loaders import (
+    BeliefDbDataLoaders,
+)
+from convlab2.policy.larl.multiwoz.latent_dialog.evaluators import (
+    MultiWozEvaluator,
+)
+from convlab2.policy.larl.multiwoz.latent_dialog.main import train, validate
+from convlab2.policy.larl.multiwoz.latent_dialog.models_task import (
+    SysPerfectBD2Cat,
+)
 from convlab2.policy.larl.multiwoz.latent_dialog.utils import (
     Pack,
     prepare_dirs_loggers,
     set_seed,
 )
-import convlab2.policy.larl.multiwoz.latent_dialog.corpora as corpora
-from convlab2.policy.larl.multiwoz.latent_dialog.data_loaders import BeliefDbDataLoaders
-from convlab2.policy.larl.multiwoz.latent_dialog.evaluators import MultiWozEvaluator
-from convlab2.policy.larl.multiwoz.latent_dialog.models_task import SysPerfectBD2Cat
-from convlab2.policy.larl.multiwoz.latent_dialog.main import train, validate
-import convlab2.policy.larl.multiwoz.latent_dialog.domain as domain
-from convlab2.policy.larl.multiwoz.experiments_woz.dialog_utils import task_generate
-from numpy import array
-import torch
-
-from convlab2.policy.larl.multiwoz.latent_dialog.corpora import EOS, PAD
-
 
 domain_name = "object_division"
 domain_info = domain.get_domain(domain_name)
@@ -122,7 +131,9 @@ if config.use_gpu:
 
 
 if config.use_gpu:
-    model.load_state_dict(torch.load("/root/NeuralDialog-LaRL/larl_model/best-model"))
+    model.load_state_dict(
+        torch.load("/root/NeuralDialog-LaRL/larl_model/best-model")
+    )
 else:
     model.load_state_dict(
         torch.load(

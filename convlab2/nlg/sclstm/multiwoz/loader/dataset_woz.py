@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import random
 import sys
@@ -66,7 +67,10 @@ class DatasetWoz(object):
 
         # Pad a with the PAD symbol
         def pad_seq(seq, max_length):
-            seq += [self.word2index["PAD_token"] for i in range(max_length - len(seq))]
+            seq += [
+                self.word2index["PAD_token"]
+                for i in range(max_length - len(seq))
+            ]
             return seq
 
         # turn list of word indexes into 1-hot matrix
@@ -135,7 +139,15 @@ class DatasetWoz(object):
             label_var = label_var.cuda()
             feats_var = feats_var.cuda()
 
-        return input_var, label_var, feats_var, lengths, refs, featStrs, sv_indexes
+        return (
+            input_var,
+            label_var,
+            feats_var,
+            lengths,
+            refs,
+            featStrs,
+            sv_indexes,
+        )
 
     def _setCardinality(self, template_file):
         self.cardinality = []
@@ -166,12 +178,16 @@ class DatasetWoz(object):
         print("Test:", len(self.data["test"]), file=sys.stderr)
         print(
             "# of batches: Train {} Valid {} Test {}".format(
-                self.n_batch["train"], self.n_batch["valid"], self.n_batch["test"]
+                self.n_batch["train"],
+                self.n_batch["valid"],
+                self.n_batch["test"],
             )
         )
         print(
             "# of batches: Train {} Valid {} Test {}".format(
-                self.n_batch["train"], self.n_batch["valid"], self.n_batch["test"]
+                self.n_batch["train"],
+                self.n_batch["valid"],
+                self.n_batch["test"],
             ),
             file=sys.stderr,
         )
@@ -199,7 +215,9 @@ class DatasetWoz(object):
         # percentage of training data
         if self.percentage < 1:
             _len = len(self.data["train"])
-            self.data["train"] = self.data["train"][: int(_len * self.percentage)]
+            self.data["train"] = self.data["train"][
+                : int(_len * self.percentage)
+            ]
 
         # setup number of batch
         for _type in ["train", "valid", "test"]:

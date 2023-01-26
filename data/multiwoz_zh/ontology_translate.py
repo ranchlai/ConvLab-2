@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 # # Prepare
 
 import json
 import re
+
 from convlab2.util.multiwoz.multiwoz_slot_trans import *
 
 en_pattern = re.compile("[a-zA-Z]")
@@ -121,7 +122,9 @@ def value_translate(domain, slot, value):
             value = value.replace("'", "")
         elif value.replace("'s", "") in vocab_dict["value_set"][domain][slot]:
             value = value.replace("'s", "")
-        elif value.replace("the ", "") in vocab_dict["value_set"][domain][slot]:
+        elif (
+            value.replace("the ", "") in vocab_dict["value_set"][domain][slot]
+        ):
             value = value.replace("the ", "")
 
     try:
@@ -156,4 +159,6 @@ if __name__ == "__main__":
     print(ontology_translate("intent", "request"))
     print(ontology_translate("domain", "police"))
     print(ontology_translate("slot", "attraction", "phone"))
-    print(ontology_translate("value", "attraction", "area", "central district"))
+    print(
+        ontology_translate("value", "attraction", "area", "central district")
+    )

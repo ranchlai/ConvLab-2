@@ -49,7 +49,9 @@ def phrase_idx_utt(value_list, utt_list, constraint=[]):
                 if j == constraint[0]:
                     constraint.append(constraint.pop(0))
                 continue
-            score = fuzz.ratio(" ".join(utt_list[j : j + i]), " ".join(value_list))
+            score = fuzz.ratio(
+                " ".join(utt_list[j : j + i]), " ".join(value_list)
+            )
             if score > threshold:
                 candidates.append((score, j, j + i - 1))
     return (

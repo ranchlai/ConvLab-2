@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import re
-import numpy as np
 from copy import deepcopy
 from pprint import pprint
+
+import numpy as np
+
 from convlab2.evaluator.evaluator import Evaluator
 from convlab2.util.multiwoz.dbquery import Database
 
@@ -82,7 +84,14 @@ mapping = {
 }
 
 time_re = re.compile(r"^(([01]\d|2[0-4]):([0-5]\d)|24:00)$")
-NUL_VALUE = ["", "dont care", "not mentioned", "don't care", "dontcare", "do n't care"]
+NUL_VALUE = [
+    "",
+    "dont care",
+    "not mentioned",
+    "don't care",
+    "dontcare",
+    "do n't care",
+]
 
 
 class MultiWozEvaluator(Evaluator):
@@ -220,9 +229,9 @@ class MultiWozEvaluator(Evaluator):
                             v_constraint = int(v.split(":")[0]) * 100 + int(
                                 v.split(":")[1]
                             )
-                            v_select = int(entity["leaveAt"].split(":")[0]) * 100 + int(
-                                entity["leaveAt"].split(":")[1]
-                            )
+                            v_select = int(
+                                entity["leaveAt"].split(":")[0]
+                            ) * 100 + int(entity["leaveAt"].split(":")[1])
                             if v_constraint <= v_select:
                                 match += 1
                         except (ValueError, IndexError):
@@ -306,7 +315,13 @@ class MultiWozEvaluator(Evaluator):
 
     def _check_value(self, domain, key, value):
         if key == "area":
-            return value.lower() in ["centre", "east", "south", "west", "north"]
+            return value.lower() in [
+                "centre",
+                "east",
+                "south",
+                "west",
+                "north",
+            ]
         elif key == "arriveBy" or key == "leaveAt":
             return time_re.match(value)
         elif key == "day":
@@ -333,7 +348,9 @@ class MultiWozEvaluator(Evaluator):
                 or domain == "attraction"
             )
         elif key == "postcode":
-            return re.match(r"^cb\d{1,3}[a-z]{2,3}$", value) or value == "pe296fl"
+            return (
+                re.match(r"^cb\d{1,3}[a-z]{2,3}$", value) or value == "pe296fl"
+            )
         elif key == "stars":
             return re.match(r"^\d$", value)
         elif key == "trainID":

@@ -4,7 +4,7 @@
 
 No sentence-level annotation. Only annotate domain.
 
-Statistics: 
+Statistics:
 
 |       | \# dialogues | \# utterances | avg. turns | avg. tokens | \# domains |
 | ----- | ------------ | ------------- | ---------- | ----------- | ---------- |

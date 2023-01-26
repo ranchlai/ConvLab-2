@@ -1,12 +1,14 @@
+# -*- coding: utf-8 -*-
 """
 Dataloader base class. Every dataset should inherit this class and implement its own dataloader.
 """
-from abc import ABC, abstractmethod
-import os
 import json
+import os
 import sys
 import zipfile
+from abc import ABC, abstractmethod
 from pprint import pprint
+
 from convlab2.util.file_util import read_zipped_json
 
 
@@ -53,7 +55,9 @@ class MultiWOZDataloader(DatasetDataloader):
         goal=False,
     ):
         if data_dir is None:
-            data_dir = os.path.join(DATA_ROOT, "multiwoz" + ("_zh" if self.zh else ""))
+            data_dir = os.path.join(
+                DATA_ROOT, "multiwoz" + ("_zh" if self.zh else "")
+            )
 
         def da2tuples(dialog_act):
             tuples = []
@@ -82,7 +86,13 @@ class MultiWOZDataloader(DatasetDataloader):
                 ],
             )
         )
-        self.data = {"train": {}, "val": {}, "test": {}, "role": role, "human_val": {}}
+        self.data = {
+            "train": {},
+            "val": {},
+            "test": {},
+            "role": role,
+            "human_val": {},
+        }
         if data_key == "all":
             data_key_list = ["train", "val", "test"]
         else:
@@ -122,7 +132,9 @@ class MultiWOZDataloader(DatasetDataloader):
                             cur_context_dialog_act[-context_window_size:]
                         )
                     if belief_state:
-                        self.data[data_key]["belief_state"].append(turn["metadata"])
+                        self.data[data_key]["belief_state"].append(
+                            turn["metadata"]
+                        )
                     if last_opponent_utterance:
                         self.data[data_key]["last_opponent_utterance"].append(
                             cur_context[-1] if len(cur_context) >= 1 else ""
@@ -134,7 +146,9 @@ class MultiWOZDataloader(DatasetDataloader):
                     if session_id:
                         self.data[data_key]["session_id"].append(sess_id)
                     if span_info:
-                        self.data[data_key]["span_info"].append(turn["span_info"])
+                        self.data[data_key]["span_info"].append(
+                            turn["span_info"]
+                        )
                     if terminated:
                         self.data[data_key]["terminated"].append(
                             i + 2 >= len(sess["log"])
@@ -237,12 +251,18 @@ class CamrestDataloader(DatasetDataloader):
                                 cur_context_dialog_act[-context_window_size:]
                             )
                         if last_opponent_utterance:
-                            self.data[data_key]["last_opponent_utterance"].append(
-                                cur_context[-1] if len(cur_context) >= 1 else ""
+                            self.data[data_key][
+                                "last_opponent_utterance"
+                            ].append(
+                                cur_context[-1]
+                                if len(cur_context) >= 1
+                                else ""
                             )
                         if last_self_utterance:
                             self.data[data_key]["last_self_utterance"].append(
-                                cur_context[-2] if len(cur_context) >= 2 else ""
+                                cur_context[-2]
+                                if len(cur_context) >= 2
+                                else ""
                             )
                         if session_id:
                             self.data[data_key]["session_id"].append(
@@ -287,7 +307,9 @@ class CrossWOZDataloader(DatasetDataloader):
         task_description=False,
     ):
         if data_dir is None:
-            data_dir = os.path.join(DATA_ROOT, "crosswoz" + ("_en" if self.en else ""))
+            data_dir = os.path.join(
+                DATA_ROOT, "crosswoz" + ("_en" if self.en else "")
+            )
 
         def da2tuples(dialog_act):
             tuples = []
@@ -317,7 +339,13 @@ class CrossWOZDataloader(DatasetDataloader):
                 ],
             )
         )
-        self.data = {"train": {}, "val": {}, "test": {}, "role": role, "human_val": {}}
+        self.data = {
+            "train": {},
+            "val": {},
+            "test": {},
+            "role": role,
+            "human_val": {},
+        }
         if data_key == "all":
             data_key_list = ["train", "val", "test"]
         else:
@@ -352,10 +380,22 @@ class CrossWOZDataloader(DatasetDataloader):
                         self.data[data_key]["context_dialog_act"].append(
                             cur_context_dialog_act[-context_window_size:]
                         )
-                    if role in ["usr", "all"] and user_state and turn["role"] == "usr":
-                        self.data[data_key]["user_state"].append(turn["user_state"])
-                    if role in ["sys", "all"] and sys_state and turn["role"] == "sys":
-                        self.data[data_key]["sys_state"].append(turn["sys_state"])
+                    if (
+                        role in ["usr", "all"]
+                        and user_state
+                        and turn["role"] == "usr"
+                    ):
+                        self.data[data_key]["user_state"].append(
+                            turn["user_state"]
+                        )
+                    if (
+                        role in ["sys", "all"]
+                        and sys_state
+                        and turn["role"] == "sys"
+                    ):
+                        self.data[data_key]["sys_state"].append(
+                            turn["sys_state"]
+                        )
                     if role in ["sys", "all"] and sys_state_init:
                         if turn["role"] == "sys":
                             self.data[data_key]["sys_state_init"].append(
@@ -380,7 +420,9 @@ class CrossWOZDataloader(DatasetDataloader):
                     if goal:
                         self.data[data_key]["goal"].append(sess["goal"])
                     if final_goal:
-                        self.data[data_key]["final_goal"].append(sess["final_goal"])
+                        self.data[data_key]["final_goal"].append(
+                            sess["final_goal"]
+                        )
                     if task_description:
                         self.data[data_key]["task_description"].append(
                             sess["task description"]
@@ -398,7 +440,9 @@ class DealOrNotDataloader(DatasetDataloader):
     def load_data(
         self,
         data_dir=os.path.abspath(
-            os.path.join(os.path.abspath(__file__), "../../../../data/deal_or_not")
+            os.path.join(
+                os.path.abspath(__file__), "../../../../data/deal_or_not"
+            )
         ),
         data_key="all",
         role="all",
@@ -415,7 +459,8 @@ class DealOrNotDataloader(DatasetDataloader):
     ):
         def get_tag(tokens, tag):
             return tokens[
-                tokens.index("<" + tag + ">") + 1 : tokens.index("</" + tag + ">")
+                tokens.index("<" + tag + ">")
+                + 1 : tokens.index("</" + tag + ">")
             ]
 
         assert role in ["YOU", "THEM", "all"]
@@ -442,7 +487,9 @@ class DealOrNotDataloader(DatasetDataloader):
             data_key_list = [data_key]
 
         for data_key in data_key_list:
-            archive = zipfile.ZipFile(os.path.join(data_dir, "deal_or_not.zip"), "r")
+            archive = zipfile.ZipFile(
+                os.path.join(data_dir, "deal_or_not.zip"), "r"
+            )
             data = archive.open(f"{data_key}.txt", "r").readlines()
             print("loaded {}, size {}".format(data_key, len(data)))
             for x in info_list:
@@ -486,11 +533,17 @@ class DealOrNotDataloader(DatasetDataloader):
                     if session_id:
                         self.data[data_key]["session_id"].append(count)
                     if terminated:
-                        self.data[data_key]["terminated"].append("<eos>" not in dialog)
+                        self.data[data_key]["terminated"].append(
+                            "<eos>" not in dialog
+                        )
                     if goal:
-                        self.data[data_key]["goal"].append(get_tag(line, "input"))
+                        self.data[data_key]["goal"].append(
+                            get_tag(line, "input")
+                        )
                     if output:
-                        self.data[data_key]["output"].append(get_tag(line, "output"))
+                        self.data[data_key]["output"].append(
+                            get_tag(line, "output")
+                        )
                     if partner_input:
                         self.data[data_key]["partner_input"].append(
                             get_tag(line, "partner_input")
@@ -510,7 +563,8 @@ if __name__ == "__main__":
                 m.load_data(
                     data_dir=os.path.abspath(
                         os.path.join(
-                            os.path.abspath(__file__), "../../../../data/multiwoz"
+                            os.path.abspath(__file__),
+                            "../../../../data/multiwoz",
                         )
                     ),
                     data_key="all",
@@ -536,7 +590,8 @@ if __name__ == "__main__":
                 m.load_data(
                     data_dir=os.path.abspath(
                         os.path.join(
-                            os.path.abspath(__file__), "../../../../data/camrest"
+                            os.path.abspath(__file__),
+                            "../../../../data/camrest",
                         )
                     ),
                     data_key="all",
@@ -560,7 +615,8 @@ if __name__ == "__main__":
                 m.load_data(
                     data_dir=os.path.abspath(
                         os.path.join(
-                            os.path.abspath(__file__), "../../../../data/crosswoz"
+                            os.path.abspath(__file__),
+                            "../../../../data/crosswoz",
                         )
                     ),
                     data_key="all",
@@ -589,7 +645,8 @@ if __name__ == "__main__":
                 m.load_data(
                     data_dir=os.path.abspath(
                         os.path.join(
-                            os.path.abspath(__file__), "../../../../data/deal_or_not"
+                            os.path.abspath(__file__),
+                            "../../../../data/deal_or_not",
                         )
                     ),
                     data_key="all",

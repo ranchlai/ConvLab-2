@@ -1,6 +1,7 @@
+# -*- coding: utf-8 -*-
 import os
-from os.path import join, dirname, abspath
 import random
+from os.path import abspath, dirname, join
 
 root_path = dirname(abspath(__file__))
 

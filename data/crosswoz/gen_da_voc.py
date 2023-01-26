@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 import json
-import zipfile
 import os
+import zipfile
+
 from convlab2.util.crosswoz.lexicalize import delexicalize_da
 
 

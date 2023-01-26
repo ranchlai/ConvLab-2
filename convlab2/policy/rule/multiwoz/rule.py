@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 import torch
+
 from convlab2.policy.policy import Policy
-from convlab2.policy.rule.multiwoz.rule_based_multiwoz_bot import RuleBasedMultiwozBot
 from convlab2.policy.rule.multiwoz.policy_agenda_multiwoz import (
     UserPolicyAgendaMultiWoz,
+)
+from convlab2.policy.rule.multiwoz.rule_based_multiwoz_bot import (
+    RuleBasedMultiwozBot,
 )
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")

@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
+import numpy as np
 import torch.nn as nn
 import torch.optim as optim
-import numpy as np
-from convlab2.policy.larl.multiwoz.latent_dialog.utils import LONG, FLOAT, Pack
+
+from convlab2.policy.larl.multiwoz.latent_dialog.utils import FLOAT, LONG, Pack
 
 
 class OfflineRlAgent(object):
@@ -33,7 +35,11 @@ class OfflineRlAgent(object):
     def print_dialog(self, dialog, reward, stats):
         for t_id, turn in enumerate(dialog):
             if t_id % 2 == 0:
-                print("Usr: {}".format(" ".join([t for t in turn if t != "<pad>"])))
+                print(
+                    "Usr: {}".format(
+                        " ".join([t for t in turn if t != "<pad>"])
+                    )
+                )
             else:
                 print("Sys: {}".format(" ".join(turn)))
         report = ["{}: {}".format(k, v) for k, v in stats.items()]
@@ -67,7 +73,9 @@ class OfflineRlAgent(object):
     def update(self, reward, stats):
         self.all_rewards.append(reward)
         # standardize the reward
-        r = (reward - np.mean(self.all_rewards)) / max(1e-4, np.std(self.all_rewards))
+        r = (reward - np.mean(self.all_rewards)) / max(
+            1e-4, np.std(self.all_rewards)
+        )
         # compute accumulated discounted reward
         g = self.model.np2var(np.array([r]), FLOAT).view(1, 1)
         rewards = []

@@ -1,24 +1,23 @@
-import sys
-import os
-
-import numpy as np
+# -*- coding: utf-8 -*-
 import copy
-from flask import Flask, request, jsonify
+import os
+import random
+import sys
+from pprint import pprint
 from queue import PriorityQueue
 from threading import Thread
 
+import numpy as np
+from flask import Flask, jsonify, request
 
 # Agent
-from convlab2.dialog_agent import PipelineAgent, BiSession
-from convlab2.nlu.milu.multiwoz import MILU
-from convlab2.nlu.jointBERT.multiwoz import BERTNLU
+from convlab2.dialog_agent import BiSession, PipelineAgent
 from convlab2.dst.rule.multiwoz import RuleDST
-from convlab2.policy.rule.multiwoz import RulePolicy
-from convlab2.nlg.template.multiwoz import TemplateNLG
 from convlab2.evaluator.multiwoz_eval import MultiWozEvaluator
-import random
-import numpy as np
-from pprint import pprint
+from convlab2.nlg.template.multiwoz import TemplateNLG
+from convlab2.nlu.jointBERT.multiwoz import BERTNLU
+from convlab2.nlu.milu.multiwoz import MILU
+from convlab2.policy.rule.multiwoz import RulePolicy
 
 rgi_queue = PriorityQueue(maxsize=0)
 rgo_queue = PriorityQueue(maxsize=0)
@@ -88,7 +87,9 @@ def generate_response(in_queue, out_queue):
 
         # last_action = action
         # out_queue.put({'response': response, 'agent_state': (encoded_state, dst_state, last_action)})
-        out_queue.put({"response": response, "agent_state": in_request["agent_state"]})
+        out_queue.put(
+            {"response": response, "agent_state": in_request["agent_state"]}
+        )
         in_queue.task_done()
         out_queue.join()
 

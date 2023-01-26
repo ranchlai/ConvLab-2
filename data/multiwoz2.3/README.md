@@ -20,7 +20,7 @@ If you find our dataset useful and use in your work, please cite the following p
 Three files are included in the zip file:
 
 1. **data.json**: the updated dataset, we add co-reference annotations.
-2. **dialogue_acts.json**: the updated dialogue acts. 
+2. **dialogue_acts.json**: the updated dialogue acts.
 3. **ontology.json**: the ontology is based on MultiWOZ 2.1 and the only difference is slot format, from domain-semi-slot to domain-slot.
 
 All files have similar format as those of previous datasets (https://github.com/budzianowski/multiwoz).
@@ -28,7 +28,7 @@ All files have similar format as those of previous datasets (https://github.com/
 Except for the corrected and co-reference annotations, we also made the following improvements:
 
 1. The field of "turn_id" is added to all utterances so that they could be referred in co-reference annotations.
-2. There are five dialogues having no "dialogue_act" annotations in MultiWOZ 2.1. These dialogues are annotated manually one by one in MultiWOZ-coref 
+2. There are five dialogues having no "dialogue_act" annotations in MultiWOZ 2.1. These dialogues are annotated manually one by one in MultiWOZ-coref
 3. Fixed some garbage characters inside MultiWOZ 2.1
 4. The field of "new_goal" is added to all dialogues. The new goal annotations are extracted from the goal descriptions. Note that, "book" and "fail_book" ("info" and "fail_info") are merged, and redundant domains are removed.
 

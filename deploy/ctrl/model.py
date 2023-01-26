@@ -5,7 +5,8 @@
 
 """
 import copy
-from deploy.utils import MyLock, ResourceLock, DeployError
+
+from deploy.utils import DeployError, MyLock, ResourceLock
 
 
 class ModelCtrl(object):
@@ -39,7 +40,9 @@ class ModelCtrl(object):
                 print("------------implement: " + self.model_id)
                 res_idxs = self.__catch_all_res()
                 try:
-                    self.models = [self.__implement() for _ in range(self.max_core)]
+                    self.models = [
+                        self.__implement() for _ in range(self.max_core)
+                    ]
                 except Exception as e:
                     raise DeployError(
                         "Instantiation failed:%s" % str(e), model=self.model_id
@@ -72,7 +75,9 @@ class ModelCtrl(object):
             getattr(model, "from_cache")(cache)
         self.res_lock.res_leave(res_idx)
         if model is None:
-            raise DeployError("Model has not started yet.", model=self.model_id)
+            raise DeployError(
+                "Model has not started yet.", model=self.model_id
+            )
         else:
             return model
 
@@ -83,7 +88,9 @@ class ModelCtrl(object):
             # get model
             model = self.models[res_idx]
             if model is None:
-                raise DeployError("Model has not started yet.", model=self.model_id)
+                raise DeployError(
+                    "Model has not started yet.", model=self.model_id
+                )
 
             # load cache
             if isfirst:
@@ -105,7 +112,9 @@ class ModelCtrl(object):
 
         except Exception as e:
             if not isinstance(e, DeployError):
-                raise DeployError("running error:%s" % str(e), model=self.model_id)
+                raise DeployError(
+                    "running error:%s" % str(e), model=self.model_id
+                )
             else:
                 raise e
         finally:

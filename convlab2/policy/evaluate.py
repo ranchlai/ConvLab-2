@@ -1,23 +1,25 @@
 # -*- coding: utf-8 -*-
-import numpy as np
-import torch
-import random
-from torch import multiprocessing as mp
-from convlab2.dialog_agent.agent import PipelineAgent
-from convlab2.dialog_agent.session import BiSession
-from convlab2.dialog_agent.env import Environment
-from convlab2.dst.rule.multiwoz import RuleDST
-from convlab2.policy.rule.multiwoz import RulePolicy
-from convlab2.policy.rlmodule import Memory, Transition
-from convlab2.evaluator.multiwoz_eval import MultiWozEvaluator
-from pprint import pprint
+import argparse
+import datetime
 import json
-import matplotlib.pyplot as plt
-import sys
 import logging
 import os
-import datetime
-import argparse
+import random
+import sys
+from pprint import pprint
+
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
+from torch import multiprocessing as mp
+
+from convlab2.dialog_agent.agent import PipelineAgent
+from convlab2.dialog_agent.env import Environment
+from convlab2.dialog_agent.session import BiSession
+from convlab2.dst.rule.multiwoz import RuleDST
+from convlab2.evaluator.multiwoz_eval import MultiWozEvaluator
+from convlab2.policy.rlmodule import Memory, Transition
+from convlab2.policy.rule.multiwoz import RulePolicy
 
 
 def init_logging(log_dir_path, path_suffix=None):
@@ -25,17 +27,21 @@ def init_logging(log_dir_path, path_suffix=None):
         os.makedirs(log_dir_path)
     current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
     if path_suffix:
-        log_file_path = os.path.join(log_dir_path, f"{current_time}_{path_suffix}.log")
+        log_file_path = os.path.join(
+            log_dir_path, f"{current_time}_{path_suffix}.log"
+        )
     else:
-        log_file_path = os.path.join(log_dir_path, "{}.log".format(current_time))
+        log_file_path = os.path.join(
+            log_dir_path, "{}.log".format(current_time)
+        )
 
     stderr_handler = logging.StreamHandler()
     file_handler = logging.FileHandler(log_file_path)
-    format_str = (
-        "%(levelname)s - %(filename)s - %(funcName)s - %(lineno)d - %(message)s"
-    )
+    format_str = "%(levelname)s - %(filename)s - %(funcName)s - %(lineno)d - %(message)s"
     logging.basicConfig(
-        level=logging.DEBUG, handlers=[stderr_handler, file_handler], format=format_str
+        level=logging.DEBUG,
+        handlers=[stderr_handler, file_handler],
+        format=format_str,
     )
 
 
@@ -223,9 +229,12 @@ def evaluate(dataset_name, model_name, load_path, calculate_reward=True):
             logging.info("-" * 50)
             logging.info(f"seed {seed}")
             for i in range(40):
-                sys_response, user_response, session_over, reward = sess.next_turn(
-                    sys_response
-                )
+                (
+                    sys_response,
+                    user_response,
+                    session_over,
+                    reward,
+                ) = sess.next_turn(sys_response)
                 if session_over is True:
                     task_succ = sess.evaluator.task_success()
                     logging.info(f"task success: {task_succ}")
@@ -267,7 +276,9 @@ def evaluate(dataset_name, model_name, load_path, calculate_reward=True):
                     next_s, r, done = env.step(a)
                     logging.info(r)
                     reward.append(r)
-                    if done:  # one due to counting from 0, the one for the last turn
+                    if (
+                        done
+                    ):  # one due to counting from 0, the one for the last turn
                         break
                 logging.info(f"{seed} reward: {np.mean(reward)}")
                 reward_tot.append(np.mean(reward))
@@ -281,17 +292,26 @@ if __name__ == "__main__":
     parser.add_argument(
         "--dataset_name", type=str, default="MultiWOZ", help="name of dataset"
     )
-    parser.add_argument("--model_name", type=str, default="PPO", help="name of model")
-    parser.add_argument("--load_path", type=str, default="", help="path of model")
     parser.add_argument(
-        "--log_path_suffix", type=str, default="", help="suffix of path of log file"
+        "--model_name", type=str, default="PPO", help="name of model"
+    )
+    parser.add_argument(
+        "--load_path", type=str, default="", help="path of model"
+    )
+    parser.add_argument(
+        "--log_path_suffix",
+        type=str,
+        default="",
+        help="suffix of path of log file",
     )
     parser.add_argument(
         "--log_dir_path", type=str, default="log", help="path of log directory"
     )
     args = parser.parse_args()
 
-    init_logging(log_dir_path=args.log_dir_path, path_suffix=args.log_path_suffix)
+    init_logging(
+        log_dir_path=args.log_dir_path, path_suffix=args.log_path_suffix
+    )
     evaluate(
         dataset_name=args.dataset_name,
         model_name=args.model_name,

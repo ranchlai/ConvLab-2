@@ -1,16 +1,20 @@
-import torch
-import numpy as np
+# -*- coding: utf-8 -*-
 import os
 import zipfile
 
+import numpy as np
+import torch
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
-from convlab2.nlg.scgpt.utils import tuple2seq
-from convlab2.nlg.scgpt.decode import set_seed, sample_sequence
+
 from convlab2.nlg.nlg import NLG
+from convlab2.nlg.scgpt.decode import sample_sequence, set_seed
+from convlab2.nlg.scgpt.utils import tuple2seq
 from convlab2.util.file_util import cached_path
 
 MAX_LENGTH = int(10000)  # Hardcoded max length to avoid infinite loop
-DEFAULT_DIRECTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
+DEFAULT_DIRECTORY = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "models"
+)
 DEFAULT_ARCHIVE_FILE = os.path.join(DEFAULT_DIRECTORY, "nlg-gpt-multiwoz.zip")
 
 
@@ -44,7 +48,9 @@ class SCGPT(NLG):
         set_seed(self.seed, torch.cuda.device_count())
 
         model_class, tokenizer_class = GPT2LMHeadModel, GPT2Tokenizer
-        self.tokenizer = tokenizer_class.from_pretrained(self.model_name_or_path)
+        self.tokenizer = tokenizer_class.from_pretrained(
+            self.model_name_or_path
+        )
         self.model = model_class.from_pretrained(self.model_name_or_path)
         self.model.to(self.device)
         self.model.eval()
@@ -75,9 +81,13 @@ class SCGPT(NLG):
         domains = set([item[1] for item in meta])
         for domain in domains:
             if domain != "general" and not self.sess_domains[domain]:
-                raw_text = raw_text.replace(domain.lower(), domain.lower() + " *", 1)
+                raw_text = raw_text.replace(
+                    domain.lower(), domain.lower() + " *", 1
+                )
                 self.sess_domains[domain] = True
-        context_tokens = self.tokenizer.encode(raw_text, add_special_tokens=False)
+        context_tokens = self.tokenizer.encode(
+            raw_text, add_special_tokens=False
+        )
         out = sample_sequence(
             model=self.model,
             context=context_tokens,

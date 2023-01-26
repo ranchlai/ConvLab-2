@@ -1,31 +1,35 @@
+# -*- coding: utf-8 -*-
+import logging
 import os
 import sys
+from collections import defaultdict
+from datetime import datetime
+
 import numpy as np
 import torch as th
 from torch import nn
-from collections import defaultdict
-from convlab2.policy.larl.multiwoz.latent_dialog.enc2dec.base_modules import summary
-from convlab2.policy.larl.multiwoz.latent_dialog.enc2dec.decoders import (
-    TEACH_FORCE,
-    GEN,
-    DecoderRNN,
-)
-from datetime import datetime
-from convlab2.policy.larl.multiwoz.latent_dialog.utils import get_detokenize
+
+from convlab2.policy.larl.multiwoz.latent_dialog import evaluators
 from convlab2.policy.larl.multiwoz.latent_dialog.corpora import EOS, PAD
 from convlab2.policy.larl.multiwoz.latent_dialog.data_loaders import (
-    DealDataLoaders,
     BeliefDbDataLoaders,
+    DealDataLoaders,
 )
-from convlab2.policy.larl.multiwoz.latent_dialog import evaluators
+from convlab2.policy.larl.multiwoz.latent_dialog.enc2dec.base_modules import (
+    summary,
+)
+from convlab2.policy.larl.multiwoz.latent_dialog.enc2dec.decoders import (
+    GEN,
+    TEACH_FORCE,
+    DecoderRNN,
+)
 from convlab2.policy.larl.multiwoz.latent_dialog.record import (
-    record,
-    record_task,
     UniquenessSentMetric,
     UniquenessWordMetric,
+    record,
+    record_task,
 )
-import logging
-
+from convlab2.policy.larl.multiwoz.latent_dialog.utils import get_detokenize
 
 logger = logging.getLogger()
 
@@ -47,10 +51,14 @@ class LossManager(object):
             if loss is None:
                 continue
             aver_loss = (
-                np.average(loss) if window is None else np.average(loss[-window:])
+                np.average(loss)
+                if window is None
+                else np.average(loss[-window:])
             )
             if "nll" in key:
-                str_losses.append("{} PPL {:.3f}".format(key, np.exp(aver_loss)))
+                str_losses.append(
+                    "{} PPL {:.3f}".format(key, np.exp(aver_loss))
+                )
             else:
                 str_losses.append("{} {:.3f}".format(key, aver_loss))
 
@@ -143,7 +151,9 @@ class Reinforce(object):
             if n % 20 == 0:
                 print(
                     "=" * 15,
-                    "{}/{}".format(n, self.ctx_gen.total_size(self.rl_config.nepoch)),
+                    "{}/{}".format(
+                        n, self.ctx_gen.total_size(self.rl_config.nepoch)
+                    ),
                 )
 
             # supervised learning
@@ -152,7 +162,9 @@ class Reinforce(object):
                 and n % self.rl_config.sv_train_freq == 0
             ):
                 # print('-'*15, 'Supervised Learning', '-'*15)
-                self.train_func(self.sys_model, self.train_data, self.sv_config)
+                self.train_func(
+                    self.sys_model, self.train_data, self.sv_config
+                )
                 # print('-'*40)
 
             # roll out and learn
@@ -161,9 +173,14 @@ class Reinforce(object):
             )
 
             # record model performance in terms of several evaluation metrics
-            if self.rl_config.record_freq > 0 and n % self.rl_config.record_freq == 0:
+            if (
+                self.rl_config.record_freq > 0
+                and n % self.rl_config.record_freq == 0
+            ):
                 # TEST ON TRAINING DATA
-                rl_stats = validate_rl(self.dialog_eval, self.ctx_gen, num_episode=400)
+                rl_stats = validate_rl(
+                    self.dialog_eval, self.ctx_gen, num_episode=400
+                )
                 self.learning_exp_file.write(
                     "{}\t{}\t{}\t{}\n".format(
                         n,
@@ -215,14 +232,20 @@ class Reinforce(object):
                 print("-" * 15, "Stop from config", "-" * 15)
                 break
 
-        print("$$$ Load {}-model".format(self.rl_config.reward_best_model_path))
+        print(
+            "$$$ Load {}-model".format(self.rl_config.reward_best_model_path)
+        )
         self.sv_config.batch_size = 32
-        self.sys_model.load_state_dict(th.load(self.rl_config.reward_best_model_path))
+        self.sys_model.load_state_dict(
+            th.load(self.rl_config.reward_best_model_path)
+        )
 
         validate(self.sys_model, self.val_data, self.sv_config)
         validate(self.sys_model, self.test_data, self.sv_config)
 
-        with open(os.path.join(self.rl_config.record_path, "valid_file.txt"), "w") as f:
+        with open(
+            os.path.join(self.rl_config.record_path, "valid_file.txt"), "w"
+        ) as f:
             self.generate_func(
                 self.sys_model,
                 self.val_data,
@@ -232,7 +255,9 @@ class Reinforce(object):
                 dest_f=f,
             )
 
-        with open(os.path.join(self.rl_config.record_path, "test_file.txt"), "w") as f:
+        with open(
+            os.path.join(self.rl_config.record_path, "test_file.txt"), "w"
+        ) as f:
             self.generate_func(
                 self.sys_model,
                 self.test_data,
@@ -244,7 +269,9 @@ class Reinforce(object):
 
 
 class OfflineTaskReinforce(object):
-    def __init__(self, agent, corpus, sv_config, sys_model, rl_config, generate_func):
+    def __init__(
+        self, agent, corpus, sv_config, sys_model, rl_config, generate_func
+    ):
         self.agent = agent
         self.corpus = corpus
         self.sv_config = sv_config
@@ -257,15 +284,22 @@ class OfflineTaskReinforce(object):
 
         # prepare data loader
         train_dial, val_dial, test_dial = self.corpus.get_corpus()
-        self.train_data = BeliefDbDataLoaders("Train", train_dial, self.sv_config)
-        self.sl_train_data = BeliefDbDataLoaders("Train", train_dial, self.sv_config)
+        self.train_data = BeliefDbDataLoaders(
+            "Train", train_dial, self.sv_config
+        )
+        self.sl_train_data = BeliefDbDataLoaders(
+            "Train", train_dial, self.sv_config
+        )
         self.val_data = BeliefDbDataLoaders("Val", val_dial, self.sv_config)
         self.test_data = BeliefDbDataLoaders("Test", test_dial, self.sv_config)
 
         # create log files
         if self.rl_config.record_freq > 0:
             self.learning_exp_file = open(
-                os.path.join(self.rl_config.record_path, "offline-learning.tsv"), "w"
+                os.path.join(
+                    self.rl_config.record_path, "offline-learning.tsv"
+                ),
+                "w",
             )
             self.ppl_val_file = open(
                 os.path.join(self.rl_config.record_path, "val-ppl.tsv"), "w"
@@ -307,7 +341,9 @@ class OfflineTaskReinforce(object):
         self.ppl_test_file.flush()
 
         self.rl_test_file.write(
-            "{}\t{}\t{}\t{}\n".format(n, (t_success + t_match), t_success, t_match)
+            "{}\t{}\t{}\t{}\n".format(
+                n, (t_success + t_match), t_success, t_match
+            )
         )
         self.rl_test_file.flush()
 
@@ -315,7 +351,10 @@ class OfflineTaskReinforce(object):
         try:
             for epoch_id in range(self.rl_config.nepoch):
                 self.train_data.epoch_init(
-                    self.sv_config, shuffle=True, verbose=epoch_id == 0, fix_batch=True
+                    self.sv_config,
+                    shuffle=True,
+                    verbose=epoch_id == 0,
+                    fix_batch=True,
                 )
                 while True:
                     if n % self.rl_config.episode_repeat == 0:
@@ -328,11 +367,15 @@ class OfflineTaskReinforce(object):
                     if n % 50 == 0:
                         print(
                             "Reinforcement Learning {}/{} eposide".format(
-                                n, self.train_data.num_batch * self.rl_config.nepoch
+                                n,
+                                self.train_data.num_batch
+                                * self.rl_config.nepoch,
                             )
                         )
                         self.learning_exp_file.write(
-                            "{}\t{}\n".format(n, np.mean(self.agent.all_rewards[-50:]))
+                            "{}\t{}\n".format(
+                                n, np.mean(self.agent.all_rewards[-50:])
+                            )
                         )
                         self.learning_exp_file.flush()
 
@@ -363,7 +406,9 @@ class OfflineTaskReinforce(object):
                         self.rl_config.record_freq > 0
                         and n % self.rl_config.record_freq == 0
                     ):
-                        self.agent.print_dialog(self.agent.dlg_history, reward, stats)
+                        self.agent.print_dialog(
+                            self.agent.dlg_history, reward, stats
+                        )
                         print("-" * 15, "Recording start", "-" * 15)
                         # save train reward
                         self.learning_exp_file.write(
@@ -380,7 +425,10 @@ class OfflineTaskReinforce(object):
 
                         # PPL & reward on validation
                         valid_loss = self.validate_func(
-                            self.sys_model, self.val_data, self.sv_config, use_py=True
+                            self.sys_model,
+                            self.val_data,
+                            self.sv_config,
+                            use_py=True,
                         )
                         v_success, v_match, v_bleu, v_f1 = self.generate_func(
                             self.sys_model,
@@ -404,7 +452,10 @@ class OfflineTaskReinforce(object):
                         self.rl_val_file.flush()
 
                         test_loss = self.validate_func(
-                            self.sys_model, self.test_data, self.sv_config, use_py=True
+                            self.sys_model,
+                            self.test_data,
+                            self.sv_config,
+                            use_py=True,
                         )
                         t_success, t_match, t_bleu, t_f1 = self.generate_func(
                             self.sys_model,
@@ -445,14 +496,20 @@ class OfflineTaskReinforce(object):
         except KeyboardInterrupt:
             print("RL training stopped from keyboard")
 
-        print("$$$ Load {}-model".format(self.rl_config.reward_best_model_path))
+        print(
+            "$$$ Load {}-model".format(self.rl_config.reward_best_model_path)
+        )
         self.sv_config.batch_size = 32
-        self.sys_model.load_state_dict(th.load(self.rl_config.reward_best_model_path))
+        self.sys_model.load_state_dict(
+            th.load(self.rl_config.reward_best_model_path)
+        )
 
         validate(self.sys_model, self.val_data, self.sv_config, use_py=True)
         validate(self.sys_model, self.test_data, self.sv_config, use_py=True)
 
-        with open(os.path.join(self.rl_config.record_path, "valid_file.txt"), "w") as f:
+        with open(
+            os.path.join(self.rl_config.record_path, "valid_file.txt"), "w"
+        ) as f:
             self.generate_func(
                 self.sys_model,
                 self.val_data,
@@ -462,7 +519,9 @@ class OfflineTaskReinforce(object):
                 dest_f=f,
             )
 
-        with open(os.path.join(self.rl_config.record_path, "test_file.txt"), "w") as f:
+        with open(
+            os.path.join(self.rl_config.record_path, "test_file.txt"), "w"
+        ) as f:
             self.generate_func(
                 self.sys_model,
                 self.test_data,
@@ -548,7 +607,9 @@ def train(model, train_data, val_data, test_data, config, evaluator, gen=None):
     model.train()
     logger.info(summary(model, show_weights=False))
     saved_models = []
-    last_n_model = config.last_n_model if hasattr(config, "last_n_model") else 5
+    last_n_model = (
+        config.last_n_model if hasattr(config, "last_n_model") else 5
+    )
 
     logger.info(
         "***** Training Begins at {} *****".format(
@@ -583,7 +644,9 @@ def train(model, train_data, val_data, test_data, config, evaluator, gen=None):
                         "Train",
                         window=config.print_step,
                         prefix="{}/{}-({:.3f})".format(
-                            batch_cnt % config.ckpt_step, config.ckpt_step, model.kl_w
+                            batch_cnt % config.ckpt_step,
+                            config.ckpt_step,
+                            model.kl_w,
                         ),
                     )
                 )
@@ -598,7 +661,9 @@ def train(model, train_data, val_data, test_data, config, evaluator, gen=None):
                 logger.info("==== Evaluating Model ====")
                 logger.info(train_loss.pprint("Train"))
                 done_epoch += 1
-                logger.info("done epoch {} -> {}".format(done_epoch - 1, done_epoch))
+                logger.info(
+                    "done epoch {} -> {}".format(done_epoch - 1, done_epoch)
+                )
 
                 # generation
                 if gen is not None:
@@ -616,8 +681,13 @@ def train(model, train_data, val_data, test_data, config, evaluator, gen=None):
 
                 # update early stopping stats
                 if valid_loss < best_valid_loss:
-                    if valid_loss <= valid_loss_threshold * config.improve_threshold:
-                        patience = max(patience, done_epoch * config.patient_increase)
+                    if (
+                        valid_loss
+                        <= valid_loss_threshold * config.improve_threshold
+                    ):
+                        patience = max(
+                            patience, done_epoch * config.patient_increase
+                        )
                         valid_loss_threshold = valid_loss
                         logger.info("Update patience to {}".format(patience))
 
@@ -631,7 +701,8 @@ def train(model, train_data, val_data, test_data, config, evaluator, gen=None):
                         th.save(
                             model.state_dict(),
                             os.path.join(
-                                config.saved_path, "{}-model".format(done_epoch)
+                                config.saved_path,
+                                "{}-model".format(done_epoch),
                             ),
                         )
                         best_epoch = done_epoch
@@ -641,7 +712,8 @@ def train(model, train_data, val_data, test_data, config, evaluator, gen=None):
                             saved_models = saved_models[-last_n_model:]
                             os.remove(
                                 os.path.join(
-                                    config.saved_path, "{}-model".format(remove_model)
+                                    config.saved_path,
+                                    "{}-model".format(remove_model),
                                 )
                             )
 
@@ -653,7 +725,9 @@ def train(model, train_data, val_data, test_data, config, evaluator, gen=None):
                     and patience <= done_epoch
                 ):
                     if done_epoch < config.max_epoch:
-                        logger.info("!!!!! Early stop due to run out of patience !!!!!")
+                        logger.info(
+                            "!!!!! Early stop due to run out of patience !!!!!"
+                        )
                     print("Best validation loss = %f" % (best_valid_loss,))
                     return best_epoch
 
@@ -661,7 +735,9 @@ def train(model, train_data, val_data, test_data, config, evaluator, gen=None):
                 model.train()
                 train_loss.clear()
                 logger.info(
-                    "\n***** Epoch {}/{} *****".format(done_epoch, config.max_epoch)
+                    "\n***** Epoch {}/{} *****".format(
+                        done_epoch, config.max_epoch
+                    )
                 )
                 sys.stdout.flush()
 
@@ -719,7 +795,9 @@ def generate(model, data, config, evaluator, num_batch, dest_f=None):
 
         # move from GPU to CPU
         labels = labels.cpu()
-        pred_labels = [t.cpu().data.numpy() for t in outputs[DecoderRNN.KEY_SEQUENCE]]
+        pred_labels = [
+            t.cpu().data.numpy() for t in outputs[DecoderRNN.KEY_SEQUENCE]
+        ]
         pred_labels = (
             np.array(pred_labels, dtype=int).squeeze(-1).swapaxes(0, 1)
         )  # (batch_size, max_dec_len)
@@ -728,7 +806,8 @@ def generate(model, data, config, evaluator, num_batch, dest_f=None):
         # get attention if possible
         if config.dec_use_attn:
             pred_attns = [
-                t.cpu().data.numpy() for t in outputs[DecoderRNN.KEY_ATTN_SCORE]
+                t.cpu().data.numpy()
+                for t in outputs[DecoderRNN.KEY_ATTN_SCORE]
             ]
             pred_attns = (
                 np.array(pred_attns, dtype=float).squeeze(2).swapaxes(0, 1)
@@ -748,7 +827,11 @@ def generate(model, data, config, evaluator, num_batch, dest_f=None):
                 ctx_str = []
                 for t_id in range(ctx_len[b_id]):
                     temp_str = get_sent(
-                        model.vocab, de_tknize, ctx[:, t_id, :], b_id, stop_eos=False
+                        model.vocab,
+                        de_tknize,
+                        ctx[:, t_id, :],
+                        b_id,
+                        stop_eos=False,
                     )
                     # print('temp_str = %s' % (temp_str, ))
                     # print('ctx[:, t_id, :] = %s' % (ctx[:, t_id, :], ))
@@ -805,9 +888,13 @@ def generate_with_name(model, data, config):
         batch = data.next_batch()
         if batch is None:
             break
-        keys, outputs, labels = model(batch, mode=GEN, gen_type=config.gen_type)
+        keys, outputs, labels = model(
+            batch, mode=GEN, gen_type=config.gen_type
+        )
 
-        pred_labels = [t.cpu().data.numpy() for t in outputs[DecoderRNN.KEY_SEQUENCE]]
+        pred_labels = [
+            t.cpu().data.numpy() for t in outputs[DecoderRNN.KEY_SEQUENCE]
+        ]
         pred_labels = (
             np.array(pred_labels, dtype=int).squeeze(-1).swapaxes(0, 1)
         )  # (batch_size, max_dec_len)

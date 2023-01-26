@@ -1,6 +1,6 @@
 # Sequicity on multiwoz
 
-Sequicity is an end-to-end task-oriented dialog system based on a single sequence-to-sequence model that uses *belief span* to track dialog believes. 
+Sequicity is an end-to-end task-oriented dialog system based on a single sequence-to-sequence model that uses *belief span* to track dialog believes.
 
 - It formulates the DST task into a generation problem (rather than the classification problem)
 - It tracks the dialog history using *two-state copynet* mechanism, one for *belief span*, the other for response generation.
@@ -73,4 +73,3 @@ In terms of `success F1`,  Sequicity by order shows the (F1, Precision, Recall) 
 	year={2018}
 }
    ```
-

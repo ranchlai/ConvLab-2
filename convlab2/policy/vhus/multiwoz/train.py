@@ -2,22 +2,24 @@
 """
 @author: truthless
 """
-import os
 import json
 import logging
+import os
 import sys
 
 root_dir = os.path.dirname(
     os.path.dirname(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        )
     )
 )
 sys.path.append(root_dir)
 
-from convlab2.util.train_util import init_logging_handler
-from convlab2.task.multiwoz.goal_generator import GoalGenerator
 from convlab2.policy.vhus.multiwoz.usermanager import UserDataManager
 from convlab2.policy.vhus.train import VHUS_Trainer
+from convlab2.task.multiwoz.goal_generator import GoalGenerator
+from convlab2.util.train_util import init_logging_handler
 
 if __name__ == "__main__":
     with open("config.json", "r") as f:

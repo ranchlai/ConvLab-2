@@ -1,10 +1,13 @@
+# -*- coding: utf-8 -*-
 """
 Evaluate NLU models on specified dataset
 Usage: python evaluate.py [MultiWOZ|CrossWOZ] [TRADE|mdbt|sumbt|rule]
 """
 import random
+
 import numpy
 import torch
+
 from convlab2.dst.trade.multiwoz.trade import MultiWOZTRADE
 
 if __name__ == "__main__":

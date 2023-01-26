@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import zipfile
 from collections import Counter, OrderedDict

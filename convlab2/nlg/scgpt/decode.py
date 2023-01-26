@@ -15,7 +15,9 @@ def set_seed(seed, n_gpu):
         torch.cuda.manual_seed_all(seed)
 
 
-def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float("Inf")):
+def top_k_top_p_filtering(
+    logits, top_k=0, top_p=0.0, filter_value=-float("Inf")
+):
     """Filter a distribution of logits using top-k and/or nucleus (top-p) filtering
     Args:
         logits: logits distribution shape (batch size x vocabulary size)
@@ -27,17 +29,23 @@ def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float("Inf")
     top_k = min(top_k, logits.size(-1))  # Safety check
     if top_k > 0:
         # Remove all tokens with a probability less than the last token of the top-k
-        indices_to_remove = logits < torch.topk(logits, top_k)[0][..., -1, None]
+        indices_to_remove = (
+            logits < torch.topk(logits, top_k)[0][..., -1, None]
+        )
         logits[indices_to_remove] = filter_value
 
     if top_p > 0.0:
         sorted_logits, sorted_indices = torch.sort(logits, descending=True)
-        cumulative_probs = torch.cumsum(torch.softmax(sorted_logits, dim=-1), dim=-1)
+        cumulative_probs = torch.cumsum(
+            torch.softmax(sorted_logits, dim=-1), dim=-1
+        )
 
         # Remove tokens with cumulative probability above the threshold
         sorted_indices_to_remove = cumulative_probs > top_p
         # Shift the indices to the right to keep also the first token above the threshold
-        sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
+        sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[
+            ..., :-1
+        ].clone()
         sorted_indices_to_remove[..., 0] = 0
 
         # scatter sorted tensors to original indexing
@@ -74,7 +82,10 @@ def sample_sequence(
                 # XLNet is a direct (predict same token, not next token) and bi-directional model by default
                 # => need one additional dummy token in the input (will be masked), attention mask and target mapping (see model docstring)
                 input_ids = torch.cat(
-                    (generated, torch.zeros((1, 1), dtype=torch.long, device=device)),
+                    (
+                        generated,
+                        torch.zeros((1, 1), dtype=torch.long, device=device),
+                    ),
                     dim=1,
                 )
                 perm_mask = torch.zeros(
@@ -82,9 +93,13 @@ def sample_sequence(
                     dtype=torch.float,
                     device=device,
                 )
-                perm_mask[:, :, -1] = 1.0  # Previous tokens don't see last token
+                perm_mask[
+                    :, :, -1
+                ] = 1.0  # Previous tokens don't see last token
                 target_mapping = torch.zeros(
-                    (1, 1, input_ids.shape[1]), dtype=torch.float, device=device
+                    (1, 1, input_ids.shape[1]),
+                    dtype=torch.float,
+                    device=device,
                 )
                 target_mapping[0, 0, -1] = 1.0  # predict last token
                 inputs = {
@@ -100,7 +115,10 @@ def sample_sequence(
                     (
                         generated,
                         torch.full(
-                            (1, 1), xlm_mask_token, dtype=torch.long, device=device
+                            (1, 1),
+                            xlm_mask_token,
+                            dtype=torch.long,
+                            device=device,
                         ),
                     ),
                     dim=1,
@@ -128,7 +146,9 @@ def sample_sequence(
                 next_token_logits, top_k=top_k, top_p=top_p
             )
             if temperature == 0:  # greedy sampling:
-                next_token = torch.argmax(filtered_logits, dim=-1).unsqueeze(-1)
+                next_token = torch.argmax(filtered_logits, dim=-1).unsqueeze(
+                    -1
+                )
             else:
                 next_token = torch.multinomial(
                     torch.softmax(filtered_logits, dim=-1), num_samples=1

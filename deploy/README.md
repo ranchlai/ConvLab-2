@@ -89,6 +89,6 @@ After that, you can start a conversation by input something in the right input a
 
 ### Intermediate Result Modification
 In this service, you can restore a dialog turn by modifying the intermediate result which you think is incorrect.
-For example, if you get an incorrect DST result, you can modify its result in the input area by the left side. 
+For example, if you get an incorrect DST result, you can modify its result in the input area by the left side.
 
 Since you modify the content, a button will appear. Then you can click the button, and the dialog system will restore this turn by masking the DST module and directly use your input as the DST result.

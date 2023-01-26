@@ -1,12 +1,14 @@
+# -*- coding: utf-8 -*-
+import numpy as np
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
-import numpy as np
+
 from convlab2.policy.larl.multiwoz.latent_dialog.utils import (
-    INT,
     FLOAT,
+    INT,
     LONG,
     cast_type,
 )
@@ -70,12 +72,16 @@ class BaseModel(nn.Module):
         elif config.fine_tune_op == "sgd":
             print("Use SGD")
             return optim.SGD(
-                params, lr=config.fine_tune_lr, momentum=config.fine_tune_momentum
+                params,
+                lr=config.fine_tune_lr,
+                momentum=config.fine_tune_momentum,
             )
         elif config.fine_tune_op == "rmsprop":
             print("Use RMSProp")
             return optim.RMSprop(
-                params, lr=config.fine_tune_lr, momentum=config.fine_tune_momentum
+                params,
+                lr=config.fine_tune_lr,
+                momentum=config.fine_tune_momentum,
             )
 
     def model_sel_loss(self, loss, batch_cnt):

@@ -1,7 +1,7 @@
 ## EDA
 Query database and randomly replace some dialog actions.
 
-Randomly replace, delete, swap or insert some words in text.  
+Randomly replace, delete, swap or insert some words in text.
 
 ## Requirements
 It requires `nltk`.
@@ -25,4 +25,3 @@ python run.py --multiwoz MULTIWOZ_FILEPATH --output AUGMENTED_MULTIWOZ_FILEPATH
 ```
 
 Run ```python run.py --help``` for more information about arguments.
-

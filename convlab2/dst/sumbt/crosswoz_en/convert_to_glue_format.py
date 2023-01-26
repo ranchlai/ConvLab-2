@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
 import json
 import zipfile
+
 from convlab2.dst.sumbt.crosswoz_en.sumbt_config import *
 
 null = "none"
@@ -36,7 +38,9 @@ def convert_to_glue_format(data_dir, sumbt_dir):
 
     ### Read woz logs and write to tsv files
     tsv_filename = os.path.join(sumbt_dir, args.tmp_data_dir, "train.tsv")
-    print("tsv file: ", os.path.join(sumbt_dir, args.tmp_data_dir, "train.tsv"))
+    print(
+        "tsv file: ", os.path.join(sumbt_dir, args.tmp_data_dir, "train.tsv")
+    )
     if os.path.exists(os.path.join(sumbt_dir, args.tmp_data_dir, "train.tsv")):
         print("data has been processed!")
         return 0
@@ -51,9 +55,15 @@ def convert_to_glue_format(data_dir, sumbt_dir):
         os.path.join(sumbt_dir, args.tmp_data_dir, "test.tsv"), "w"
     ) as fp_test:
 
-        fp_train.write("# Dialogue ID\tTurn Index\tUser Utterance\tSystem Response\t")
-        fp_dev.write("# Dialogue ID\tTurn Index\tUser Utterance\tSystem Response\t")
-        fp_test.write("# Dialogue ID\tTurn Index\tUser Utterance\tSystem Response\t")
+        fp_train.write(
+            "# Dialogue ID\tTurn Index\tUser Utterance\tSystem Response\t"
+        )
+        fp_dev.write(
+            "# Dialogue ID\tTurn Index\tUser Utterance\tSystem Response\t"
+        )
+        fp_test.write(
+            "# Dialogue ID\tTurn Index\tUser Utterance\tSystem Response\t"
+        )
 
         for domain in sorted(ontology.keys()):
             for slot in sorted(ontology[domain].keys()):
@@ -96,7 +106,9 @@ def convert_to_glue_format(data_dir, sumbt_dir):
 
                         split_fp.write(str(file_id))  # 0: dialogue ID
                         split_fp.write("\t" + str(turn_idx))  # 1: turn index
-                        split_fp.write("\t" + str(user_utterance))  # 2: user utterance
+                        split_fp.write(
+                            "\t" + str(user_utterance)
+                        )  # 2: user utterance
                         split_fp.write(
                             "\t" + str(system_response)
                         )  # 3: system response
@@ -113,7 +125,9 @@ def convert_to_glue_format(data_dir, sumbt_dir):
                                 if isinstance(value, list):
                                     continue
                                 if domain not in ontology:
-                                    print("domain (%s) is not defined" % domain)
+                                    print(
+                                        "domain (%s) is not defined" % domain
+                                    )
                                     continue
 
                                 if slot == "Hotel Facilities":
@@ -141,7 +155,9 @@ def convert_to_glue_format(data_dir, sumbt_dir):
                                         )
                                         value = null
 
-                                    belief[f"{str(domain)}-{str(slot)}"] = value
+                                    belief[
+                                        f"{str(domain)}-{str(slot)}"
+                                    ] = value
 
                         for domain in sorted(ontology.keys()):
                             for slot in sorted(ontology[domain].keys()):

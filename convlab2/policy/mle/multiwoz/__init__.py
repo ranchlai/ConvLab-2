@@ -1,2 +1,2 @@
-from convlab2.policy.mle.multiwoz.mle import MLE
-from convlab2.policy.mle.multiwoz.mle import MLEPolicy
+# -*- coding: utf-8 -*-
+from convlab2.policy.mle.multiwoz.mle import MLE, MLEPolicy

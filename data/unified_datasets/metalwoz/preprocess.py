@@ -1,9 +1,9 @@
+# -*- coding: utf-8 -*-
 import json
 import os
-from zipfile import ZipFile, ZIP_DEFLATED
+from zipfile import ZIP_DEFLATED, ZipFile
 
 import json_lines
-
 
 dataset = "metalwoz"
 self_dir = os.path.dirname(os.path.abspath(__file__))
@@ -13,7 +13,12 @@ origin_data_dir = self_dir
 
 
 def preprocess():
-    ontology = {"domains": {}, "intents": {}, "binary_dialogue_act": [], "state": {}}
+    ontology = {
+        "domains": {},
+        "intents": {},
+        "binary_dialogue_act": [],
+        "state": {},
+    }
 
     def process_dialog(ori_dialog, split, dialog_id):
         domain = ori_dialog["domain"]
@@ -75,7 +80,9 @@ def preprocess():
 
     json.dump(ontology, open(os.path.join(self_dir, "ontology.json"), "w"))
     json.dump(data, open("data.json", "w"), indent=4)
-    ZipFile(os.path.join(self_dir, "data.zip"), "w", ZIP_DEFLATED).write("data.json")
+    ZipFile(os.path.join(self_dir, "data.zip"), "w", ZIP_DEFLATED).write(
+        "data.json"
+    )
     os.remove("data.json")
 
 

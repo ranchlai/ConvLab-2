@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Evaluate SVMNLU models on Multiwoz test dataset
 
@@ -59,7 +60,9 @@ if __name__ == "__main__":
             precision = 1.0 * TP / (TP + FP)
             recall = 1.0 * TP / (TP + FN)
             F1 = 2.0 * precision * recall / (precision + recall)
-            print("Model on {} session {} sentences:".format(sess_num, sen_num))
+            print(
+                "Model on {} session {} sentences:".format(sess_num, sen_num)
+            )
             print("\t Precision: %.2f" % (100 * precision))
             print("\t Recall: %.2f" % (100 * recall))
             print("\t F1: %.2f" % (100 * F1))

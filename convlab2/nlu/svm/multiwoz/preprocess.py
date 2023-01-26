@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Preprocess multiwoz data for SVMNLU.
 
@@ -15,9 +16,9 @@ Output:
 """
 import json
 import os
+import sys
 import zipfile
 from collections import Counter
-import sys
 
 
 def read_zipped_json(filepath, filename):
@@ -41,9 +42,13 @@ if __name__ == "__main__":
         print("load {}, size {}".format(key, len(data[key])))
 
     db = {
-        "attraction": json.load(open(os.path.join(db_dir, "attraction_db.json"))),
+        "attraction": json.load(
+            open(os.path.join(db_dir, "attraction_db.json"))
+        ),
         "hotel": json.load(open(os.path.join(db_dir, "hotel_db.json"))),
-        "restaurant": json.load(open(os.path.join(db_dir, "restaurant_db.json"))),
+        "restaurant": json.load(
+            open(os.path.join(db_dir, "restaurant_db.json"))
+        ),
         "police": json.load(open(os.path.join(db_dir, "police_db.json"))),
         "hospital": json.load(open(os.path.join(db_dir, "hospital_db.json"))),
         "taxi": json.load(open(os.path.join(db_dir, "taxi_db.json"))),
@@ -205,14 +210,18 @@ if __name__ == "__main__":
                                 }
                             )
                         else:
-                            new_das.append({"act": da, "slots": [[s, v.lower()]]})
+                            new_das.append(
+                                {"act": da, "slots": [[s, v.lower()]]}
+                            )
                         da2slot2value.setdefault(da, {})
                         da2slot2value[da].setdefault(s, [])
                         da2slot2value[da][s].append(v)
                 label_turns.append({"semantics": {"json": new_das}})
                 log_turn = {
                     "input": {
-                        "live": {"asr-hyps": [{"asr-hyp": turn["text"], "score": 0}]}
+                        "live": {
+                            "asr-hyps": [{"asr-hyp": turn["text"], "score": 0}]
+                        }
                     }
                 }
                 log_turns.append(log_turn)
@@ -223,12 +232,24 @@ if __name__ == "__main__":
                 os.makedirs(f_dir)
 
             json.dump(
-                label_json, open(os.path.join(f_dir, "label.json"), "w"), indent=4
+                label_json,
+                open(os.path.join(f_dir, "label.json"), "w"),
+                indent=4,
             )
-            json.dump(log_json, open(os.path.join(f_dir, "log.json"), "w"), indent=4)
+            json.dump(
+                log_json, open(os.path.join(f_dir, "log.json"), "w"), indent=4
+            )
 
     all_tuples = []
-    slots_enumerated = ["Area", "Type", "Price", "Day", "Internet", "none", "Parking"]
+    slots_enumerated = [
+        "Area",
+        "Type",
+        "Price",
+        "Day",
+        "Internet",
+        "none",
+        "Parking",
+    ]
     for da, sv in da2slot2value.items():
         if "Request" in da:
             pass

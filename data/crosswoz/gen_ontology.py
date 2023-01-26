@@ -1,7 +1,7 @@
+# -*- coding: utf-8 -*-
 import json
-from zipfile import ZipFile
-
 import re
+from zipfile import ZipFile
 
 ontology = {
     "景点": {

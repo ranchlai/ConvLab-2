@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2017-present, Facebook, Inc.
 # All rights reserved.
 #
@@ -63,7 +64,9 @@ class ObjectDivisionDomain(Domain):
 
         def gen(cnts, idx=0, choice=[]):
             if idx >= len(cnts):
-                left_choice = ["item%d=%d" % (i, c) for i, c in enumerate(choice)]
+                left_choice = [
+                    "item%d=%d" % (i, c) for i, c in enumerate(choice)
+                ]
                 right_choice = [
                     "item%d=%d" % (i, n - c)
                     for i, (n, c) in enumerate(zip(cnts, choice))
@@ -153,7 +156,9 @@ class ObjectTradeDomain(ObjectDivisionDomain):
 
         def gen(cnts, idx=0, choice=[]):
             if idx >= len(cnts):
-                left_choice = ["item%d=%d" % (i, c) for i, c in enumerate(choice)]
+                left_choice = [
+                    "item%d=%d" % (i, c) for i, c in enumerate(choice)
+                ]
                 return [left_choice]
             choices = []
             for c in range(-cnts[idx], self.max_items + 1):

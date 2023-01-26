@@ -1,10 +1,18 @@
-import numpy as np
-from convlab2.policy.larl.multiwoz.latent_dialog.enc2dec.decoders import GEN, DecoderRNN
-from convlab2.policy.larl.multiwoz.latent_dialog.main import get_sent
+# -*- coding: utf-8 -*-
 from collections import defaultdict
 
+import numpy as np
 
-def task_generate(model, data, config, evaluator, num_batch, dest_f=None, verbose=True):
+from convlab2.policy.larl.multiwoz.latent_dialog.enc2dec.decoders import (
+    GEN,
+    DecoderRNN,
+)
+from convlab2.policy.larl.multiwoz.latent_dialog.main import get_sent
+
+
+def task_generate(
+    model, data, config, evaluator, num_batch, dest_f=None, verbose=True
+):
     def write(msg):
         if msg is None or msg == "":
             return
@@ -16,7 +24,10 @@ def task_generate(model, data, config, evaluator, num_batch, dest_f=None, verbos
     model.eval()
     de_tknize = lambda x: " ".join(x)
     data.epoch_init(
-        config, shuffle=num_batch is not None, verbose=False, fix_batch=config.fix_batch
+        config,
+        shuffle=num_batch is not None,
+        verbose=False,
+        fix_batch=config.fix_batch,
     )
     evaluator.initialize()
     print(
@@ -35,7 +46,9 @@ def task_generate(model, data, config, evaluator, num_batch, dest_f=None, verbos
 
         # move from GPU to CPU
         labels = labels.cpu()
-        pred_labels = [t.cpu().data.numpy() for t in outputs[DecoderRNN.KEY_SEQUENCE]]
+        pred_labels = [
+            t.cpu().data.numpy() for t in outputs[DecoderRNN.KEY_SEQUENCE]
+        ]
         pred_labels = (
             np.array(pred_labels, dtype=int).squeeze(-1).swapaxes(0, 1)
         )  # (batch_size, max_dec_len)
@@ -55,7 +68,11 @@ def task_generate(model, data, config, evaluator, num_batch, dest_f=None, verbos
                 ctx_str = []
                 for t_id in range(ctx_len[b_id]):
                     temp_str = get_sent(
-                        model.vocab, de_tknize, ctx[:, t_id, :], b_id, stop_eos=False
+                        model.vocab,
+                        de_tknize,
+                        ctx[:, t_id, :],
+                        b_id,
+                        stop_eos=False,
                     )
                     # print('temp_str = %s' % (temp_str, ))
                     # print('ctx[:, t_id, :] = %s' % (ctx[:, t_id, :], ))
@@ -111,7 +128,9 @@ def dump_latent(model, data, config):
 
         outputs, labels = model(batch, mode=GEN, gen_type=config.gen_type)
         labels = labels.cpu()
-        pred_labels = [t.cpu().data.numpy() for t in outputs[DecoderRNN.KEY_SEQUENCE]]
+        pred_labels = [
+            t.cpu().data.numpy() for t in outputs[DecoderRNN.KEY_SEQUENCE]
+        ]
         pred_labels = (
             np.array(pred_labels, dtype=int).squeeze(-1).swapaxes(0, 1)
         )  # (batch_size, max_dec_len)
@@ -130,7 +149,10 @@ def dump_latent(model, data, config):
         )
 
         if config.dec_use_attn:
-            attns = [t.cpu().data.numpy() for t in outputs[DecoderRNN.KEY_ATTN_SCORE]]
+            attns = [
+                t.cpu().data.numpy()
+                for t in outputs[DecoderRNN.KEY_ATTN_SCORE]
+            ]
             attns = np.array(attns).squeeze(2).swapaxes(0, 1)
         else:
             attns = None
@@ -148,7 +170,11 @@ def dump_latent(model, data, config):
                 ctx_str = []
                 for t_id in range(ctx_len[b_id]):
                     temp_str = get_sent(
-                        model.vocab, de_tknize, ctx[:, t_id, :], b_id, stop_eos=False
+                        model.vocab,
+                        de_tknize,
+                        ctx[:, t_id, :],
+                        b_id,
+                        stop_eos=False,
                     )
                     ctx_str.append(temp_str)
                 prev_ctx = "Source context: {}".format(ctx_str)

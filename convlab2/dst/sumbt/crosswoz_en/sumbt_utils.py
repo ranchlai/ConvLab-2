@@ -1,9 +1,11 @@
-import csv
-import os
-import json
+# -*- coding: utf-8 -*-
 import collections
+import csv
+import json
 import logging
+import os
 import re
+
 import torch
 
 from convlab2.dst.sumbt.crosswoz_en.convert_to_glue_format import null
@@ -58,7 +60,9 @@ class Processor(DataProcessor):
                 os.path.dirname(
                     os.path.dirname(
                         os.path.dirname(
-                            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                            os.path.dirname(
+                                os.path.dirname(os.path.abspath(__file__))
+                            )
                         )
                     )
                 ),
@@ -110,24 +114,33 @@ class Processor(DataProcessor):
     def get_train_examples(self, data_dir, accumulation=False):
         """See base class."""
         return self._create_examples(
-            self._read_tsv(os.path.join(data_dir, "train.tsv")), "train", accumulation
+            self._read_tsv(os.path.join(data_dir, "train.tsv")),
+            "train",
+            accumulation,
         )
 
     def get_dev_examples(self, data_dir, accumulation=False):
         """See base class."""
         return self._create_examples(
-            self._read_tsv(os.path.join(data_dir, "dev.tsv")), "dev", accumulation
+            self._read_tsv(os.path.join(data_dir, "dev.tsv")),
+            "dev",
+            accumulation,
         )
 
     def get_test_examples(self, data_dir, accumulation=False):
         """See base class."""
         return self._create_examples(
-            self._read_tsv(os.path.join(data_dir, "test.tsv")), "test", accumulation
+            self._read_tsv(os.path.join(data_dir, "test.tsv")),
+            "test",
+            accumulation,
         )
 
     def get_labels(self):
         """See base class."""
-        return [list(map(str.lower, self.ontology[slot])) for slot in self.target_slot]
+        return [
+            list(map(str.lower, self.ontology[slot]))
+            for slot in self.target_slot
+        ]
 
     def _create_examples(self, lines, set_type, accumulation=False):
         """Creates examples for the training and dev sets."""
@@ -140,7 +153,10 @@ class Processor(DataProcessor):
                 line[1],
             )  # line[0]: dialogue index, line[1]: turn index
             if accumulation:
-                if prev_dialogue_index is None or prev_dialogue_index != line[0]:
+                if (
+                    prev_dialogue_index is None
+                    or prev_dialogue_index != line[0]
+                ):
                     text_a = line[2]
                     text_b = line[3]
                     prev_dialogue_index = line[0]
@@ -155,7 +171,9 @@ class Processor(DataProcessor):
             label = [line[4 + idx] for idx in self.target_slot_idx]
 
             examples.append(
-                InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label)
+                InputExample(
+                    guid=guid, text_a=text_a, text_b=text_b, label=label
+                )
             )
         return examples
 
@@ -242,7 +260,9 @@ def get_label_embedding(labels, max_seq_length, tokenizer, device):
     for label in labels:
         label_tokens = ["[CLS]"] + tokenizer.tokenize(label) + ["[SEP]"]
         # just truncate, some names are unreasonable long
-        label_token_ids = tokenizer.convert_tokens_to_ids(label_tokens)[:max_seq_length]
+        label_token_ids = tokenizer.convert_tokens_to_ids(label_tokens)[
+            :max_seq_length
+        ]
         label_len = len(label_token_ids)
 
         label_padding = [0] * (max_seq_length - len(label_token_ids))
@@ -251,10 +271,12 @@ def get_label_embedding(labels, max_seq_length, tokenizer, device):
 
         features.append((label_token_ids, label_len))
 
-    all_label_token_ids = torch.tensor([f[0] for f in features], dtype=torch.long).to(
-        device
-    )
-    all_label_len = torch.tensor([f[1] for f in features], dtype=torch.long).to(device)
+    all_label_token_ids = torch.tensor(
+        [f[0] for f in features], dtype=torch.long
+    ).to(device)
+    all_label_len = torch.tensor(
+        [f[1] for f in features], dtype=torch.long
+    ).to(device)
 
     return all_label_token_ids, all_label_len
 
@@ -317,7 +339,9 @@ def convert_examples_to_features(
 ):
     """Loads a data file into a list of `InputBatch`s."""
 
-    label_map = [{label: i for i, label in enumerate(labels)} for labels in label_list]
+    label_map = [
+        {label: i for i, label in enumerate(labels)} for labels in label_list
+    ]
     slot_dim = len(label_list)
 
     features = []
@@ -334,12 +358,14 @@ def convert_examples_to_features(
 
     for (ex_index, example) in enumerate(examples):
         tokens_a = [
-            x if x != "#" else "[SEP]" for x in tokenizer.tokenize(example.text_a)
+            x if x != "#" else "[SEP]"
+            for x in tokenizer.tokenize(example.text_a)
         ]
         tokens_b = None
         if example.text_b:
             tokens_b = [
-                x if x != "#" else "[SEP]" for x in tokenizer.tokenize(example.text_b)
+                x if x != "#" else "[SEP]"
+                for x in tokenizer.tokenize(example.text_b)
             ]
             # Modifies `tokens_a` and `tokens_b` in place so that the total
             # length is less than the specified length.
@@ -397,8 +423,12 @@ def convert_examples_to_features(
                 logger.info("*** Example ***")
                 logger.info("guid: %s" % example.guid)
                 logger.info("tokens: %s" % " ".join([str(x) for x in tokens]))
-                logger.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
-                logger.info("input_len: %s" % " ".join([str(x) for x in input_len]))
+                logger.info(
+                    "input_ids: %s" % " ".join([str(x) for x in input_ids])
+                )
+                logger.info(
+                    "input_len: %s" % " ".join([str(x) for x in input_len])
+                )
                 logger.info("label: " + label_info)
         else:
             FLAG_TEST = True
@@ -407,7 +437,10 @@ def convert_examples_to_features(
         curr_dialogue_idx = example.guid.split("-")[1]
         curr_turn_idx = int(example.guid.split("-")[2])
 
-        if prev_dialogue_idx is not None and prev_dialogue_idx != curr_dialogue_idx:
+        if (
+            prev_dialogue_idx is not None
+            and prev_dialogue_idx != curr_dialogue_idx
+        ):
             if prev_turn_idx < max_turn_length:
                 features += [
                     InputFeatures(
@@ -439,10 +472,16 @@ def convert_examples_to_features(
         ] * (max_turn_length - prev_turn_idx - 1)
     assert len(features) % max_turn_length == 0
 
-    all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
-    all_input_len = torch.tensor([f.input_len for f in features], dtype=torch.long)
+    all_input_ids = torch.tensor(
+        [f.input_ids for f in features], dtype=torch.long
+    )
+    all_input_len = torch.tensor(
+        [f.input_len for f in features], dtype=torch.long
+    )
     if not FLAG_TEST:
-        all_label_ids = torch.tensor([f.label_id for f in features], dtype=torch.long)
+        all_label_ids = torch.tensor(
+            [f.label_id for f in features], dtype=torch.long
+        )
 
     # reshape tensors to [#batch, #max_turn_length, #max_seq_length]
     all_input_ids = all_input_ids.view(-1, max_turn_length, max_seq_length)
@@ -486,7 +525,9 @@ def eval_all_accs(pred_slot, labels, accuracies):
     label_slot5 = torch.cat((labels[:, :, 0:3], labels[:, :, 8:]), 2)
 
     # 5 domains (excluding bus and hotel domain)
-    joint_acc, slot_acc, num_turn, num_data = _eval_acc(pred_slot5, label_slot5)
+    joint_acc, slot_acc, num_turn, num_data = _eval_acc(
+        pred_slot5, label_slot5
+    )
     accuracies["joint5"] += joint_acc
     accuracies["slot5"] += slot_acc
     accuracies["num_slot5"] += num_data

@@ -1,20 +1,20 @@
+# -*- coding: utf-8 -*-
 # Copyright 2017-present, Facebook, Inc.
 # All rights reserved.
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import os
-import random
-import sys
-import pdb
 import copy
+import os
+import pdb
+import random
 import re
+import sys
 from collections import OrderedDict
 
-import torch
 import numpy as np
-
+import torch
 
 SPECIAL = [
     "<eos>",
@@ -30,7 +30,9 @@ STOP_TOKENS = [
 
 
 def get_tag(tokens, tag):
-    return tokens[tokens.index("<" + tag + ">") + 1 : tokens.index("</" + tag + ">")]
+    return tokens[
+        tokens.index("<" + tag + ">") + 1 : tokens.index("</" + tag + ">")
+    ]
 
 
 def read_lines(file_name):
@@ -83,7 +85,9 @@ class Dictionary(object):
                 for token in tokens:
                     token_freqs[token] = token_freqs.get(token, 0) + 1
         dictionary = Dictionary(init=init_dict)
-        token_freqs = sorted(token_freqs.items(), key=lambda x: x[1], reverse=True)
+        token_freqs = sorted(
+            token_freqs.items(), key=lambda x: x[1], reverse=True
+        )
         for token, freq in token_freqs:
             if freq > freq_cutoff:
                 dictionary.add_word(token)
@@ -97,7 +101,11 @@ class ItemDictionary(Dictionary):
 
     def w2i(self, words, inv=False):
         # pick last selection_size if inv=True, otherwise first selection_size
-        words = words[self.selection_size :] if inv else words[: self.selection_size]
+        words = (
+            words[self.selection_size :]
+            if inv
+            else words[: self.selection_size]
+        )
         token = " ".join(words)
         return self.word2idx[token]
 
@@ -141,7 +149,9 @@ class CountDictionary(Dictionary):
                 tokens = get_tag(tokens, tag)
                 key = CountDictionary.get_key(tokens)
                 token_freqs[key] = token_freqs.get(key, 0) + 1
-        token_freqs = sorted(token_freqs.items(), key=lambda x: x[1], reverse=True)
+        token_freqs = sorted(
+            token_freqs.items(), key=lambda x: x[1], reverse=True
+        )
         dictionary = CountDictionary(init=init_dict)
         for token, freq in token_freqs:
             dictionary.add_word(token)
@@ -153,10 +163,18 @@ def create_dicts_from_file(domain, file_name, freq_cutoff):
     word_dict = Dictionary.read_tag(
         domain, file_name, "dialogue", freq_cutoff=freq_cutoff
     )
-    item_dict = ItemDictionary.read_tag(domain, file_name, "output", init_dict=False)
-    item_dict_old = Dictionary.read_tag(domain, file_name, "output", init_dict=False)
-    context_dict = Dictionary.read_tag(domain, file_name, "input", init_dict=False)
-    count_dict = CountDictionary.read_tag(domain, file_name, "input", init_dict=False)
+    item_dict = ItemDictionary.read_tag(
+        domain, file_name, "output", init_dict=False
+    )
+    item_dict_old = Dictionary.read_tag(
+        domain, file_name, "output", init_dict=False
+    )
+    context_dict = Dictionary.read_tag(
+        domain, file_name, "input", init_dict=False
+    )
+    count_dict = CountDictionary.read_tag(
+        domain, file_name, "input", init_dict=False
+    )
     return word_dict, item_dict, context_dict, item_dict_old, count_dict
 
 
@@ -206,7 +224,9 @@ class WordCorpus(object):
             return mask.unsqueeze(0)
 
         def make_indexes(choices):
-            items = torch.Tensor([self.item_dict.w2i(c) for c in choices]).long()
+            items = torch.Tensor(
+                [self.item_dict.w2i(c) for c in choices]
+            ).long()
             return items
 
         unk = self.word_dict.get_idx("<unk>")
@@ -217,15 +237,25 @@ class WordCorpus(object):
             count_idx = self.count_dict.get_idx(get_tag(tokens, "input"))
             word_idxs = self.word_dict.w2i(get_tag(tokens, "dialogue"))
             item_idx = self.item_dict.w2i(get_tag(tokens, "output"), inv=False)
-            item_idx_inv = self.item_dict.w2i(get_tag(tokens, "output"), inv=True)
+            item_idx_inv = self.item_dict.w2i(
+                get_tag(tokens, "output"), inv=True
+            )
             items = self.item_dict_old.w2i(get_tag(tokens, "output"))
 
             # valid_choices = self.domain.generate_choices(get_tag(tokens, 'input'), with_disagreement=False)
             # valid_mask = make_mask(valid_choices)
-            partner_input_idxs = self.context_dict.w2i(get_tag(tokens, "partner_input"))
+            partner_input_idxs = self.context_dict.w2i(
+                get_tag(tokens, "partner_input")
+            )
             if self.sep_sel:
                 dataset.append(
-                    (input_idxs, word_idxs, items, partner_input_idxs, count_idx)
+                    (
+                        input_idxs,
+                        word_idxs,
+                        items,
+                        partner_input_idxs,
+                        count_idx,
+                    )
                 )
             else:
                 dataset.append(
@@ -249,13 +279,19 @@ class WordCorpus(object):
         return dataset
 
     def train_dataset(self, bsz, shuffle=True):
-        return self._split_into_batches(copy.copy(self.train), bsz, shuffle=shuffle)
+        return self._split_into_batches(
+            copy.copy(self.train), bsz, shuffle=shuffle
+        )
 
     def valid_dataset(self, bsz, shuffle=True):
-        return self._split_into_batches(copy.copy(self.valid), bsz, shuffle=shuffle)
+        return self._split_into_batches(
+            copy.copy(self.valid), bsz, shuffle=shuffle
+        )
 
     def test_dataset(self, bsz, shuffle=True):
-        return self._split_into_batches(copy.copy(self.test), bsz, shuffle=shuffle)
+        return self._split_into_batches(
+            copy.copy(self.test), bsz, shuffle=shuffle
+        )
 
     def _split_into_batches(self, dataset, bsz, shuffle=True):
         if shuffle:
@@ -294,7 +330,11 @@ class WordCorpus(object):
             data = torch.Tensor(words).long().transpose(0, 1).contiguous()
             if self.sep_sel:
                 sel_tgt = (
-                    torch.Tensor(items).long().transpose(0, 1).contiguous().view(-1)
+                    torch.Tensor(items)
+                    .long()
+                    .transpose(0, 1)
+                    .contiguous()
+                    .view(-1)
                 )
             else:
                 sel_tgt = [torch.Tensor(it).long().view(-1) for it in items]
@@ -428,7 +468,17 @@ class SentenceCorpus(WordCorpus):
             hid_idxs = self._make_hidden_idxs(lens)
 
             batches.append(
-                (ctx, partner_ctx, inpts, lens, tgts, sel_tgt, rev_idxs, hid_idxs, cnt)
+                (
+                    ctx,
+                    partner_ctx,
+                    inpts,
+                    lens,
+                    tgts,
+                    sel_tgt,
+                    rev_idxs,
+                    hid_idxs,
+                    cnt,
+                )
             )
 
         if shuffle:
@@ -446,7 +496,9 @@ class PhraseCorpus(WordCorpus):
         dataset, total, unks = [], 0, 0
         for line in lines:
             tokens = line.split()
-            dialog, items = get_tag(tokens, "dialogue"), get_tag(tokens, "output")
+            dialog, items = get_tag(tokens, "dialogue"), get_tag(
+                tokens, "output"
+            )
 
             for words in re.split(r"(?:YOU|THEM):", " ".join(dialog))[1:-1]:
                 if words is "":

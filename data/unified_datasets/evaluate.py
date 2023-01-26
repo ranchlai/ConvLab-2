@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import os
 from copy import deepcopy
@@ -46,7 +47,9 @@ def check_ontology(name):
     global special_values
 
     ontology_file = os.path.join(f"{name}", "ontology.json")
-    assert os.path.exists(ontology_file), f"ontology file should named {ontology_file}"
+    assert os.path.exists(
+        ontology_file
+    ), f"ontology file should named {ontology_file}"
     ontology = json.load(open(ontology_file))
 
     # record issues in ontology
@@ -66,7 +69,9 @@ def check_ontology(name):
                 descriptions["slots"] = False
             if slot["is_categorical"]:
                 assert slot["possible_values"]
-                slot["possible_values"] = list(map(str.lower, slot["possible_values"]))
+                slot["possible_values"] = list(
+                    map(str.lower, slot["possible_values"])
+                )
                 for value in special_values:
                     assert (
                         value not in slot["possible_values"]
@@ -132,7 +137,9 @@ def check_data(name, ontology):
 
     for dialogue in data:
         dialogue_id = dialogue["dialogue_id"]
-        assert isinstance(dialogue_id, str), "`dialogue_id` is expected to be str type"
+        assert isinstance(
+            dialogue_id, str
+        ), "`dialogue_id` is expected to be str type"
         dialogue_id = str(dialogue_id)
 
         assert (
@@ -150,7 +157,9 @@ def check_data(name, ontology):
         except:
             print(f"{dialogue_id}\twrong dialogue id format: {dialogue_id}")
             raise Exception
-        assert dialogue_id not in all_id, f"multiple dialogue id: {dialogue_id}"
+        assert (
+            dialogue_id not in all_id
+        ), f"multiple dialogue id: {dialogue_id}"
         all_id.add(dialogue_id)
 
         cur_domains = dialogue["domains"]
@@ -171,7 +180,9 @@ def check_data(name, ontology):
         cur_stat["utterances"] += len(turns)
         assert turns, f"{dialogue_id}\tempty turn"
 
-        assert turns[0]["speaker"] == "user", f"{dialogue_id}\tnot start with user role"
+        assert (
+            turns[0]["speaker"] == "user"
+        ), f"{dialogue_id}\tnot start with user role"
         if ontology["state"]:
             # update cur_state with state_update every turn, and compare it with state annotation
             cur_state = {
@@ -184,7 +195,9 @@ def check_data(name, ontology):
                 "user",
                 "system",
             ], f'{dialogue_id}:{turn_id}\tunknown speaker value: {turn["speaker"]}'
-            assert turn_id == turn["utt_idx"], f"{dialogue_id}:{turn_id}\twrong utt_idx"
+            assert (
+                turn_id == turn["utt_idx"]
+            ), f"{dialogue_id}:{turn_id}\twrong utt_idx"
             if turn_id > 0:
                 assert (
                     turns[turn_id - 1]["speaker"] != turn["speaker"]
@@ -211,7 +224,8 @@ def check_data(name, ontology):
                     ], f"{prefix}\t{domain_name}-{slot_name} is not categorical"
                     value = value.lower()
                     assert (
-                        value in special_values or value in slot["possible_values"]
+                        value in special_values
+                        or value in slot["possible_values"]
                     ), (
                         f"{prefix}\t`{value}` not presented in possible values of"
                         f' {domain_name}-{slot_name}: {slot["possible_values"]}'
@@ -316,10 +330,16 @@ def check_data(name, ontology):
         ), f"{dialogue_id} dialog must end with user role"
 
     if da_values:
-        print("da values match rate:    {:.3f}".format(da_matches * 100 / da_values))
+        print(
+            "da values match rate:    {:.3f}".format(
+                da_matches * 100 / da_values
+            )
+        )
     if state_values:
         print(
-            "state values match rate: {:.3f}".format(state_matches * 100 / state_values)
+            "state values match rate: {:.3f}".format(
+                state_matches * 100 / state_values
+            )
         )
 
     all_stat = {key: 0 for key in stat_keys}
@@ -358,12 +378,17 @@ if __name__ == "__main__":
         nargs="*",
         help="dataset names to be evaluated",
     )
-    parser.add_argument("--all", action="store_true", help="evaluate all datasets")
+    parser.add_argument(
+        "--all", action="store_true", help="evaluate all datasets"
+    )
     parser.add_argument(
         "--no-int", action="store_true", help="not interrupted by exception"
     )
     parser.add_argument(
-        "--preprocess", "-p", action="store_true", help="run preprocess automatically"
+        "--preprocess",
+        "-p",
+        action="store_true",
+        help="run preprocess automatically",
     )
     args = parser.parse_args()
 

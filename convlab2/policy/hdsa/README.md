@@ -15,7 +15,7 @@
 * data: all the needed training/evaluation/testing data
 * transformer: all the baseline and proposed models, which include the hierarchical disentangled self-attention (class TableSemanticDecoder)
 * preprocessing: the code for pre-processing the database and original downloaded data
-* 
+*
 
 1. Dialog Act Predictor
 2. Response Generator

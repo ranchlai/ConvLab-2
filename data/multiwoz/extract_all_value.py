@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
 """
 extract all value appear in dialog act and state, for translation.
 """
 import json
 import zipfile
+
 from convlab2.util.multiwoz.multiwoz_slot_trans import REF_SYS_DA
 
 
@@ -35,15 +37,17 @@ def extract_value(data, all_da, all_state, all_value):
                     all_da[domain_intent][slot].setdefault(value, 0)
                     all_da[domain_intent][slot][value] += 1
                     if domain != "general":
-                        all_value[domain.lower()][REF_SYS_DA[domain].get(slot, slot)][
-                            value.lower()
-                        ] = ""
+                        all_value[domain.lower()][
+                            REF_SYS_DA[domain].get(slot, slot)
+                        ][value.lower()] = ""
             for domain in turn["metadata"]:
                 all_state.setdefault(domain, {})
                 all_value.setdefault(domain, {})
                 for slot, value in turn["metadata"][domain]["book"].items():
                     if slot == "booked":
-                        for book_info in turn["metadata"][domain]["book"]["booked"]:
+                        for book_info in turn["metadata"][domain]["book"][
+                            "booked"
+                        ]:
                             for s, v in book_info.items():
                                 all_state[domain].setdefault(s, {})
                                 all_value[domain].setdefault(s, {})

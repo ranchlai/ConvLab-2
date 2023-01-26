@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
 import json
 import os
-import zipfile
 import sys
+import zipfile
 from collections import Counter
+
 from transformers import BertTokenizer
 
 
@@ -53,7 +55,10 @@ def preprocess(mode):
                 span_info = []
                 intents = []
                 for intent, domain, slot, value in turn["dialog_act"]:
-                    if intent in ["Inform", "Recommend"] and "酒店设施" not in slot:
+                    if (
+                        intent in ["Inform", "Recommend"]
+                        and "酒店设施" not in slot
+                    ):
                         if value in utterance:
                             idx = utterance.index(value)
                             idx = len(tokenizer.tokenize(utterance[:idx]))
@@ -66,7 +71,9 @@ def preprocess(mode):
                                 )
                             )
                             token_v = "".join(
-                                tokens[idx : idx + len(tokenizer.tokenize(value))]
+                                tokens[
+                                    idx : idx + len(tokenizer.tokenize(value))
+                                ]
                             )
                             # if token_v != value:
                             #     print(slot, token_v, value)
@@ -121,14 +128,20 @@ def preprocess(mode):
     json.dump(
         all_intent,
         open(
-            os.path.join(processed_data_dir, "intent_vocab.json"), "w", encoding="utf-8"
+            os.path.join(processed_data_dir, "intent_vocab.json"),
+            "w",
+            encoding="utf-8",
         ),
         indent=2,
         ensure_ascii=False,
     )
     json.dump(
         all_tag,
-        open(os.path.join(processed_data_dir, "tag_vocab.json"), "w", encoding="utf-8"),
+        open(
+            os.path.join(processed_data_dir, "tag_vocab.json"),
+            "w",
+            encoding="utf-8",
+        ),
         indent=2,
         ensure_ascii=False,
     )

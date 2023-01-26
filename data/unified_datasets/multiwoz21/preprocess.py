@@ -1,20 +1,24 @@
+# -*- coding: utf-8 -*-
 import copy
-import re
-import zipfile
+import difflib
 import json
 import os
-from tqdm import tqdm
+import re
 import sys
-import difflib
+import zipfile
+
 from fuzzywuzzy import fuzz
+from tqdm import tqdm
 
 sys.path.append(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
 )
 
-from convlab2.util.file_util import read_zipped_json, write_zipped_json
 import logging
 
+from convlab2.util.file_util import read_zipped_json, write_zipped_json
 
 logging.basicConfig(level=logging.INFO)
 self_dir = os.path.abspath(os.getcwd())
@@ -102,7 +106,12 @@ REF_SYS_DA = {
         "none": None,
         "Ticket": "price",
     },
-    "Police": {"Addr": "address", "Post": "postcode", "Phone": "phone", "none": None},
+    "Police": {
+        "Addr": "address",
+        "Post": "postcode",
+        "Phone": "phone",
+        "none": None,
+    },
 }
 
 # taxi restaurant attraction train
@@ -402,7 +411,9 @@ def update_state(state, update):
             state[service].update(update[service])
 
 
-def convert_da(utt, da_dict, binary_ont, intent_ont, did, tid, da_cat_slot_values):
+def convert_da(
+    utt, da_dict, binary_ont, intent_ont, did, tid, da_cat_slot_values
+):
     """
      convert multiwoz dialogue acts to required format
     :param utt: user or system utt
@@ -612,7 +623,9 @@ def get_state_update(
     if prev_state is None:
         diff_state = {
             domain: {
-                slot: value for slot, value in cur_state[domain].items() if value != ""
+                slot: value
+                for slot, value in cur_state[domain].items()
+                if value != ""
             }
             for domain in cur_state
         }
@@ -666,9 +679,16 @@ def get_state_update(
                     "stars",
                 ]:
                     reformated_domain_slot = "-".join([domain, slot])
-                    if reformated_domain_slot in state_cat_slot_value_dict and (
-                        value in state_cat_slot_value_dict[reformated_domain_slot]
-                        or value in ["dontcare", "", "none", "not mentioned"]
+                    if (
+                        reformated_domain_slot in state_cat_slot_value_dict
+                        and (
+                            value
+                            in state_cat_slot_value_dict[
+                                reformated_domain_slot
+                            ]
+                            or value
+                            in ["dontcare", "", "none", "not mentioned"]
+                        )
                     ):
                         state_update["categorical"].append(
                             {
@@ -695,9 +715,13 @@ def get_state_update(
                                 for da in _turn["dialogue_act"]["categorical"]:
                                     if da["value"] == value:
                                         if "start" in da:
-                                            state_update["categorical"][-1].update(
+                                            state_update["categorical"][
+                                                -1
+                                            ].update(
                                                 {
-                                                    "utt_idx": _turn["utt_idx"],
+                                                    "utt_idx": _turn[
+                                                        "utt_idx"
+                                                    ],
                                                     "start": da["start"],
                                                     "end": da["end"],
                                                     "from": "prev_da_span",
@@ -755,16 +779,26 @@ def get_state_update(
                     ]
                     if _coref_value == "":
                         continue
-                    _coref_turn = coref_dict[(_Domain_Act, _Slot, _value)]["turn"]
+                    _coref_turn = coref_dict[(_Domain_Act, _Slot, _value)][
+                        "turn"
+                    ]
                     if _coref_turn == -1:
                         continue
-                    _coref_pos = coref_dict[(_Domain_Act, _Slot, _value)]["pos"]
+                    _coref_pos = coref_dict[(_Domain_Act, _Slot, _value)][
+                        "pos"
+                    ]
                     if _coref_pos == "":
                         continue
                     _utt = coref_dict[(_Domain_Act, _Slot, _value)]["utt"]
-                    if _domain == domain and _slot == slot and value == _coref_value:
+                    if (
+                        _domain == domain
+                        and _slot == slot
+                        and value == _coref_value
+                    ):
 
-                        start_w, end_w = [int(p) for p in _coref_pos.split("-")]
+                        start_w, end_w = [
+                            int(p) for p in _coref_pos.split("-")
+                        ]
                         utt_list = _utt.split()
                         start_ch = 0
                         for i in range(start_w):
@@ -849,7 +883,8 @@ def get_state_update(
                     if num:
                         assert (
                             value.lower() == _utt[start:end].lower()
-                            or digit2word[value].lower() == _utt[start:end].lower()
+                            or digit2word[value].lower()
+                            == _utt[start:end].lower()
                         )
                         found = True
                         state_update["non-categorical"].append(
@@ -874,7 +909,9 @@ def get_state_update(
                             state_update["non-categorical"][-1].update(
                                 {"fixed_value": _utt[start:end].lower()}
                             )
-                            ret_diff_state[domain][slot] = _utt[start:end].lower()
+                            ret_diff_state[domain][slot] = _utt[
+                                start:end
+                            ].lower()
                         found = True
                         break
                 if found:
@@ -894,7 +931,9 @@ def get_state_update(
                             if i + len(value) < len(_utt) and _utt[
                                 i + len(value)
                             ] not in [" ", ",", ".", "?", "!", "/"]:
-                                possible_value += _utt[i + len(value) :].split()[0]
+                                possible_value += _utt[
+                                    i + len(value) :
+                                ].split()[0]
 
                                 if possible_value.startswith("th "):
                                     possible_value = possible_value[3:]
@@ -947,7 +986,9 @@ def get_state_update(
                                     state_update["non-categorical"][-1].update(
                                         {"fixed_value": possible_value}
                                     )
-                                    ret_diff_state[domain][slot] = possible_value
+                                    ret_diff_state[domain][
+                                        slot
+                                    ] = possible_value
                                 break
                             #             assert _utt[i:i+len(possible_value)] == possible_value, print(_utt, _utt[i:i+len(possible_value)], possible_value)
                             #             break
@@ -1056,13 +1097,19 @@ def preprocess(da_cat_slot_values, state_cat_slot_values):
         # exit()
         # data = json.load(open(os.path.join(self_dir, extract_dir, 'data_meta_fixed.json')))
         train_list = (
-            open(os.path.join(self_dir, extract_dir, "trainListFile")).read().split()
+            open(os.path.join(self_dir, extract_dir, "trainListFile"))
+            .read()
+            .split()
         )
         val_list = (
-            open(os.path.join(self_dir, extract_dir, "valListFile")).read().split()
+            open(os.path.join(self_dir, extract_dir, "valListFile"))
+            .read()
+            .split()
         )
         test_list = (
-            open(os.path.join(self_dir, extract_dir, "testListFile")).read().split()
+            open(os.path.join(self_dir, extract_dir, "testListFile"))
+            .read()
+            .split()
         )
 
         total_not_found_slot = 0
@@ -1187,8 +1234,12 @@ def preprocess(da_cat_slot_values, state_cat_slot_values):
                             da_dict[(Domain_Act, S, v)]["start_word"] = []
                             da_dict[(Domain_Act, S, v)]["end_word"] = []
 
-                        da_dict[(Domain_Act, S, v)]["start_word"].append(start_word)
-                        da_dict[(Domain_Act, S, v)]["end_word"].append(end_word)
+                        da_dict[(Domain_Act, S, v)]["start_word"].append(
+                            start_word
+                        )
+                        da_dict[(Domain_Act, S, v)]["end_word"].append(
+                            end_word
+                        )
 
                 converted_turn = {
                     "utt_idx": turn_id,
@@ -1230,7 +1281,9 @@ def preprocess(da_cat_slot_values, state_cat_slot_values):
                                     fixed_slot = slot
                                 state_ds = domain + "-" + fixed_slot
                                 if state_ds not in slot_to_type:
-                                    logging.info("state slot not defined in da list")
+                                    logging.info(
+                                        "state slot not defined in da list"
+                                    )
                                     logging.info(state_ds)
                                 if turn_state[domain][subdomain][slot] in [
                                     "",
@@ -1240,41 +1293,52 @@ def preprocess(da_cat_slot_values, state_cat_slot_values):
                                 ]:
                                     cur_state[domain][fixed_slot] = ""
                                 else:
-                                    if turn_state[domain][subdomain][slot].startswith(
-                                        "th "
-                                    ):
+                                    if turn_state[domain][subdomain][
+                                        slot
+                                    ].startswith("th "):
                                         # print('state')
                                         # print(turn_state[domain][subdomain][slot])
                                         turn_state[domain][subdomain][
                                             slot
-                                        ] = turn_state[domain][subdomain][slot][3:]
-                                    if turn_state[domain][subdomain][slot].startswith(
-                                        "he "
-                                    ):
+                                        ] = turn_state[domain][subdomain][
+                                            slot
+                                        ][
+                                            3:
+                                        ]
+                                    if turn_state[domain][subdomain][
+                                        slot
+                                    ].startswith("he "):
                                         # print('state')
                                         # print(turn_state[domain][subdomain][slot])
                                         turn_state[domain][subdomain][
                                             slot
-                                        ] = turn_state[domain][subdomain][slot][3:]
+                                        ] = turn_state[domain][subdomain][
+                                            slot
+                                        ][
+                                            3:
+                                        ]
 
-                                    cur_state[domain][fixed_slot] = turn_state[domain][
-                                        subdomain
-                                    ][slot]
+                                    cur_state[domain][fixed_slot] = turn_state[
+                                        domain
+                                    ][subdomain][slot]
 
                                 if domain not in state_ont:
                                     state_ont[domain] = []
                                 if fixed_slot not in state_ont[domain]:
                                     state_ont[domain].append(fixed_slot)
 
-                        if domain == "train" and "people" not in cur_state[domain]:
+                        if (
+                            domain == "train"
+                            and "people" not in cur_state[domain]
+                        ):
                             cur_state[domain]["people"] = ""
                         # if len(converted_turn['state'][domain]) == 0:
                         #     converted_turn['state'].pop(domain)
                         if len(converted_dialogue["turns"]) > 0:
                             # move state from system side to user side
-                            converted_dialogue["turns"][-1]["state"] = copy.deepcopy(
-                                cur_state
-                            )
+                            converted_dialogue["turns"][-1][
+                                "state"
+                            ] = copy.deepcopy(cur_state)
 
                     # for state update annotations
                     (
@@ -1318,7 +1382,9 @@ def preprocess(da_cat_slot_values, state_cat_slot_values):
                             if "utt_idx" not in slot:
                                 flag = True
                                 break
-                        assert flag, print(flag, state_update["non-categorical"])
+                        assert flag, print(
+                            flag, state_update["non-categorical"]
+                        )
 
                     total_turn += 1
                     total_slot += _totalslot
@@ -1330,12 +1396,12 @@ def preprocess(da_cat_slot_values, state_cat_slot_values):
                         total_not_found_state += 1
 
                     coref_dict = {}
-                    converted_dialogue["turns"][-1]["state_update"] = copy.deepcopy(
-                        state_update
-                    )
-                    converted_dialogue["turns"][-1]["fixed_state"] = copy.deepcopy(
-                        accum_fixed_state
-                    )
+                    converted_dialogue["turns"][-1][
+                        "state_update"
+                    ] = copy.deepcopy(state_update)
+                    converted_dialogue["turns"][-1][
+                        "fixed_state"
+                    ] = copy.deepcopy(accum_fixed_state)
                     if "state" not in converted_dialogue["turns"][-1]:
                         converted_dialogue["turns"][-1]["state"] = {}
                     prev_state = copy.deepcopy(cur_state)
@@ -1377,8 +1443,12 @@ def preprocess(da_cat_slot_values, state_cat_slot_values):
             open(os.path.join(self_dir, "cat_slot_values.json"), "w"),
             indent=4,
         )
-        cat_slot_values = {k: list(set(v)) for k, v in state_cat_slot_values.items()}
-        da_cat_slot_values = {k: list(set(v)) for k, v in da_cat_slot_values.items()}
+        cat_slot_values = {
+            k: list(set(v)) for k, v in state_cat_slot_values.items()
+        }
+        da_cat_slot_values = {
+            k: list(set(v)) for k, v in da_cat_slot_values.items()
+        }
 
         json.dump(all_data, open("data.json", "w"), indent=4)
         write_zipped_json(os.path.join(self_dir, "./data.zip"), "data.json")
@@ -1396,7 +1466,9 @@ def preprocess(da_cat_slot_values, state_cat_slot_values):
             domain_ont = new_ont["domains"][d]
             assert s not in domain_ont
             domain_ont["slots"][s] = {
-                "description": multiwoz_desc[d][s] if s in multiwoz_desc[d] else "",
+                "description": multiwoz_desc[d][s]
+                if s in multiwoz_desc[d]
+                else "",
                 "is_categorical": d_s in state_cat_slot_ds,
                 "possible_values": da_cat_slot_values[d_s]
                 if d_s in state_cat_slot_ds
@@ -1423,7 +1495,9 @@ def preprocess(da_cat_slot_values, state_cat_slot_values):
         new_ont["binary_dialogue_act"] = binary_ont
 
         slot_desc = json.load(
-            open(os.path.join(self_dir, extract_dir, "./slot_descriptions.json"))
+            open(
+                os.path.join(self_dir, extract_dir, "./slot_descriptions.json")
+            )
         )
         for domain_slot in slot_desc:
             _domain, _slot = domain_slot.split("-")
@@ -1441,23 +1515,37 @@ def preprocess(da_cat_slot_values, state_cat_slot_values):
                 _domain in new_ont["domains"]
                 and _slot in new_ont["domains"][_domain]["slots"]
             ):
-                new_ont["domains"][_domain]["slots"][_slot]["description"] = _desc
+                new_ont["domains"][_domain]["slots"][_slot][
+                    "description"
+                ] = _desc
             if not _slot in new_ont["state"][_domain]:
-                logging.info("domain {} slot {} not in state".format(_domain, _slot))
+                logging.info(
+                    "domain {} slot {} not in state".format(_domain, _slot)
+                )
                 continue
             # new_ont['state'][_domain][_slot] = ""
             assert _domain in new_ont["domains"], print(_domain)
             assert _slot in new_ont["domains"][_domain]["slots"]
 
-        logging.info("num_match_error_da_span {}".format(num_match_error_da_span))
+        logging.info(
+            "num_match_error_da_span {}".format(num_match_error_da_span)
+        )
         json.dump(
-            new_ont, open(os.path.join(self_dir, "./ontology.json"), "w"), indent=4
+            new_ont,
+            open(os.path.join(self_dir, "./ontology.json"), "w"),
+            indent=4,
         )
 
     else:
-        all_data = read_zipped_json(os.path.join(self_dir, "./data.zip"), "data.json")
-        new_ont = json.load(open(os.path.join(self_dir, "./ontology.json"), "r"))
-    logging.info("# dialogue: {}, # turn: {}".format(num_train_dialogue, num_train_utt))
+        all_data = read_zipped_json(
+            os.path.join(self_dir, "./data.zip"), "data.json"
+        )
+        new_ont = json.load(
+            open(os.path.join(self_dir, "./ontology.json"), "r")
+        )
+    logging.info(
+        "# dialogue: {}, # turn: {}".format(num_train_dialogue, num_train_utt)
+    )
     return all_data, new_ont
 
 
@@ -1632,7 +1720,9 @@ def check_spans(dialog):
                 utt_idx = _update["utt_idx"]
                 start = _update["start"]
                 end = _update["end"]
-                assert dialog["turns"][utt_idx]["utterance"][start:end] == value, print(
+                assert (
+                    dialog["turns"][utt_idx]["utterance"][start:end] == value
+                ), print(
                     dialog["turns"][utt_idx]["utterance"],
                     dialog["turns"][utt_idx]["utterance"][start:end],
                 )

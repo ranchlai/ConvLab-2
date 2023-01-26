@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import random
 import sys
 
@@ -7,7 +8,15 @@ from convlab2.policy.mdrg.multiwoz.utils.dbPointer import queryResultVenues
 from convlab2.policy.mdrg.multiwoz.utils.delexicalize import *
 from convlab2.policy.mdrg.multiwoz.utils.nlp import *
 
-domains = ["restaurant", "hotel", "attraction", "train", "taxi", "hospital", "police"]
+domains = [
+    "restaurant",
+    "hotel",
+    "attraction",
+    "train",
+    "taxi",
+    "hospital",
+    "police",
+]
 requestables = ["phone", "address", "postcode", "reference", "id"]
 
 
@@ -26,7 +35,13 @@ def parseGoal(goal, d, domain):
         else:
             if "reqt" in d["goal"][domain]:
                 for s in d["goal"][domain]["reqt"]:  # addtional requests:
-                    if s in ["phone", "address", "postcode", "reference", "id"]:
+                    if s in [
+                        "phone",
+                        "address",
+                        "postcode",
+                        "reference",
+                        "id",
+                    ]:
                         # ones that can be easily delexicalized
                         goal[domain]["requestable"].append(s)
             if "book" in d["goal"][domain]:
@@ -112,15 +127,24 @@ def evaluateModel(dialogues, val_dials, mode="valid"):
     # Print results
     if mode == "valid":
         try:
-            print("Valid BLUES SCORE %.10f" % bscorer.score(model_corpus, corpus))
+            print(
+                "Valid BLUES SCORE %.10f" % bscorer.score(model_corpus, corpus)
+            )
         except:
             print("BLUE SCORE ERROR")
-        print("Valid Corpus Matches : %2.2f%%" % (matches / float(total) * 100))
-        print("Valid Corpus Success : %2.2f%%" % (successes / float(total) * 100))
+        print(
+            "Valid Corpus Matches : %2.2f%%" % (matches / float(total) * 100)
+        )
+        print(
+            "Valid Corpus Success : %2.2f%%" % (successes / float(total) * 100)
+        )
         print("Valid Total number of dialogues: %s " % total)
     else:
         try:
-            print("Corpus BLUES SCORE %.10f" % bscorer.score(model_corpus, corpus))
+            print(
+                "Corpus BLUES SCORE %.10f"
+                % bscorer.score(model_corpus, corpus)
+            )
         except:
             print("BLUE SCORE ERROR")
         print("Corpus Matches : %2.2f%%" % (matches / float(total) * 100))
@@ -153,7 +177,9 @@ def evaluateGeneratedDialogue(dialog, goal, realDialogue, real_requestables):
             if "[" + domain + "_name]" in sent_t or "_id" in sent_t:
                 if domain in ["restaurant", "hotel", "attraction", "train"]:
                     # HERE YOU CAN PUT YOUR BELIEF STATE ESTIMATION
-                    venues = queryResultVenues(domain, realDialogue["log"][t * 2 + 1])
+                    venues = queryResultVenues(
+                        domain, realDialogue["log"][t * 2 + 1]
+                    )
 
                     # if venue has changed
                     if len(venue_offered[domain]) == 0 and venues:
@@ -178,21 +204,30 @@ def evaluateGeneratedDialogue(dialog, goal, realDialogue, real_requestables):
                     if domain + "_reference" in sent_t:
                         if "restaurant_reference" in sent_t:
                             if (
-                                realDialogue["log"][t * 2]["db_pointer"][-5] == 1
+                                realDialogue["log"][t * 2]["db_pointer"][-5]
+                                == 1
                             ):  # if pointer was allowing for that?
-                                provided_requestables[domain].append("reference")
+                                provided_requestables[domain].append(
+                                    "reference"
+                                )
 
                         elif "hotel_reference" in sent_t:
                             if (
-                                realDialogue["log"][t * 2]["db_pointer"][-3] == 1
+                                realDialogue["log"][t * 2]["db_pointer"][-3]
+                                == 1
                             ):  # if pointer was allowing for that?
-                                provided_requestables[domain].append("reference")
+                                provided_requestables[domain].append(
+                                    "reference"
+                                )
 
                         elif "train_reference" in sent_t:
                             if (
-                                realDialogue["log"][t * 2]["db_pointer"][-1] == 1
+                                realDialogue["log"][t * 2]["db_pointer"][-1]
+                                == 1
                             ):  # if pointer was allowing for that?
-                                provided_requestables[domain].append("reference")
+                                provided_requestables[domain].append(
+                                    "reference"
+                                )
 
                         else:
                             provided_requestables[domain].append("reference")
@@ -246,7 +281,10 @@ def evaluateGeneratedDialogue(dialog, goal, realDialogue, real_requestables):
             goal_venues = queryResultVenues(
                 domain, goal[domain]["informable"], real_belief=True
             )
-            if type(venue_offered[domain]) is str and "_name" in venue_offered[domain]:
+            if (
+                type(venue_offered[domain]) is str
+                and "_name" in venue_offered[domain]
+            ):
                 match += 1
                 match_stat = 1
             elif (
@@ -342,7 +380,9 @@ def evaluateRealDialogue(dialog, filename):
             if domain + "_name" in sent_t or "_id" in sent_t:
                 if domain in ["restaurant", "hotel", "attraction", "train"]:
                     # HERE YOU CAN PUT YOUR BELIEF STATE ESTIMATION
-                    venues = queryResultVenues(domain, dialog["log"][t * 2 + 1])
+                    venues = queryResultVenues(
+                        domain, dialog["log"][t * 2 + 1]
+                    )
 
                     # if venue has changed
                     if len(venue_offered[domain]) == 0 and venues:
@@ -369,20 +409,26 @@ def evaluateRealDialogue(dialog, filename):
                             if (
                                 dialog["log"][t * 2]["db_pointer"][-5] == 1
                             ):  # if pointer was allowing for that?
-                                provided_requestables[domain].append("reference")
+                                provided_requestables[domain].append(
+                                    "reference"
+                                )
 
                         elif "hotel_reference" in sent_t:
                             if (
                                 dialog["log"][t * 2]["db_pointer"][-3] == 1
                             ):  # if pointer was allowing for that?
-                                provided_requestables[domain].append("reference")
+                                provided_requestables[domain].append(
+                                    "reference"
+                                )
 
                                 # return goal, 0, match, real_requestables
                         elif "train_reference" in sent_t:
                             if (
                                 dialog["log"][t * 2]["db_pointer"][-1] == 1
                             ):  # if pointer was allowing for that?
-                                provided_requestables[domain].append("reference")
+                                provided_requestables[domain].append(
+                                    "reference"
+                                )
 
                         else:
                             provided_requestables[domain].append("reference")
@@ -403,7 +449,8 @@ def evaluateRealDialogue(dialog, filename):
 
         # if id was not requested but train was found we dont want to override it to check if we booked the right train
         if domain == "train" and (
-            not venue_offered[domain] and "id" not in goal["train"]["requestable"]
+            not venue_offered[domain]
+            and "id" not in goal["train"]["requestable"]
         ):
             venue_offered[domain] = "[" + domain + "_name]"
 
@@ -427,7 +474,10 @@ def evaluateRealDialogue(dialog, filename):
                 domain, dialog["goal"][domain]["info"], real_belief=True
             )
             # print(goal_venues)
-            if type(venue_offered[domain]) is str and "_name" in venue_offered[domain]:
+            if (
+                type(venue_offered[domain]) is str
+                and "_name" in venue_offered[domain]
+            ):
                 match += 1
                 match_stat = 1
             elif (

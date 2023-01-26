@@ -1,12 +1,14 @@
+# -*- coding: utf-8 -*-
+import time
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
-from convlab2.dst.comer.multiwoz import dict
-from convlab2.dst.comer.multiwoz import models
-import time
-import numpy as np
-from convlab2.dst.comer.multiwoz.convert_mw import bert, tokenizer, bert_type
+
+from convlab2.dst.comer.multiwoz import dict, models
+from convlab2.dst.comer.multiwoz.convert_mw import bert, bert_type, tokenizer
 
 
 def norm_emb(emb):
@@ -23,7 +25,9 @@ def sequence_mask(sequence_length, max_len=None):
     seq_range_expand = seq_range.unsqueeze(0).expand(batch_size, max_len)
     if sequence_length.is_cuda:
         seq_range_expand = seq_range_expand.cuda()
-    seq_length_expand = sequence_length.unsqueeze(1).expand_as(seq_range_expand)
+    seq_length_expand = sequence_length.unsqueeze(1).expand_as(
+        seq_range_expand
+    )
     return -(seq_range_expand >= seq_length_expand).float() * 1e9
 
 
@@ -114,7 +118,11 @@ class seq2seq(nn.Module):
             tgt,
             state,
             False,
-            (b_out.transpose(0, 1), user_out.transpose(0, 1), sys_out.transpose(0, 1)),
+            (
+                b_out.transpose(0, 1),
+                user_out.transpose(0, 1),
+                sys_out.transpose(0, 1),
+            ),
             self.criterion,
             story,
             lengths,
@@ -164,7 +172,15 @@ class seq2seq(nn.Module):
         return loss, soutputs, voutputs, num, snums, vnums
 
     def sample(
-        self, src1s, src1_lens, src2s, src2_lens, src3s, src3_lens, tgtpvs, tgtpv_lens
+        self,
+        src1s,
+        src1_lens,
+        src2s,
+        src2_lens,
+        src3s,
+        src3_lens,
+        tgtpvs,
+        tgtpv_lens,
     ):
 
         # srcs: B x N x T.

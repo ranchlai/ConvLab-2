@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 import torch
+
 from convlab2.dst.comer.multiwoz import dict
 
 

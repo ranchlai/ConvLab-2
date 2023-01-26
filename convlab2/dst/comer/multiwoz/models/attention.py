@@ -1,10 +1,12 @@
+# -*- coding: utf-8 -*-
+import math
+
 import torch
 import torch.nn as nn
+import torch.nn.init as init
 from torch.autograd import Variable
 from torch.nn.utils.rnn import pack_padded_sequence as pack
 from torch.nn.utils.rnn import pad_packed_sequence as unpack
-import torch.nn.init as init
-import math
 
 
 class global_attention(nn.Module):
@@ -30,6 +32,8 @@ class global_attention(nn.Module):
         weights = torch.bmm(context, gamma_h).squeeze(2) + mask  # batch * time
 
         weights = self.softmax(weights)  # batch * time
-        c_t = torch.bmm(weights.unsqueeze(1), context).squeeze(1)  # batch * size
+        c_t = torch.bmm(weights.unsqueeze(1), context).squeeze(
+            1
+        )  # batch * size
         c_t = self.linear_out(c_t)
         return c_t, weights

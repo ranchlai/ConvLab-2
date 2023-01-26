@@ -1,41 +1,48 @@
-import requests
-import zipfile
+# -*- coding: utf-8 -*-
 import argparse
 import json
 import os
-import shutil
-import time
 import re
+import shutil
 import sys
+import time
+import zipfile
+
+import requests
 
 sys.path.append(
-    os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, os.pardir)
+    os.path.join(
+        os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, os.pardir
+    )
 )
+
+from copy import deepcopy
+from pprint import pprint
 
 import numpy as np
 import torch
 
-from convlab2.policy.policy import Policy
-from convlab2.policy.mdrg.multiwoz.utils import delexicalize, util, dbPointer
-from convlab2.policy.mdrg.multiwoz.utils.nlp import normalize
-from convlab2.policy.mdrg.multiwoz.evaluator import evaluateModel
-from convlab2.policy.mdrg.multiwoz.mdrg_model import Model
 from convlab2.policy.mdrg.multiwoz.create_delex_data import (
     delexicaliseReferenceNumber,
     get_dial,
 )
-
-from convlab2.util.multiwoz.state import default_state
+from convlab2.policy.mdrg.multiwoz.evaluator import evaluateModel
+from convlab2.policy.mdrg.multiwoz.mdrg_model import Model
+from convlab2.policy.mdrg.multiwoz.utils import dbPointer, delexicalize, util
+from convlab2.policy.mdrg.multiwoz.utils.nlp import normalize
+from convlab2.policy.policy import Policy
 from convlab2.util.multiwoz.dbquery import Database
-from pprint import pprint
-from copy import deepcopy
+from convlab2.util.multiwoz.state import default_state
 
 
 def load_config(args):
     config = util.unicode_to_utf8(
         json.load(
             open(
-                os.path.join(os.path.dirname(__file__), args.model_path + ".json"), "rb"
+                os.path.join(
+                    os.path.dirname(__file__), args.model_path + ".json"
+                ),
+                "rb",
             )
         )
     )
@@ -51,19 +58,27 @@ def load_config(args):
 def loadModelAndData(num, args):
     # Load dictionaries
     with open(
-        os.path.join(os.path.curdir(__file__), "data/input_lang.index2word.json")
+        os.path.join(
+            os.path.curdir(__file__), "data/input_lang.index2word.json"
+        )
     ) as f:
         input_lang_index2word = json.load(f)
     with open(
-        os.path.join(os.path.curdir(__file__), "data/input_lang.word2index.json")
+        os.path.join(
+            os.path.curdir(__file__), "data/input_lang.word2index.json"
+        )
     ) as f:
         input_lang_word2index = json.load(f)
     with open(
-        os.path.join(os.path.curdir(__file__), "data/output_lang.index2word.json")
+        os.path.join(
+            os.path.curdir(__file__), "data/output_lang.index2word.json"
+        )
     ) as f:
         output_lang_index2word = json.load(f)
     with open(
-        os.path.join(os.path.curdir(__file__), "data/output_lang.word2index.json")
+        os.path.join(
+            os.path.curdir(__file__), "data/output_lang.word2index.json"
+        )
     ) as f:
         output_lang_word2index = json.load(f)
 
@@ -92,7 +107,9 @@ def loadModelAndData(num, args):
         os.makedirs(args.valid_output)
 
     # Load validation file list:
-    with open(os.path.join(os.path.curdir(__file__), "data/val_dials.json")) as outfile:
+    with open(
+        os.path.join(os.path.curdir(__file__), "data/val_dials.json")
+    ) as outfile:
         val_dials = json.load(outfile)
 
     # Load test file list:
@@ -172,23 +189,31 @@ def addDBPointer(state, db):
     for domain in domains:
         # entities = dbPointer.queryResultVenues(domain, {'metadata': state})
         try:
-            entities = db.query(domain, state["metadata"][domain]["semi"].items())
+            entities = db.query(
+                domain, state["metadata"][domain]["semi"].items()
+            )
         except:
-            entities = db.query(domain, state["belief_state"][domain]["semi"].items())
+            entities = db.query(
+                domain, state["belief_state"][domain]["semi"].items()
+            )
         num_entities[domain] = len(entities)
         if len(entities) > 0:
             # fields = dbPointer.table_schema(domain)
             # db_results[domain] = dict(zip(fields, entities[0]))
             db_results[domain] = entities[0]
         # pointer_vector = dbPointer.oneHotVector(len(entities), domain, pointer_vector)
-        pointer_vector = dbPointer.oneHotVector(len(entities), domain, pointer_vector)
+        pointer_vector = dbPointer.oneHotVector(
+            len(entities), domain, pointer_vector
+        )
 
     return pointer_vector, db_results, num_entities
 
 
 def decodeWrapper(args):
     # Load config file
-    with open(os.path.join(os.path.curdir(__file__), args.model_path + ".config")) as f:
+    with open(
+        os.path.join(os.path.curdir(__file__), args.model_path + ".config")
+    ) as f:
         add_args = json.load(f)
         for k, v in add_args.items():
             setattr(args, k, v)
@@ -311,7 +336,9 @@ def populate_template(template, top_results, num_results, state):
     active_domain = (
         None if len(top_results.keys()) == 0 else list(top_results.keys())[0]
     )
-    template = template.replace("book [value_count] of them", "book one of them")
+    template = template.replace(
+        "book [value_count] of them", "book one of them"
+    )
     tokens = template.split()
     response = []
     for index, token in enumerate(tokens):
@@ -334,9 +361,17 @@ def populate_template(template, top_results, num_results, state):
             elif domain == "value":
                 if slot == "count":
                     if index + 1 < len(tokens):
-                        if "minute" in tokens[index + 1] and active_domain == "train":
-                            response.append(top_results["train"]["duration"].split()[0])
-                        elif "star" in tokens[index + 1] and active_domain == "hotel":
+                        if (
+                            "minute" in tokens[index + 1]
+                            and active_domain == "train"
+                        ):
+                            response.append(
+                                top_results["train"]["duration"].split()[0]
+                            )
+                        elif (
+                            "star" in tokens[index + 1]
+                            and active_domain == "hotel"
+                        ):
                             response.append(top_results["hotel"]["stars"])
                         else:
                             response.append(str(num_results))
@@ -348,7 +383,9 @@ def populate_template(template, top_results, num_results, state):
                             if d == "history":
                                 continue
                             if "destination" in state[d]["semi"]:
-                                response.append(state[d]["semi"]["destination"])
+                                response.append(
+                                    state[d]["semi"]["destination"]
+                                )
                                 break
                     elif "leave" in response:
                         for d in state:
@@ -377,7 +414,9 @@ def populate_template(template, top_results, num_results, state):
                             and "arriveBy" in top_results[active_domain]
                         ):
                             # print('{} -> {}'.format(token, top_results[active_domain]['arriveBy']))
-                            response.append(top_results[active_domain]["arriveBy"])
+                            response.append(
+                                top_results[active_domain]["arriveBy"]
+                            )
                             continue
                         for d in state:
                             if d == "history":
@@ -391,7 +430,9 @@ def populate_template(template, top_results, num_results, state):
                             and "leaveAt" in top_results[active_domain]
                         ):
                             # print('{} -> {}'.format(token, top_results[active_domain]['leaveAt']))
-                            response.append(top_results[active_domain]["leaveAt"])
+                            response.append(
+                                top_results[active_domain]["leaveAt"]
+                            )
                             continue
                         for d in state:
                             if d == "history":
@@ -401,7 +442,9 @@ def populate_template(template, top_results, num_results, state):
                                 break
                     elif "book" in response:
                         if state["restaurant"]["book"]["time"] != "":
-                            response.append(state["restaurant"]["book"]["time"])
+                            response.append(
+                                state["restaurant"]["book"]["time"]
+                            )
                     else:
                         try:
                             for d in state:
@@ -416,7 +459,9 @@ def populate_template(template, top_results, num_results, state):
                         else:
                             response.append(token)
                 elif slot == "price" and active_domain == "attraction":
-                    value = top_results["attraction"]["entrance fee"].split()[0]
+                    value = top_results["attraction"]["entrance fee"].split()[
+                        0
+                    ]
                     try:
                         value = str(int(value))
                     except:
@@ -498,14 +543,28 @@ def decode(data, model, device):
             target_tensor = []
             bs_tensor = []
             db_tensor = []
-            input_tensor, target_tensor, bs_tensor, db_tensor = util.loadDialogue(
-                model, val_file, input_tensor, target_tensor, bs_tensor, db_tensor
+            (
+                input_tensor,
+                target_tensor,
+                bs_tensor,
+                db_tensor,
+            ) = util.loadDialogue(
+                model,
+                val_file,
+                input_tensor,
+                target_tensor,
+                bs_tensor,
+                db_tensor,
             )
             # create an empty matrix with padding tokens
             input_tensor, input_lengths = util.padSequence(input_tensor)
             target_tensor, target_lengths = util.padSequence(target_tensor)
-            bs_tensor = torch.tensor(bs_tensor, dtype=torch.float, device=device)
-            db_tensor = torch.tensor(db_tensor, dtype=torch.float, device=device)
+            bs_tensor = torch.tensor(
+                bs_tensor, dtype=torch.float, device=device
+            )
+            db_tensor = torch.tensor(
+                db_tensor, dtype=torch.float, device=device
+            )
 
             output_words, loss_sentence = model.predict(
                 input_tensor,
@@ -524,19 +583,27 @@ def loadModel(num, args):
 
     # Load dictionaries
     with open(
-        os.path.join(os.path.dirname(__file__), "data", "input_lang.index2word.json")
+        os.path.join(
+            os.path.dirname(__file__), "data", "input_lang.index2word.json"
+        )
     ) as f:
         input_lang_index2word = json.load(f)
     with open(
-        os.path.join(os.path.dirname(__file__), "data", "input_lang.word2index.json")
+        os.path.join(
+            os.path.dirname(__file__), "data", "input_lang.word2index.json"
+        )
     ) as f:
         input_lang_word2index = json.load(f)
     with open(
-        os.path.join(os.path.dirname(__file__), "data", "output_lang.index2word.json")
+        os.path.join(
+            os.path.dirname(__file__), "data", "output_lang.index2word.json"
+        )
     ) as f:
         output_lang_index2word = json.load(f)
     with open(
-        os.path.join(os.path.dirname(__file__), "data", "output_lang.word2index.json")
+        os.path.join(
+            os.path.dirname(__file__), "data", "output_lang.word2index.json"
+        )
     ) as f:
         output_lang_word2index = json.load(f)
 
@@ -566,21 +633,34 @@ class MDRGWordPolicy(Policy):
             help="enables CUDA training",
         )
         parser.add_argument(
-            "--seed", type=int, default=1, metavar="S", help="random seed (default: 1)"
+            "--seed",
+            type=int,
+            default=1,
+            metavar="S",
+            help="random seed (default: 1)",
         )
 
         parser.add_argument(
-            "--no_models", type=int, default=20, help="how many models to evaluate"
+            "--no_models",
+            type=int,
+            default=20,
+            help="how many models to evaluate",
         )
         parser.add_argument(
-            "--original", type=str, default="model/model/", help="Original path."
+            "--original",
+            type=str,
+            default="model/model/",
+            help="Original path.",
         )
 
         parser.add_argument("--dropout", type=float, default=0.0)
         parser.add_argument("--use_emb", type=str, default="False")
 
         parser.add_argument(
-            "--beam_width", type=int, default=10, help="Beam width used in beamsearch"
+            "--beam_width",
+            type=int,
+            default=10,
+            help="Beam width used in beamsearch",
         )
         parser.add_argument(
             "--write_n_best",
@@ -623,7 +703,10 @@ class MDRGWordPolicy(Policy):
 
         self.device = torch.device("cuda" if args.cuda else "cpu")
         with open(
-            os.path.join(os.path.dirname(__file__), args.model_path + ".config"), "r"
+            os.path.join(
+                os.path.dirname(__file__), args.model_path + ".config"
+            ),
+            "r",
         ) as f:
             add_args = json.load(f)
             # print(add_args)
@@ -648,7 +731,10 @@ class MDRGWordPolicy(Policy):
     def predict(self, state):
         last_usr_uttr = state["history"][-1][-1]
         usr_turn = {"text": last_usr_uttr, "metadata": ""}
-        sys_turn = {"text": "placeholder " * 50, "metadata": state["belief_state"]}
+        sys_turn = {
+            "text": "placeholder " * 50,
+            "metadata": state["belief_state"],
+        }
         self.dial["cur"]["log"].append(usr_turn)
         self.dial["cur"]["log"].append(sys_turn)
         # print(self.dial)
@@ -709,7 +795,9 @@ def main():
     # print(s)
     print(testPolicy.predict(s))
 
-    s["history"].append(["sys", "the address is 106 Regent Street City Centre."])
+    s["history"].append(
+        ["sys", "the address is 106 Regent Street City Centre."]
+    )
     s["history"].append(
         [
             "user",

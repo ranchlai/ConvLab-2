@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2017-present, Facebook, Inc.
 # All rights reserved.
 #
@@ -9,12 +10,12 @@ and models with planning.
 """
 
 import argparse
+import itertools
+import pdb
+import random
+import re
 import sys
 import time
-import random
-import itertools
-import re
-import pdb
 
 import numpy as np
 import torch
@@ -22,12 +23,11 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
 
+import convlab2.e2e.rnn_rollout.utils as utils
 import data
 from convlab2.e2e.rnn_rollout.agent import LstmAgent
 from convlab2.e2e.rnn_rollout.dialog import DialogLogger
-import convlab2.e2e.rnn_rollout.utils as utils
 from convlab2.e2e.rnn_rollout.domain import get_domain
-
 
 TAGS = ["YOU:", "THEM:"]
 
@@ -71,7 +71,9 @@ def read_dataset(file_name):
 
 def rollout(sent, ai, domain, temperature):
     enc = ai._encode(sent, ai.model.word_dict)
-    _, lang_h, lang_hs = ai.model.score_sent(enc, ai.lang_h, ai.ctx_h, temperature)
+    _, lang_h, lang_hs = ai.model.score_sent(
+        enc, ai.lang_h, ai.ctx_h, temperature
+    )
 
     is_selection = len(sent) == 1 and sent[0] == "<selection>"
 
@@ -147,12 +149,20 @@ def main():
     )
     parser.add_argument("--model_file", type=str, help="model file")
     parser.add_argument(
-        "--smart_ai", action="store_true", default=False, help="to use rollouts"
+        "--smart_ai",
+        action="store_true",
+        default=False,
+        help="to use rollouts",
     )
     parser.add_argument("--seed", type=int, default=1, help="random seed")
-    parser.add_argument("--temperature", type=float, default=1.0, help="temperature")
     parser.add_argument(
-        "--domain", type=str, default="object_division", help="domain for the dialogue"
+        "--temperature", type=float, default=1.0, help="temperature"
+    )
+    parser.add_argument(
+        "--domain",
+        type=str,
+        default="object_division",
+        help="domain for the dialogue",
     )
     parser.add_argument("--log_file", type=str, default="", help="log file")
     args = parser.parse_args()

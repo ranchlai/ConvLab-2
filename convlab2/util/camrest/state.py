@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 def default_state():
     state = dict(
         user_action=[],

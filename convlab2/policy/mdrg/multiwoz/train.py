@@ -1,19 +1,19 @@
+# -*- coding: utf-8 -*-
 from __future__ import division, print_function, unicode_literals
 
 import argparse
 import json
+import os
 import random
 import time
 from io import open
-import os
 
 import numpy as np
 import torch
 from torch.optim import Adam
 
-from convlab2.policy.mdrg.multiwoz.utils import util
 from convlab2.policy.mdrg.multiwoz.model import Model
-
+from convlab2.policy.mdrg.multiwoz.utils import util
 
 parser = argparse.ArgumentParser(description="S2S")
 parser.add_argument(
@@ -48,7 +48,9 @@ parser.add_argument("--optim", type=str, default="adam")
 parser.add_argument("--lr_rate", type=float, default=0.005)
 parser.add_argument("--lr_decay", type=float, default=0.0)
 parser.add_argument("--l2_norm", type=float, default=0.00001)
-parser.add_argument("--clip", type=float, default=5.0, help="clip the gradient by norm")
+parser.add_argument(
+    "--clip", type=float, default=5.0, help="clip the gradient by norm"
+)
 
 parser.add_argument(
     "--teacher_ratio",
@@ -83,7 +85,10 @@ parser.add_argument(
 parser.add_argument("--epoch_load", type=int, default=0)
 
 parser.add_argument(
-    "--mode", type=str, default="train", help="training or testing: test, train, RL"
+    "--mode",
+    type=str,
+    default="train",
+    help="training or testing: test, train, RL",
 )
 
 
@@ -147,7 +152,9 @@ def trainIters(model, n_epochs=10, args=args):
         )
         model.optimizer_policy = Adam(
             lr=args.lr_rate,
-            params=filter(lambda x: x.requires_grad, model.policy.parameters()),
+            params=filter(
+                lambda x: x.requires_grad, model.policy.parameters()
+            ),
             weight_decay=args.l2_norm,
         )
 
@@ -162,8 +169,18 @@ def trainIters(model, n_epochs=10, args=args):
             model.optimizer.zero_grad()
             model.optimizer_policy.zero_grad()
 
-            input_tensor, target_tensor, bs_tensor, db_tensor = util.loadDialogue(
-                model, val_file, input_tensor, target_tensor, bs_tensor, db_tensor
+            (
+                input_tensor,
+                target_tensor,
+                bs_tensor,
+                db_tensor,
+            ) = util.loadDialogue(
+                model,
+                val_file,
+                input_tensor,
+                target_tensor,
+                bs_tensor,
+                db_tensor,
             )
 
             if len(db_tensor) > args.batch_size:
@@ -204,14 +221,28 @@ def trainIters(model, n_epochs=10, args=args):
             target_tensor = []
             bs_tensor = []
             db_tensor = []
-            input_tensor, target_tensor, bs_tensor, db_tensor = util.loadDialogue(
-                model, val_file, input_tensor, target_tensor, bs_tensor, db_tensor
+            (
+                input_tensor,
+                target_tensor,
+                bs_tensor,
+                db_tensor,
+            ) = util.loadDialogue(
+                model,
+                val_file,
+                input_tensor,
+                target_tensor,
+                bs_tensor,
+                db_tensor,
             )
             # create an empty matrix with padding tokens
             input_tensor, input_lengths = util.padSequence(input_tensor)
             target_tensor, target_lengths = util.padSequence(target_tensor)
-            bs_tensor = torch.tensor(bs_tensor, dtype=torch.float, device=device)
-            db_tensor = torch.tensor(db_tensor, dtype=torch.float, device=device)
+            bs_tensor = torch.tensor(
+                bs_tensor, dtype=torch.float, device=device
+            )
+            db_tensor = torch.tensor(
+                db_tensor, dtype=torch.float, device=device
+            )
 
             proba, _, _ = model.forward(
                 input_tensor,
@@ -234,19 +265,31 @@ def trainIters(model, n_epochs=10, args=args):
 def loadDictionaries():
     # load data and dictionaries
     with open(
-        os.path.join(os.path.dirname(__file__), "data/input_lang.index2word.json"), "r"
+        os.path.join(
+            os.path.dirname(__file__), "data/input_lang.index2word.json"
+        ),
+        "r",
     ) as f:
         input_lang_index2word = json.load(f)
     with open(
-        os.path.join(os.path.dirname(__file__), "data/input_lang.word2index.json"), "r"
+        os.path.join(
+            os.path.dirname(__file__), "data/input_lang.word2index.json"
+        ),
+        "r",
     ) as f:
         input_lang_word2index = json.load(f)
     with open(
-        os.path.join(os.path.dirname(__file__), "data/output_lang.index2word.json"), "r"
+        os.path.join(
+            os.path.dirname(__file__), "data/output_lang.index2word.json"
+        ),
+        "r",
     ) as f:
         output_lang_index2word = json.load(f)
     with open(
-        os.path.join(os.path.dirname(__file__), "data/output_lang.word2index.json"), "r"
+        os.path.join(
+            os.path.dirname(__file__), "data/output_lang.word2index.json"
+        ),
+        "r",
     ) as f:
         output_lang_word2index = json.load(f)
 

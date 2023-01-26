@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """module interface."""
 from abc import ABC
 

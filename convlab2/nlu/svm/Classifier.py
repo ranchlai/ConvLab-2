@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import multiprocessing as mp
 import os
@@ -7,10 +8,10 @@ from collections import defaultdict
 
 import numpy
 from scipy.sparse import lil_matrix
-from sklearn.linear_model import SGDClassifier
 from sklearn import svm
+from sklearn.linear_model import SGDClassifier
 
-from convlab2.nlu.svm import sutils, Tuples
+from convlab2.nlu.svm import Tuples, sutils
 from convlab2.nlu.svm.Features import cnet as cnet_extractor
 
 names_to_classes = {}
@@ -43,7 +44,9 @@ class classifier(object):
         self.feature_extractors = []
         for feature in self.features:
             self.feature_extractors.append(
-                sutils.import_class("convlab2.nlu.svm.Features." + feature)(config)
+                sutils.import_class("convlab2.nlu.svm.Features." + feature)(
+                    config
+                )
             )
         print(self.feature_extractors)
         self.tuples = Tuples.tuples(config)
@@ -103,7 +106,10 @@ class classifier(object):
                 for this_tuple in active_tuples:
                     # print(this_tuple)
                     if label_turn != None:
-                        y = Tuples.generic_to_specific(this_tuple) in these_tuples
+                        y = (
+                            Tuples.generic_to_specific(this_tuple)
+                            in these_tuples
+                        )
 
                     X = defaultdict(float)
                     for feature_extractor in self.feature_extractors:
@@ -130,7 +136,9 @@ class classifier(object):
                     if label_turn != None:
                         self.y[this_tuple].append(y)
 
-                    self.baseX_pointers[this_tuple].append(len(self.baseXs) - 1)
+                    self.baseX_pointers[this_tuple].append(
+                        len(self.baseXs) - 1
+                    )
 
                     # self.fnames[this_tuple].append(log_turn["input"]["audio-file"])
 
@@ -192,7 +200,9 @@ class classifier(object):
         print("finished extracting features")
         print("creating feature dictionary")
         self.createDictionary()
-        print("finished creating dictionary (of size", len(self.dictionary), ")")
+        print(
+            "finished creating dictionary (of size", len(self.dictionary), ")"
+        )
 
     def train(self, dw, config=None):
         # print "creating feature dictionary"
@@ -215,10 +225,15 @@ class classifier(object):
                 print("Warning: no examples of", this_tuple)
                 self.classifiers[this_tuple] = None
                 continue
-            baseXs = [self.baseXs[index] for index in self.baseX_pointers[this_tuple]]
+            baseXs = [
+                self.baseXs[index] for index in self.baseX_pointers[this_tuple]
+            ]
             y = list(map(int, self.y[this_tuple]))
             if sum(y) < self.min_examples:
-                print("Warning:  not enough examples (%d) of" % sum(y), this_tuple)
+                print(
+                    "Warning:  not enough examples (%d) of" % sum(y),
+                    this_tuple,
+                )
                 self.classifiers[this_tuple] = None
                 continue
             if len(set(y)) < 2:
@@ -229,7 +244,9 @@ class classifier(object):
             X = toSparse(baseXs, self.X[this_tuple], self.dictionary)
 
             # pick the right classifier class
-            self.classifiers[this_tuple] = names_to_classes[self.type](self.config)
+            self.classifiers[this_tuple] = names_to_classes[self.type](
+                self.config
+            )
             # self.classifiers[this_tuple].train(X,y)
 
             result = pool.apply_async(trainSVMwrapper, args=(X, y))
@@ -251,7 +268,9 @@ class classifier(object):
         ]
 
         if no_models:
-            print("Not able to learn about: %d/%d" % (len(no_models), total_num))
+            print(
+                "Not able to learn about: %d/%d" % (len(no_models), total_num)
+            )
             # print(len(no_models))
             # print ", ".join(map(str, no_models))
 
@@ -266,7 +285,9 @@ class classifier(object):
             if self.classifiers[this_tuple] is None:
                 results[this_tuple] = numpy.zeros((n,))
                 continue
-            baseXs = [self.baseXs[index] for index in self.baseX_pointers[this_tuple]]
+            baseXs = [
+                self.baseXs[index] for index in self.baseX_pointers[this_tuple]
+            ]
             X = toSparse(baseXs, self.X[this_tuple], self.dictionary)
             results[this_tuple] = self.classifiers[this_tuple].predict(X)
         return results
@@ -361,9 +382,14 @@ class classifier(object):
                 classifier_params[this_tuple] = None
             else:
                 print("saving: ", this_tuple)
-                classifier_params[this_tuple] = self.classifiers[this_tuple].params()
+                classifier_params[this_tuple] = self.classifiers[
+                    this_tuple
+                ].params()
 
-        obj = {"classifier_params": classifier_params, "dictionary": self.dictionary}
+        obj = {
+            "classifier_params": classifier_params,
+            "dictionary": self.dictionary,
+        }
         save_file = open(save_fname, "wb")
         pickle.dump(obj, save_file)
         save_file.close()
@@ -374,6 +400,7 @@ class classifier(object):
         print("loading saved Classifier")
         # print(fname)
         import sys
+
         import convlab2
 
         sys.modules["tatk"] = convlab2
@@ -386,8 +413,12 @@ class classifier(object):
             if classifier_params[this_tuple] is None:
                 self.classifiers[this_tuple] = None
             else:
-                self.classifiers[this_tuple] = names_to_classes[self.type](self.config)
-                self.classifiers[this_tuple].load(classifier_params[this_tuple])
+                self.classifiers[this_tuple] = names_to_classes[self.type](
+                    self.config
+                )
+                self.classifiers[this_tuple].load(
+                    classifier_params[this_tuple]
+                )
 
         self.dictionary = obj["dictionary"]
 
@@ -407,7 +438,9 @@ class classifier(object):
                 if Tuples.is_generic(this_tuple[-1]):
                     t = this_tuple[:-1] + ("<generic_value>",)
                 lines += ["(" + ",".join(t) + ")"]
-                lines += utils.svm_to_libsvm(self.classifiers[this_tuple].model)
+                lines += utils.svm_to_libsvm(
+                    self.classifiers[this_tuple].model
+                )
                 lines += [".", ""]
         models_savefile = open(models_fname, "wb")
         for line in lines:
@@ -425,7 +458,9 @@ class classifier(object):
 
         # save config
         config_savefile = open(config_fname, "w")
-        config_savefile.write("# Automatically generated by CNetTrain scripts\n")
+        config_savefile.write(
+            "# Automatically generated by CNetTrain scripts\n"
+        )
         options = {
             "FEATURES": json.dumps(self.features),
             "MAX_ACTIVE_TUPLES": str(self.tuples.max_active),

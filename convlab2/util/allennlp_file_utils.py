@@ -1,25 +1,28 @@
+# -*- coding: utf-8 -*-
 """
 Copy from allennlp https://github.com/allenai/allennlp/blob/master/allennlp/common/file_utils.py
 Utilities for working with the local dataset cache.
 """
 
-import os
+import json
 import logging
+import os
 import shutil
 import tempfile
-import json
-from urllib.parse import urlparse
-from pathlib import Path
-from typing import Optional, Tuple, Union, IO, Callable, Set
-from hashlib import sha256
 from functools import wraps
+from hashlib import sha256
+from pathlib import Path
+from typing import IO, Callable, Optional, Set, Tuple, Union
+from urllib.parse import urlparse
 
 import boto3
 import botocore
-from botocore.exceptions import ClientError
 import requests
+from botocore.exceptions import ClientError
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry  # pylint: disable=import-error
+from requests.packages.urllib3.util.retry import (  # pylint: disable=import-error
+    Retry,
+)
 
 """
 :class:`~allennlp.common.tqdm.Tqdm` wraps tqdm so we can add configurable
@@ -126,7 +129,9 @@ def filename_to_url(filename: str, cache_dir: str = None) -> Tuple[str, str]:
     return url, etag
 
 
-def cached_path(url_or_filename: Union[str, Path], cache_dir: str = None) -> str:
+def cached_path(
+    url_or_filename: Union[str, Path], cache_dir: str = None
+) -> str:
     """
     Given something that might be a URL (or might be a local path),
     determine which. If it's a URL, download the file and cache it, and
@@ -153,7 +158,9 @@ def cached_path(url_or_filename: Union[str, Path], cache_dir: str = None) -> str
     else:
         # Something unknown
         raise ValueError(
-            "unable to parse {} as a URL or as a local path".format(url_or_filename)
+            "unable to parse {} as a URL or as a local path".format(
+                url_or_filename
+            )
         )
 
 
@@ -166,7 +173,9 @@ def is_url_or_existing_file(url_or_filename: Union[str, Path, None]) -> bool:
         return False
     url_or_filename = os.path.expanduser(str(url_or_filename))
     parsed = urlparse(url_or_filename)
-    return parsed.scheme in ("http", "https", "s3") or os.path.exists(url_or_filename)
+    return parsed.scheme in ("http", "https", "s3") or os.path.exists(
+        url_or_filename
+    )
 
 
 def split_s3_path(url: str) -> Tuple[str, str]:
@@ -206,7 +215,8 @@ def get_s3_resource():
     if session.get_credentials() is None:
         # Use unsigned requests.
         s3_resource = session.resource(
-            "s3", config=botocore.client.Config(signature_version=botocore.UNSIGNED)
+            "s3",
+            config=botocore.client.Config(signature_version=botocore.UNSIGNED),
         )
     else:
         s3_resource = session.resource("s3")
@@ -240,7 +250,9 @@ def session_with_backoff() -> requests.Session:
     see https://stackoverflow.com/questions/23267409/how-to-implement-retry-mechanism-into-python-requests-library
     """
     session = requests.Session()
-    retries = Retry(total=5, backoff_factor=1, status_forcelist=[502, 503, 504])
+    retries = Retry(
+        total=5, backoff_factor=1, status_forcelist=[502, 503, 504]
+    )
     session.mount("http://", HTTPAdapter(max_retries=retries))
     session.mount("https://", HTTPAdapter(max_retries=retries))
 
@@ -294,7 +306,9 @@ def get_from_cache(url: str, cache_dir: str = None) -> str:
         # Download to temporary file, then copy to cache dir once finished.
         # Otherwise you get corrupt cache entries if the download gets interrupted.
         with tempfile.NamedTemporaryFile() as temp_file:
-            logger.info("%s not found in cache, downloading to %s", url, temp_file.name)
+            logger.info(
+                "%s not found in cache, downloading to %s", url, temp_file.name
+            )
 
             # GET file object
             if url.startswith("s3://"):
@@ -307,7 +321,9 @@ def get_from_cache(url: str, cache_dir: str = None) -> str:
             # shutil.copyfileobj() starts at the current position, so go to the start
             temp_file.seek(0)
 
-            logger.info("copying %s to cache at %s", temp_file.name, cache_path)
+            logger.info(
+                "copying %s to cache at %s", temp_file.name, cache_path
+            )
             with open(cache_path, "wb") as cache_file:
                 shutil.copyfileobj(temp_file, cache_file)
 

@@ -1,11 +1,12 @@
+# -*- coding: utf-8 -*-
 # Copyright 2017-present, Facebook, Inc.
 # All rights reserved.
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import sys
 import re
+import sys
 import time
 
 import numpy as np
@@ -14,14 +15,16 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init
 from torch.autograd import Variable
-import torch.nn.functional as F
 
 import convlab2.e2e.rnn_rollout.data as data
-from convlab2.e2e.rnn_rollout.engines.selection_engine import SelectionEngine
 from convlab2.e2e.rnn_rollout.domain import get_domain
-from convlab2.e2e.rnn_rollout.models.utils import *
+from convlab2.e2e.rnn_rollout.engines.selection_engine import SelectionEngine
+from convlab2.e2e.rnn_rollout.models.attn import (
+    Attention,
+    HierarchicalAttention,
+)
 from convlab2.e2e.rnn_rollout.models.ctx_encoder import MlpContextEncoder
-from convlab2.e2e.rnn_rollout.models.attn import Attention, HierarchicalAttention
+from convlab2.e2e.rnn_rollout.models.utils import *
 
 
 class SelectionModule(nn.Module):
@@ -96,7 +99,9 @@ class SelectionModel(nn.Module):
 
         self.word_encoder = nn.Embedding(len(self.word_dict), args.nembed_word)
         self.pos_encoder = nn.Embedding(self.len_cutoff, self.nhid_pos)
-        self.speaker_encoder = nn.Embedding(len(self.word_dict), self.nhid_speaker)
+        self.speaker_encoder = nn.Embedding(
+            len(self.word_dict), self.nhid_speaker
+        )
         self.ctx_encoder = MlpContextEncoder(
             len(self.context_dict),
             domain.input_length(),
@@ -149,9 +154,13 @@ class SelectionModel(nn.Module):
                 [
                     inpt_emb,
                     speaker_emb.expand(
-                        inpt_emb.size(0), speaker_emb.size(1), speaker_emb.size(2)
+                        inpt_emb.size(0),
+                        speaker_emb.size(1),
+                        speaker_emb.size(2),
                     ),
-                    pos_emb.expand(inpt_emb.size(0), inpt_emb.size(1), pos_emb.size(2)),
+                    pos_emb.expand(
+                        inpt_emb.size(0), inpt_emb.size(1), pos_emb.size(2)
+                    ),
                 ],
                 2,
             )
@@ -173,7 +182,11 @@ class SelectionModel(nn.Module):
         sels = []
         for i in range(len(hs)):
             sel, _, _ = self.sel_head(
-                ctx_h, hs[: i + 1], lens[: i + 1], rev_idxs[: i + 1], hid_idxs[: i + 1]
+                ctx_h,
+                hs[: i + 1],
+                lens[: i + 1],
+                rev_idxs[: i + 1],
+                hid_idxs[: i + 1],
             )
             sels.append(sel)
         return sels

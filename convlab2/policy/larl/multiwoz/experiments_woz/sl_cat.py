@@ -1,22 +1,32 @@
+# -*- coding: utf-8 -*-
+import json
+import logging
+import os
 import sys
 import time
-import os
-import json
+
 import torch as th
-import logging
-from convlab2.policy.larl.multiwoz.experiments_woz.dialog_utils import task_generate
-import convlab2.policy.larl.multiwoz.latent_dialog.domain as domain
-from convlab2.policy.larl.multiwoz.latent_dialog.main import train, validate
-from convlab2.policy.larl.multiwoz.latent_dialog.models_task import SysPerfectBD2Cat
-from convlab2.policy.larl.multiwoz.latent_dialog.evaluators import MultiWozEvaluator
-from convlab2.policy.larl.multiwoz.latent_dialog.data_loaders import BeliefDbDataLoaders
+
 import convlab2.policy.larl.multiwoz.latent_dialog.corpora as corpora
+import convlab2.policy.larl.multiwoz.latent_dialog.domain as domain
+from convlab2.policy.larl.multiwoz.experiments_woz.dialog_utils import (
+    task_generate,
+)
+from convlab2.policy.larl.multiwoz.latent_dialog.data_loaders import (
+    BeliefDbDataLoaders,
+)
+from convlab2.policy.larl.multiwoz.latent_dialog.evaluators import (
+    MultiWozEvaluator,
+)
+from convlab2.policy.larl.multiwoz.latent_dialog.main import train, validate
+from convlab2.policy.larl.multiwoz.latent_dialog.models_task import (
+    SysPerfectBD2Cat,
+)
 from convlab2.policy.larl.multiwoz.latent_dialog.utils import (
     Pack,
     prepare_dirs_loggers,
     set_seed,
 )
-
 
 domain_name = "object_division"
 domain_info = domain.get_domain(domain_name)
@@ -117,7 +127,13 @@ best_epoch = None
 if not config.forward_only:
     try:
         best_epoch = train(
-            model, train_data, val_data, test_data, config, evaluator, gen=task_generate
+            model,
+            train_data,
+            val_data,
+            test_data,
+            config,
+            evaluator,
+            gen=task_generate,
         )
     except KeyboardInterrupt:
         print("Training stopped by keyboard.")
@@ -133,7 +149,9 @@ if best_epoch is None:
 
 print("$$$ Load {}-model".format(best_epoch))
 config.batch_size = 32
-model.load_state_dict(th.load(os.path.join(saved_path, "{}-model".format(best_epoch))))
+model.load_state_dict(
+    th.load(os.path.join(saved_path, "{}-model".format(best_epoch)))
+)
 
 
 logger.info("Forward Only Evaluation")
@@ -142,14 +160,22 @@ validate(model, val_data, config)
 validate(model, test_data, config)
 
 with open(
-    os.path.join(saved_path, "{}_{}_valid_file.txt".format(start_time, best_epoch)), "w"
+    os.path.join(
+        saved_path, "{}_{}_valid_file.txt".format(start_time, best_epoch)
+    ),
+    "w",
 ) as f:
     task_generate(model, val_data, config, evaluator, num_batch=None, dest_f=f)
 
 with open(
-    os.path.join(saved_path, "{}_{}_test_file.txt".format(start_time, best_epoch)), "w"
+    os.path.join(
+        saved_path, "{}_{}_test_file.txt".format(start_time, best_epoch)
+    ),
+    "w",
 ) as f:
-    task_generate(model, test_data, config, evaluator, num_batch=None, dest_f=f)
+    task_generate(
+        model, test_data, config, evaluator, num_batch=None, dest_f=f
+    )
 
 end_time = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime(time.time()))
 print("[END]", end_time, "=" * 30)

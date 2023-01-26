@@ -1,11 +1,14 @@
-import os, json
-from convlab2.laug.Word_Perturbation.multiwoz.multiwoz_eda import MultiwozEDA
+# -*- coding: utf-8 -*-
+import json
+import os
+
+from convlab2 import DATA_ROOT
 from convlab2.laug.Word_Perturbation.multiwoz.db.slot_value_replace import (
     MultiSourceDBLoader,
     MultiSourceDBLoaderArgs,
 )
+from convlab2.laug.Word_Perturbation.multiwoz.multiwoz_eda import MultiwozEDA
 from convlab2.laug.Word_Perturbation.multiwoz.util import load_json
-from convlab2 import DATA_ROOT
 
 
 def main(
@@ -39,7 +42,9 @@ def main(
         ("train", "destination"): ("train", "Dest"),
         ("train", "departure"): ("train", "Depart"),
     }
-    loader_args = MultiSourceDBLoaderArgs(db_dir, multiwoz_multiwoz_domain_slot_map)
+    loader_args = MultiSourceDBLoaderArgs(
+        db_dir, multiwoz_multiwoz_domain_slot_map
+    )
     db_loader = MultiSourceDBLoader(loader_args)
 
     eda = MultiwozEDA(
@@ -54,7 +59,9 @@ def main(
     )
     result = eda.augment_multiwoz_dataset("usr")
 
-    os.makedirs(os.path.dirname(os.path.abspath(output_filepath)), exist_ok=True)
+    os.makedirs(
+        os.path.dirname(os.path.abspath(output_filepath)), exist_ok=True
+    )
     with open(output_filepath, "w", encoding="utf-8") as out:
         json.dump(result, out, indent=4)
 
@@ -63,12 +70,20 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--multiwoz_filepath", "--multiwoz", default="multiwoz.json")
     parser.add_argument(
-        "--output_filepath", "--output", "-o", default="augmented_multiwoz.json"
+        "--multiwoz_filepath", "--multiwoz", default="multiwoz.json"
     )
     parser.add_argument(
-        "--alpha_sr", type=float, default=0.1, help="probability of replacement"
+        "--output_filepath",
+        "--output",
+        "-o",
+        default="augmented_multiwoz.json",
+    )
+    parser.add_argument(
+        "--alpha_sr",
+        type=float,
+        default=0.1,
+        help="probability of replacement",
     )
     parser.add_argument(
         "--alpha_ri", type=float, default=0.1, help="probability of insertion"

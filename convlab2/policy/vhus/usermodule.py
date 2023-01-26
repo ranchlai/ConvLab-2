@@ -52,9 +52,13 @@ class VHUS(nn.Module):
     def __init__(self, cfg, voc_goal_size, voc_usr_size, voc_sys_size):
         super(VHUS, self).__init__()
 
-        self.goal_encoder = Encoder(voc_goal_size, cfg["eu_dim"], cfg["hu_dim"])
+        self.goal_encoder = Encoder(
+            voc_goal_size, cfg["eu_dim"], cfg["hu_dim"]
+        )
         self.sys_encoder = Encoder(voc_sys_size, cfg["eu_dim"], cfg["hu_dim"])
-        self.context_encoder = nn.GRU(cfg["hu_dim"], cfg["hu_dim"], batch_first=True)
+        self.context_encoder = nn.GRU(
+            cfg["hu_dim"], cfg["hu_dim"], batch_first=True
+        )
 
         self.mu_net = nn.Linear(cfg["hu_dim"], cfg["hu_dim"])
         self.logvar_net = nn.Linear(cfg["hu_dim"], cfg["hu_dim"])
@@ -71,7 +75,9 @@ class VHUS(nn.Module):
             voc_usr_size, cfg["max_ulen"], cfg["eu_dim"], cfg["hu_dim"]
         )
 
-    def forward(self, goals, goals_length, posts, posts_length, origin_responses=None):
+    def forward(
+        self, goals, goals_length, posts, posts_length, origin_responses=None
+    ):
         goal_output, _ = self.goal_encoder(goals)  # [B, G, H]
         goal_h = batch_gather_3_1(goal_output, goals_length)  # [B, H]
 
@@ -91,9 +97,9 @@ class VHUS(nn.Module):
         context = batch_gather_3_1(context_output, posts_sen_length)  # [B, H]
         mu, logvar = self.mu_net(context), self.logvar_net(context)
         last_context = batch_gather_3_1(context_output, posts_sen_length - 1)
-        mu_last, logvar_last = self.mu_net_last(last_context), self.logvar_net_last(
+        mu_last, logvar_last = self.mu_net_last(
             last_context
-        )
+        ), self.logvar_net_last(last_context)
         z = reparameterize(mu_last, logvar_last)
         hidden = self.concat_net(torch.cat([context, z], dim=1))
 
@@ -122,7 +128,9 @@ class VHUS(nn.Module):
             post_length.to(device=DEVICE).unsqueeze(0),
         )
 
-        a_weights, t_weights, _ = self.forward(goal, goal_length, post, post_length)
+        a_weights, t_weights, _ = self.forward(
+            goal, goal_length, post, post_length
+        )
         usr_a = []
         for a_weight in a_weights:
             a = a_weight.argmax(1).item()
@@ -167,7 +175,11 @@ class Encoder(nn.Module):
             self.embedding.weight = nn.Parameter(embedding)
         self.embedding.weight.requires_grad = update_embedding
         self.rnn = self.rnn_cell(
-            embed_size, hidden_size, n_layers, batch_first=True, dropout=dropout_p
+            embed_size,
+            hidden_size,
+            n_layers,
+            batch_first=True,
+            dropout=dropout_p,
         )
 
     def forward(self, input_var, input_lengths=None):
@@ -191,7 +203,9 @@ class Encoder(nn.Module):
             )
         output, hidden = self.rnn(embedded)
         if self.variable_lengths:
-            output, _ = nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
+            output, _ = nn.utils.rnn.pad_packed_sequence(
+                output, batch_first=True
+            )
         return output, hidden
 
 
@@ -227,7 +241,11 @@ class Decoder(nn.Module):
         else:
             raise ValueError("Unsupported RNN Cell: {0}".format(rnn_cell))
         self.rnn = self.rnn_cell(
-            embed_size, hidden_size, n_layers, batch_first=True, dropout=dropout_p
+            embed_size,
+            hidden_size,
+            n_layers,
+            batch_first=True,
+            dropout=dropout_p,
         )
 
         self.output_size = vocab_size
@@ -274,11 +292,17 @@ class Decoder(nn.Module):
             ret_dict[Decoder.KEY_ATTN_SCORE] = list()
 
         inputs, batch_size, max_length = self._validate_args(
-            inputs, encoder_hidden, encoder_outputs, function, teacher_forcing_ratio
+            inputs,
+            encoder_hidden,
+            encoder_outputs,
+            function,
+            teacher_forcing_ratio,
         )
         decoder_hidden = encoder_hidden
 
-        use_teacher_forcing = True if random.random() < teacher_forcing_ratio else False
+        use_teacher_forcing = (
+            True if random.random() < teacher_forcing_ratio else False
+        )
 
         decoder_outputs = []
         sequence_symbols = []
@@ -312,7 +336,10 @@ class Decoder(nn.Module):
         if use_teacher_forcing:
             decoder_input = inputs[:, :-1]
             decoder_output, decoder_hidden, attn = self.forward_step(
-                decoder_input, decoder_hidden, encoder_outputs, function=function
+                decoder_input,
+                decoder_hidden,
+                encoder_outputs,
+                function=function,
             )
 
             for di in range(decoder_output.size(1)):
@@ -326,7 +353,10 @@ class Decoder(nn.Module):
             decoder_input = inputs[:, 0].unsqueeze(1)
             for di in range(max_length):
                 decoder_output, decoder_hidden, step_attn = self.forward_step(
-                    decoder_input, decoder_hidden, encoder_outputs, function=function
+                    decoder_input,
+                    decoder_hidden,
+                    encoder_outputs,
+                    function=function,
                 )
                 step_output = decoder_output.squeeze(1)
                 symbols = decode(di, step_output, step_attn, infer=True)
@@ -338,7 +368,12 @@ class Decoder(nn.Module):
         return decoder_outputs, decoder_hidden, ret_dict  # NLLLoss
 
     def _validate_args(
-        self, inputs, encoder_hidden, encoder_outputs, function, teacher_forcing_ratio
+        self,
+        inputs,
+        encoder_hidden,
+        encoder_outputs,
+        function,
+        teacher_forcing_ratio,
     ):
         if self.use_attention:
             if encoder_outputs is None:
@@ -364,11 +399,15 @@ class Decoder(nn.Module):
                 raise ValueError(
                     "Teacher forcing has to be disabled (set 0) when no inputs is provided."
                 )
-            inputs = torch.LongTensor([self.sos_id] * batch_size).view(batch_size, 1)
+            inputs = torch.LongTensor([self.sos_id] * batch_size).view(
+                batch_size, 1
+            )
             if torch.cuda.is_available():
                 inputs = inputs.cuda()
             max_length = self.max_length
         else:
-            max_length = inputs.size(1) - 1  # minus the start of sequence symbol
+            max_length = (
+                inputs.size(1) - 1
+            )  # minus the start of sequence symbol
 
         return inputs, batch_size, max_length

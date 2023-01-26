@@ -25,6 +25,6 @@ Confusion Network Config Options                 {#CNetConfig}
 * `log_input_key` - the key to use of `log_turn["input"]`. Default is 'batch'.
 
 ## [decode]
-* `output` - the JSON file that decoder output is saved to. 
+* `output` - the JSON file that decoder output is saved to.
 * `dataListFile` - the file which contains all session name, one name each line
 * `dataroot` - the directory where the data is found

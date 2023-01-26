@@ -17,7 +17,9 @@ class LockBase(object):
             lock.acquire()
 
     def leave(self):
-        for lock in self.locks[::-1]:  # Release in inverse order of acquisition
+        for lock in self.locks[
+            ::-1
+        ]:  # Release in inverse order of acquisition
             lock.release()
 
     def __enter__(self):

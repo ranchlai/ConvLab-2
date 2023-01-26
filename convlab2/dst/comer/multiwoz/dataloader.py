@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
+import os
+
 import torch
 import torch.utils.data as torch_data
-import os
 
 
 class dataset(torch_data.Dataset):
@@ -44,11 +46,21 @@ def save_dataset(dataset, path):
 def padding(data):
     # first iteration
     max_ulen, max_slen = 128, 128
-    src1_iter, src2_iter, src3_iter, tgt_iter, tgtv_iter, tgtpv_iter = zip(*data)
+    src1_iter, src2_iter, src3_iter, tgt_iter, tgtv_iter, tgtpv_iter = zip(
+        *data
+    )
 
     num_dialogue = len(src1_iter)
 
-    turn_lens, src1_lens, src2_lens, src3_lens, tgt_lens, tgtv_lens, tgtpv_lens = (
+    (
+        turn_lens,
+        src1_lens,
+        src2_lens,
+        src3_lens,
+        tgt_lens,
+        tgtv_lens,
+        tgtpv_lens,
+    ) = (
         [],
         [],
         [],
@@ -78,13 +90,17 @@ def padding(data):
     max_tgtv_len = max(tgtv_lens)
     max_tgtpv_len = max(tgtpv_lens)
     # second iteration
-    src1_iter, src2_iter, src3_iter, tgt_iter, tgtv_iter, tgtpv_iter = zip(*data)
+    src1_iter, src2_iter, src3_iter, tgt_iter, tgtv_iter, tgtpv_iter = zip(
+        *data
+    )
 
     src1_pad = torch.zeros(num_dialogue, max_turn_len, max_src1_len).long()
     src2_pad = torch.zeros(num_dialogue, max_turn_len, max_src2_len).long()
     src3_pad = torch.zeros(num_dialogue, max_turn_len, max_src3_len).long()
     tgt_pad = torch.zeros(num_dialogue, max_turn_len, max_tgt_len).long()
-    tgtv_pad = torch.zeros(num_dialogue, max_turn_len, max_tgt_len, max_tgtv_len).long()
+    tgtv_pad = torch.zeros(
+        num_dialogue, max_turn_len, max_tgt_len, max_tgtv_len
+    ).long()
     tgtpv_pad = torch.zeros(
         num_dialogue, max_turn_len, max_tgt_len, max_tgtv_len, max_tgtpv_len
     ).long()
@@ -93,7 +109,9 @@ def padding(data):
     src3_len = torch.ones(num_dialogue, max_turn_len).long()
     tgt_len = torch.ones(num_dialogue, max_turn_len).long()
     tgtv_len = torch.ones(num_dialogue, max_turn_len, max_tgt_len).long()
-    tgtpv_len = torch.ones(num_dialogue, max_turn_len, max_tgt_len, max_tgtv_len).long()
+    tgtpv_len = torch.ones(
+        num_dialogue, max_turn_len, max_tgt_len, max_tgtv_len
+    ).long()
     raw_src1s, raw_src2s, raw_src3s, raw_tgts = [], [], [], []
 
     dialogue_idx = 0
@@ -130,7 +148,9 @@ def padding(data):
             for j, v in enumerate(s):
                 if len(v) > 0:
                     end = len(v)
-                    tgtv_pad[dialogue_idx, i, j, :end] = torch.LongTensor(v[:end])
+                    tgtv_pad[dialogue_idx, i, j, :end] = torch.LongTensor(
+                        v[:end]
+                    )
                     tgtv_len[dialogue_idx, i, j] = end
 
         for i, s in enumerate(tgtpv):
@@ -138,9 +158,9 @@ def padding(data):
                 for k, vv in enumerate(v):
                     if len(vv) > 0:
                         end = len(vv)
-                        tgtpv_pad[dialogue_idx, i, j, k, :end] = torch.LongTensor(
-                            vv[:end]
-                        )
+                        tgtpv_pad[
+                            dialogue_idx, i, j, k, :end
+                        ] = torch.LongTensor(vv[:end])
                         tgtpv_len[dialogue_idx, i, j, k] = end
 
         dialogue_idx += 1

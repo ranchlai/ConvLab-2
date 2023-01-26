@@ -23,9 +23,15 @@ class SentenceGenerator:
                     if constraint[0] == "名称":
                         if "周边" in constraint[1]:
                             origin_id = int(constraint[1].split("id=")[1][0])
-                            sen += "你要去id=%d附近的酒店(id=%d)住宿。" % (origin_id, goal["id"])
+                            sen += "你要去id=%d附近的酒店(id=%d)住宿。" % (
+                                origin_id,
+                                goal["id"],
+                            )
                         else:
-                            sen += "你要去名叫%s的酒店(id=%d)住宿。" % (constraint[1], goal["id"])
+                            sen += "你要去名叫%s的酒店(id=%d)住宿。" % (
+                                constraint[1],
+                                goal["id"],
+                            )
                 if sen == "":
                     sen += "你要去一个酒店(id=%d)住宿。" % goal["id"]
 
@@ -48,9 +54,15 @@ class SentenceGenerator:
                     if constraint[0] == "名称":
                         if "周边" in constraint[1]:
                             origin_id = int(constraint[1].split("id=")[1][0])
-                            sen += "你要去id=%d附近的景点(id=%d)游玩。" % (origin_id, goal["id"])
+                            sen += "你要去id=%d附近的景点(id=%d)游玩。" % (
+                                origin_id,
+                                goal["id"],
+                            )
                         else:
-                            sen += "你要去名叫%s的景点(id=%d)游玩。" % (constraint[1], goal["id"])
+                            sen += "你要去名叫%s的景点(id=%d)游玩。" % (
+                                constraint[1],
+                                goal["id"],
+                            )
                 if sen == "":
                     sen += "你要去一个景点(id=%d)游玩。" % goal["id"]
 
@@ -66,9 +78,15 @@ class SentenceGenerator:
                     if constraint[0] == "名称":
                         if "周边" in constraint[1]:
                             origin_id = int(constraint[1].split("id=")[1][0])
-                            sen += "你要去id=%d附近的餐馆(id=%d)用餐。" % (origin_id, goal["id"])
+                            sen += "你要去id=%d附近的餐馆(id=%d)用餐。" % (
+                                origin_id,
+                                goal["id"],
+                            )
                         else:
-                            sen += "你要去名叫%s的餐馆(id=%d)用餐。" % (constraint[1], goal["id"])
+                            sen += "你要去名叫%s的餐馆(id=%d)用餐。" % (
+                                constraint[1],
+                                goal["id"],
+                            )
                 if sen == "":
                     sen += "你要去一个餐馆(id=%d)用餐。" % goal["id"]
 
@@ -82,9 +100,15 @@ class SentenceGenerator:
                 # if goal["预订信息"]:
                 #     sen += "你希望预订在%s%s共%s人一起用餐。" % (goal["预订信息"][1][1], goal["预订信息"][2][1], goal["预订信息"][0][1])
             elif domain == "出租":
-                sen += "你想呼叫从%s到%s的出租车。" % (goal["约束条件"][0][1], goal["约束条件"][1][1])
+                sen += "你想呼叫从%s到%s的出租车。" % (
+                    goal["约束条件"][0][1],
+                    goal["约束条件"][1][1],
+                )
             elif domain == "地铁":
-                sen += "你想乘坐从%s到%s的地铁。" % (goal["约束条件"][0][1], goal["约束条件"][1][1])
+                sen += "你想乘坐从%s到%s的地铁。" % (
+                    goal["约束条件"][0][1],
+                    goal["约束条件"][1][1],
+                )
             sen += "你想知道这个%s的%s。" % (
                 domain,
                 "、".join(

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import csv
 import json
 import logging
@@ -27,7 +28,9 @@ def clean_replace(s, r, t, forward=True, backward=False):
             return s, -1
 
         if forward:
-            while idx_r < len(s) and (s[idx_r].isalpha() or s[idx_r].isdigit()):
+            while idx_r < len(s) and (
+                s[idx_r].isalpha() or s[idx_r].isdigit()
+            ):
                 idx_r += 1
         elif idx_r != len(s) and (s[idx_r].isalpha() or s[idx_r].isdigit()):
             return s, -1
@@ -60,7 +63,9 @@ class _ReaderBase:
             self._freq_dict[item] += 1
 
         def construct(self, limit):
-            l = sorted(self._freq_dict.keys(), key=lambda x: -self._freq_dict[x])
+            l = sorted(
+                self._freq_dict.keys(), key=lambda x: -self._freq_dict[x]
+            )
             print("Actual label size %d" % (len(l) + len(self._idx2item)))
             if len(l) + len(self._idx2item) < limit:
                 logging.warning(
@@ -222,7 +227,9 @@ class _ReaderBase:
         for i, batch in enumerate(all_batches):
             yield self._transpose_batch(batch)
 
-    def wrap_result(self, turn_batch, gen_m, gen_z, eos_syntax=None, prev_z=None):
+    def wrap_result(
+        self, turn_batch, gen_m, gen_z, eos_syntax=None, prev_z=None
+    ):
         """
         wrap generated results
         :param gen_z:
@@ -233,7 +240,11 @@ class _ReaderBase:
 
         results = []
         if eos_syntax is None:
-            eos_syntax = {"response": "EOS_M", "user": "EOS_U", "bspan": "EOS_Z2"}
+            eos_syntax = {
+                "response": "EOS_M",
+                "user": "EOS_U",
+                "bspan": "EOS_Z2",
+            }
         batch_size = len(turn_batch["user"])
         for i in range(batch_size):
             entry = {}
@@ -353,7 +364,9 @@ class CamRest676Reader(_ReaderBase):
                 requested.append("EOS_Z2")
                 user = word_tokenize(turn["usr"]["transcript"]) + ["EOS_U"]
                 response = word_tokenize(
-                    self._replace_entity(turn["sys"]["sent"], vk_map, constraint)
+                    self._replace_entity(
+                        turn["sys"]["sent"], vk_map, constraint
+                    )
                 ) + ["EOS_M"]
                 tokenized_dial.append(
                     {
@@ -374,7 +387,9 @@ class CamRest676Reader(_ReaderBase):
 
     def _replace_entity(self, response, vk_map, constraint):
         response = re.sub(
-            "[cC][., ]*[bB][., ]*\d[., ]*\d[., ]*\w[., ]*\w", "postcode_SLOT", response
+            "[cC][., ]*[bB][., ]*\d[., ]*\d[., ]*\w[., ]*\w",
+            "postcode_SLOT",
+            response,
         )
         response = re.sub("\d{5}\s?\d{6}", "phone_SLOT", response)
         constraint_str = " ".join(constraint)
@@ -478,14 +493,18 @@ class CamRest676Reader(_ReaderBase):
         db_json = open(db_json_path)
         db_data = json.loads(db_json.read().lower())
         self.db = db_data
-        tokenized_data = self._get_tokenized_data(raw_data, db_data, construct_vocab)
+        tokenized_data = self._get_tokenized_data(
+            raw_data, db_data, construct_vocab
+        )
         if construct_vocab:
             self.vocab.construct(cfg.vocab_size)
             self.vocab.save_vocab(cfg.vocab_path)
         else:
             self.vocab.load_vocab(cfg.vocab_path)
         encoded_data = self._get_encoded_data(tokenized_data)
-        self.train, self.dev, self.test = self._split_data(encoded_data, cfg.split)
+        self.train, self.dev, self.test = self._split_data(
+            encoded_data, cfg.split
+        )
         random.shuffle(self.train)
         random.shuffle(self.dev)
         random.shuffle(self.test)
@@ -540,9 +559,15 @@ class KvretReader(_ReaderBase):
         entity_data = json.loads(entity_json.read().lower())
         self._get_entity_dict(entity_data)
 
-        tokenized_train = self._get_tokenized_data(train_data, construct_vocab, "train")
-        tokenized_dev = self._get_tokenized_data(dev_data, construct_vocab, "dev")
-        tokenized_test = self._get_tokenized_data(test_data, construct_vocab, "test")
+        tokenized_train = self._get_tokenized_data(
+            train_data, construct_vocab, "train"
+        )
+        tokenized_dev = self._get_tokenized_data(
+            dev_data, construct_vocab, "dev"
+        )
+        tokenized_test = self._get_tokenized_data(
+            test_data, construct_vocab, "test"
+        )
 
         if construct_vocab:
             self.vocab.construct(cfg.vocab_size)
@@ -551,7 +576,8 @@ class KvretReader(_ReaderBase):
             self.vocab.load_vocab(cfg.vocab_path)
 
         self.train, self.dev, self.test = map(
-            self._get_encoded_data, [tokenized_train, tokenized_dev, tokenized_test]
+            self._get_encoded_data,
+            [tokenized_train, tokenized_dev, tokenized_test],
         )
         random.shuffle(self.train)
         random.shuffle(self.dev)
@@ -610,10 +636,18 @@ class KvretReader(_ReaderBase):
             while end_idx < len(response) and response[end_idx] != " ":
                 end_idx += 1
             # test whether they are indeed the same word
-            lm1, lm2 = v.replace(".", "").replace(" ", "").replace("'", ""), response[
-                start_idx:end_idx
-            ].replace(".", "").replace(" ", "").replace("'", "")
-            if lm1 == lm2 and lm1 not in prev_user_input and v not in prev_user_input:
+            lm1, lm2 = v.replace(".", "").replace(" ", "").replace(
+                "'", ""
+            ), response[start_idx:end_idx].replace(".", "").replace(
+                " ", ""
+            ).replace(
+                "'", ""
+            )
+            if (
+                lm1 == lm2
+                and lm1 not in prev_user_input
+                and v not in prev_user_input
+            ):
                 response = clean_replace(
                     response, response[start_idx:end_idx], k + "_SLOT"
                 )
@@ -640,7 +674,9 @@ class KvretReader(_ReaderBase):
             constraint_dict[k] = constraint_dict[k].strip()
             v = self._lemmatize(self._tokenize(constraint_dict[k]))
             v = re.sub("(\d+) ([ap]m)", lambda x: x.group(1) + x.group(2), v)
-            v = re.sub("(\d+)\s?(mile)s?", lambda x: x.group(1) + " " + x.group(2), v)
+            v = re.sub(
+                "(\d+)\s?(mile)s?", lambda x: x.group(1) + " " + x.group(2), v
+            )
             if v in self.entity_dict:
                 if prefer == "short":
                     constraint_dict[k] = v
@@ -657,7 +693,9 @@ class KvretReader(_ReaderBase):
             constraint_dict.pop(key)
         return constraint_dict
 
-    def _get_tokenized_data(self, raw_data, add_to_vocab, data_type, is_test=False):
+    def _get_tokenized_data(
+        self, raw_data, add_to_vocab, data_type, is_test=False
+    ):
         """
         Somerrthing to note: We define requestable and informable slots as below in further experiments
         (including other baselines):
@@ -699,14 +737,20 @@ class KvretReader(_ReaderBase):
             for turn_num, dial_turn in enumerate(raw_dial["dialogue"]):
                 state_dump[(dial_id, turn_num)] = {}
                 if dial_turn["turn"] == "driver":
-                    u = self._lemmatize(self._tokenize(dial_turn["data"]["utterance"]))
-                    u = re.sub("(\d+) ([ap]m)", lambda x: x.group(1) + x.group(2), u)
+                    u = self._lemmatize(
+                        self._tokenize(dial_turn["data"]["utterance"])
+                    )
+                    u = re.sub(
+                        "(\d+) ([ap]m)", lambda x: x.group(1) + x.group(2), u
+                    )
                     single_turn["user"] = prev_response + u.split() + ["EOS_U"]
                     prev_utter += u
                 elif dial_turn["turn"] == "assistant":
                     s = dial_turn["data"]["utterance"]
                     # find entities and replace them
-                    s = re.sub("(\d+) ([ap]m)", lambda x: x.group(1) + x.group(2), s)
+                    s = re.sub(
+                        "(\d+) ([ap]m)", lambda x: x.group(1) + x.group(2), s
+                    )
                     s, reqs = self._replace_entity(
                         s, self.entity_dict, prev_utter, intent
                     )
@@ -723,7 +767,8 @@ class KvretReader(_ReaderBase):
 
                     raw_constraints = constraint_dict.values()
                     raw_constraints = [
-                        self._lemmatize(self._tokenize(_)) for _ in raw_constraints
+                        self._lemmatize(self._tokenize(_))
+                        for _ in raw_constraints
                     ]
 
                     # add separator
@@ -742,9 +787,17 @@ class KvretReader(_ReaderBase):
                     requestable = {
                         "weather": ["weather_attribute"],
                         "navigate": ["poi", "traffic", "address", "distance"],
-                        "schedule": ["date", "time", "party", "agenda", "room"],
+                        "schedule": [
+                            "date",
+                            "time",
+                            "party",
+                            "agenda",
+                            "room",
+                        ],
                     }
-                    requests = sorted(list(dataset_requested.intersection(reqs)))
+                    requests = sorted(
+                        list(dataset_requested.intersection(reqs))
+                    )
 
                     single_turn["constraint"] = constraints + ["EOS_Z1"]
                     single_turn["requested"] = requests + ["EOS_Z2"]
@@ -758,7 +811,9 @@ class KvretReader(_ReaderBase):
                         state_dump[(dial_id, len(tokenized_dial))][
                             "constraint"
                         ] = constraint_dict
-                        state_dump[(dial_id, len(tokenized_dial))]["request"] = requests
+                        state_dump[(dial_id, len(tokenized_dial))][
+                            "request"
+                        ] = requests
                         tokenized_dial.append(single_turn)
                     prev_response = single_turn["response"]
                     single_turn = {}
@@ -780,8 +835,12 @@ class KvretReader(_ReaderBase):
         for dial in tokenized_data:
             new_dial = []
             for turn in dial:
-                turn["constraint"] = self.vocab.sentence_encode(turn["constraint"])
-                turn["requested"] = self.vocab.sentence_encode(turn["requested"])
+                turn["constraint"] = self.vocab.sentence_encode(
+                    turn["constraint"]
+                )
+                turn["requested"] = self.vocab.sentence_encode(
+                    turn["requested"]
+                )
                 turn["bspan"] = turn["constraint"] + turn["requested"]
                 turn["user"] = self.vocab.sentence_encode(turn["user"])
                 turn["response"] = self.vocab.sentence_encode(turn["response"])
@@ -806,7 +865,9 @@ class KvretReader(_ReaderBase):
                 for entity_entry in entity_data[k]:
                     for entity_type, entity in entity_entry.items():
                         entity_type = (
-                            "poi_type" if entity_type == "type" else entity_type
+                            "poi_type"
+                            if entity_type == "type"
+                            else entity_type
                         )
                         entity = self._lemmatize(self._tokenize(entity))
                         entity_dict[entity] = entity_type
@@ -900,7 +961,9 @@ class MultiWozReader(_ReaderBase):
 
     def _replace_entity(self, response, vk_map, constraint):
         response = re.sub(
-            "[cC][., ]*[bB][., ]*\d[., ]*\d[., ]*\w[., ]*\w", "postcode_SLOT", response
+            "[cC][., ]*[bB][., ]*\d[., ]*\d[., ]*\w[., ]*\w",
+            "postcode_SLOT",
+            response,
         )
         response = re.sub("\d{5}\s?\d{6}", "phone_SLOT", response)
         constraint_str = " ".join(constraint)
@@ -1000,7 +1063,9 @@ class MultiWozReader(_ReaderBase):
                     if not isinstance(v, str) or v == "?":
                         entry.pop(k)
 
-    def _construct(self, train_json_path, dev_json_path, test_json_path, db_json_path):
+    def _construct(
+        self, train_json_path, dev_json_path, test_json_path, db_json_path
+    ):
         """
         construct encoded train, dev, test set.
         :param train_json_path:
@@ -1069,7 +1134,9 @@ class MultiWozReader(_ReaderBase):
                 match_results.append(entry)
         return match_results
 
-    def wrap_result(self, turn_batch, gen_m, gen_z, eos_syntax=None, prev_z=None):
+    def wrap_result(
+        self, turn_batch, gen_m, gen_z, eos_syntax=None, prev_z=None
+    ):
         """
         wrap generated results
         :param gen_z:
@@ -1080,7 +1147,11 @@ class MultiWozReader(_ReaderBase):
 
         results = []
         if eos_syntax is None:
-            eos_syntax = {"response": "EOS_M", "user": "EOS_U", "bspan": "EOS_Z2"}
+            eos_syntax = {
+                "response": "EOS_M",
+                "user": "EOS_U",
+                "bspan": "EOS_Z2",
+            }
         batch_size = len(turn_batch["user"])
         for i in range(batch_size):
             entry = {}
@@ -1113,7 +1184,8 @@ class MultiWozReader(_ReaderBase):
                 for j, ent in enumerate(constraints):
                     constraints[j] = ent.replace("_", " ")
                 degree = self.db_search(
-                    constraints[1:], constraints[0] if constraints else "restaurant"
+                    constraints[1:],
+                    constraints[0] if constraints else "restaurant",
                 )
                 # print('constraints',constraints)
                 # print('degree',degree)
@@ -1172,7 +1244,12 @@ class MultiWozReader(_ReaderBase):
 
 
 def pad_sequences(
-    sequences, maxlen=None, dtype="int32", padding="pre", truncating="pre", value=0.0
+    sequences,
+    maxlen=None,
+    dtype="int32",
+    padding="pre",
+    truncating="pre",
+    value=0.0,
 ):
     if not hasattr(sequences, "__len__"):
         raise ValueError("`sequences` must be iterable.")
@@ -1208,7 +1285,9 @@ def pad_sequences(
         elif truncating == "post":
             trunc = s[:maxlen]
         else:
-            raise ValueError('Truncating type "%s" not understood' % truncating)
+            raise ValueError(
+                'Truncating type "%s" not understood' % truncating
+            )
 
         # check `trunc` has expected shape
         trunc = np.asarray(trunc, dtype=dtype)
@@ -1248,7 +1327,9 @@ def get_glove_matrix(vocab, initial_embedding_np):
         word, vec = line[0], line[1:]
         vec = np.array(vec, np.float32)
         word_idx = vocab.encode(word)
-        if word.lower() in ["unk", "<unk>"] or word_idx != vocab.encode("<unk>"):
+        if word.lower() in ["unk", "<unk>"] or word_idx != vocab.encode(
+            "<unk>"
+        ):
             cnt += 1
             vec_array[word_idx] = vec
             new_avg += np.average(vec)

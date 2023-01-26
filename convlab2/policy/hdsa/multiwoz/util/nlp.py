@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import math
 import os
 import re
@@ -12,7 +13,9 @@ pricepat = re.compile("\d{1,3}[.]\d{1,2}")
 # fin = file('utils/mapping.pair')
 # fin = open('/home/sule/projects/research/multiwoz/utils/mapping.pair')
 fin = open(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "../data/mapping.pair")
+    os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "../data/mapping.pair"
+    )
 )
 replacements = []
 for line in fin.readlines():
@@ -167,7 +170,9 @@ class BLEUScorer(object):
                     for ref in refs:
                         refcnts = Counter(ngrams(ref, i + 1))
                         for ng in hypcnts:
-                            max_counts[ng] = max(max_counts.get(ng, 0), refcnts[ng])
+                            max_counts[ng] = max(
+                                max_counts.get(ng, 0), refcnts[ng]
+                            )
                     clipcnt = dict(
                         (ng, min(count, max_counts[ng]))
                         for ng, count in hypcnts.items()
@@ -190,8 +195,12 @@ class BLEUScorer(object):
         # computing bleu score
         p0 = 1e-7
         bp = 1 if c > r else math.exp(1 - float(r) / float(c))
-        p_ns = [float(clip_count[i]) / float(count[i] + p0) + p0 for i in range(4)]
-        s = math.fsum(w * math.log(p_n) for w, p_n in zip(weights, p_ns) if p_n)
+        p_ns = [
+            float(clip_count[i]) / float(count[i] + p0) + p0 for i in range(4)
+        ]
+        s = math.fsum(
+            w * math.log(p_n) for w, p_n in zip(weights, p_ns) if p_n
+        )
         bleu = bp * math.exp(s)
         return bleu
 

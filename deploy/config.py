@@ -52,9 +52,9 @@ E.g:
 }
 ```
 """
+import json
 import os
 import sys
-import json
 
 
 def load_config_file(filepath: str = None) -> dict:
@@ -71,11 +71,15 @@ def load_config_file(filepath: str = None) -> dict:
     # load
     with open(filepath, "r", encoding="UTF-8") as f:
         conf = json.load(f)
-    assert isinstance(conf, dict), "Incorrect format in config file '%s'" % filepath
+    assert isinstance(conf, dict), (
+        "Incorrect format in config file '%s'" % filepath
+    )
 
     # check sections
     for sec in ["net", "nlu", "dst", "policy", "nlg"]:
-        assert sec in conf.keys(), "Missing '%s' section in config file '%s'" % (
+        assert (
+            sec in conf.keys()
+        ), "Missing '%s' section in config file '%s'" % (
             sec,
             filepath,
         )
@@ -97,7 +101,9 @@ def load_config_file(filepath: str = None) -> dict:
             for (key, info) in conf[module].items()
             if info.get("enable", True)
         }
-        assert conf[module], "'%s' module can not be empty in config file '%s'" % (
+        assert conf[
+            module
+        ], "'%s' module can not be empty in config file '%s'" % (
             module,
             filepath,
         )
@@ -123,17 +129,23 @@ def load_config_file(filepath: str = None) -> dict:
             )
             assert isinstance(
                 conf[module][model].get("class_path", None), str
-            ), "Incorrect type for '%s'->'%s'->'class_path' in config file '%s'" % (
-                module,
-                model,
-                filepath,
+            ), (
+                "Incorrect type for '%s'->'%s'->'class_path' in config file '%s'"
+                % (
+                    module,
+                    model,
+                    filepath,
+                )
             )
             assert isinstance(
                 conf[module][model].get("data_set", None), str
-            ), "Incorrect type for '%s'->'%s'->'data_set' in config file '%s'" % (
-                module,
-                model,
-                filepath,
+            ), (
+                "Incorrect type for '%s'->'%s'->'data_set' in config file '%s'"
+                % (
+                    module,
+                    model,
+                    filepath,
+                )
             )
 
     return conf
@@ -165,20 +177,27 @@ def get_config(filepath: str = None) -> dict:
 
     # add project root dir
     sys.path.append(
-        os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
+        os.path.abspath(
+            os.path.join(os.path.dirname(__file__), os.path.pardir)
+        )
     )
 
     # reflect class
-    from convlab2.util.module import Module
-
     # NLU
     from convlab2.nlu import NLU
+    from convlab2.util.module import Module
 
     for (model, infos) in conf["nlu"].items():
         cls_path = infos.get("class_path", "")
         cls = map_class(cls_path)
-        assert issubclass(cls, NLU), "'%s' is not a %s class" % (cls_path, "nlu")
-        assert issubclass(cls, Module), "'%s' is not a %s class" % (cls_path, "Module")
+        assert issubclass(cls, NLU), "'%s' is not a %s class" % (
+            cls_path,
+            "nlu",
+        )
+        assert issubclass(cls, Module), "'%s' is not a %s class" % (
+            cls_path,
+            "Module",
+        )
         conf["nlu"][model]["class"] = cls
 
     # DST
@@ -187,8 +206,14 @@ def get_config(filepath: str = None) -> dict:
     for (model, infos) in conf["dst"].items():
         cls_path = infos.get("class_path", "")
         cls = map_class(cls_path)
-        assert issubclass(cls, DST), "'%s' is not a %s class" % (cls_path, "dst")
-        assert issubclass(cls, Module), "'%s' is not a %s class" % (cls_path, "Module")
+        assert issubclass(cls, DST), "'%s' is not a %s class" % (
+            cls_path,
+            "dst",
+        )
+        assert issubclass(cls, Module), "'%s' is not a %s class" % (
+            cls_path,
+            "Module",
+        )
         conf["dst"][model]["class"] = cls
 
     # Policy
@@ -197,8 +222,14 @@ def get_config(filepath: str = None) -> dict:
     for (model, infos) in conf["policy"].items():
         cls_path = infos.get("class_path", "")
         cls = map_class(cls_path)
-        assert issubclass(cls, Policy), "'%s' is not a %s class" % (cls_path, "policy")
-        assert issubclass(cls, Module), "'%s' is not a %s class" % (cls_path, "Module")
+        assert issubclass(cls, Policy), "'%s' is not a %s class" % (
+            cls_path,
+            "policy",
+        )
+        assert issubclass(cls, Module), "'%s' is not a %s class" % (
+            cls_path,
+            "Module",
+        )
         conf["policy"][model]["class"] = cls
 
     # NLG
@@ -207,8 +238,14 @@ def get_config(filepath: str = None) -> dict:
     for (model, infos) in conf["nlg"].items():
         cls_path = infos.get("class_path", "")
         cls = map_class(cls_path)
-        assert issubclass(cls, NLG), "'%s' is not a %s class" % (cls_path, "nlg")
-        assert issubclass(cls, Module), "'%s' is not a %s class" % (cls_path, "Module")
+        assert issubclass(cls, NLG), "'%s' is not a %s class" % (
+            cls_path,
+            "nlg",
+        )
+        assert issubclass(cls, Module), "'%s' is not a %s class" % (
+            cls_path,
+            "Module",
+        )
         conf["nlg"][model]["class"] = cls
 
     return conf
@@ -217,8 +254,12 @@ def get_config(filepath: str = None) -> dict:
 if __name__ == "__main__":
     # test
     cfg = get_config()
-    nlu_mod = cfg["nlu"]["svm-cam"]["class"](**cfg["nlu"]["svm-cam"]["ini_params"])
-    dst_mod = cfg["dst"]["rule-cam"]["class"](**cfg["dst"]["rule-cam"]["ini_params"])
+    nlu_mod = cfg["nlu"]["svm-cam"]["class"](
+        **cfg["nlu"]["svm-cam"]["ini_params"]
+    )
+    dst_mod = cfg["dst"]["rule-cam"]["class"](
+        **cfg["dst"]["rule-cam"]["ini_params"]
+    )
     plc_mod = cfg["policy"]["mle-cam"]["class"](
         **cfg["policy"]["mle-cam"]["ini_params"]
     )

@@ -1,13 +1,15 @@
-from convlab2.e2e.rnn_rollout.rnnrollout import RNNRolloutAgent
+# -*- coding: utf-8 -*-
+import os
+import shutil
+import zipfile
+
+import convlab2.e2e.rnn_rollout.utils as utils
+from convlab2 import get_root_path
+from convlab2.e2e.rnn_rollout.domain import get_domain
 from convlab2.e2e.rnn_rollout.models.rnn_model import RnnModel
 from convlab2.e2e.rnn_rollout.models.selection_model import SelectionModel
-import convlab2.e2e.rnn_rollout.utils as utils
-from convlab2.e2e.rnn_rollout.domain import get_domain
-from convlab2 import get_root_path
-import os
-import zipfile
+from convlab2.e2e.rnn_rollout.rnnrollout import RNNRolloutAgent
 from convlab2.util.file_util import cached_path
-import shutil
 
 
 class DealornotAgent(RNNRolloutAgent):

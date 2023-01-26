@@ -1,30 +1,37 @@
+# -*- coding: utf-8 -*-
+import argparse
+import collections
+import copy
+import json
+import math
+import os
+import time
+from collections import defaultdict
+from pprint import pprint
+
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 import torch.utils.data
-from convlab2.dst.comer.multiwoz import models
-from convlab2.dst.comer.multiwoz import dataloader
-from convlab2.dst.comer.multiwoz import utils
-from convlab2.dst.comer.multiwoz import dict as dic
-from convlab2.dst.comer.multiwoz.preprocess_mw import preprocess_data
-from convlab2.dst.comer.multiwoz.comer import revert_state
-from convlab2.util.multiwoz.state import default_state
-from pprint import pprint
-import copy
-import os
-import argparse
-import time
-import math
-import json
-import collections
+from torch.autograd import Variable
 
-from collections import defaultdict
+from convlab2.dst.comer.multiwoz import dataloader
+from convlab2.dst.comer.multiwoz import dict as dic
+from convlab2.dst.comer.multiwoz import models, utils
+from convlab2.dst.comer.multiwoz.comer import revert_state
+from convlab2.dst.comer.multiwoz.preprocess_mw import preprocess_data
+from convlab2.util.multiwoz.state import default_state
 
 # config
 parser = argparse.ArgumentParser(description="predict.py")
-parser.add_argument("-config", default="config.yaml", type=str, help="config file")
 parser.add_argument(
-    "-gpus", default=[0], nargs="+", type=int, help="Use CUDA on the listed devices."
+    "-config", default="config.yaml", type=str, help="config file"
+)
+parser.add_argument(
+    "-gpus",
+    default=[0],
+    nargs="+",
+    type=int,
+    help="Use CUDA on the listed devices.",
 )
 parser.add_argument(
     "-restore",
@@ -33,9 +40,13 @@ parser.add_argument(
     help="restore checkpoint",
 )
 parser.add_argument("-seed", type=int, default=1234, help="Random seed")
-parser.add_argument("-model", default="seq2seq", type=str, help="Model selection")
+parser.add_argument(
+    "-model", default="seq2seq", type=str, help="Model selection"
+)
 parser.add_argument("-score", default="", type=str, help="score_fn")
-parser.add_argument("-pretrain", action="store_true", help="load pretrain embedding")
+parser.add_argument(
+    "-pretrain", action="store_true", help="load pretrain embedding"
+)
 parser.add_argument("-limit", type=int, default=0, help="data limit")
 parser.add_argument("-log", default="predict", type=str, help="log directory")
 parser.add_argument("-unk", action="store_true", help="replace unk")
@@ -68,11 +79,14 @@ print("loading time cost: %.3f" % (time.time() - start_time))
 testset = datas["test"]
 # testset = preprocess_data()
 src_vocab, tgt_vocab = vocab, vocab
-testloader = dataloader.get_loader(testset, batch_size=1, shuffle=False, num_workers=2)
+testloader = dataloader.get_loader(
+    testset, batch_size=1, shuffle=False, num_workers=2
+)
 print(len(testloader))
 print(len(testset))
 from pytorch_pretrained_bert import BertModel
-from convlab2.dst.comer.multiwoz.convert_mw import bert, tokenizer, bert_type
+
+from convlab2.dst.comer.multiwoz.convert_mw import bert, bert_type, tokenizer
 
 pretrain_embed = {}
 pretrain_embed["slot"] = torch.load("emb_tgt_mw.pt")

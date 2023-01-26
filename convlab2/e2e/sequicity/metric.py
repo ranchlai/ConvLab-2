@@ -1,10 +1,12 @@
-import os
+# -*- coding: utf-8 -*-
 import argparse
 import csv
 import functools
 import json
 import math
+import os
 from collections import Counter
+
 import nltk
 
 nltk.download("stopwords")
@@ -52,7 +54,14 @@ def similar(a, b):
 
 def setsub(a, b):
     junks_a = []
-    useless_constraint = ["temperature", "week", "est ", "quick", "reminder", "near"]
+    useless_constraint = [
+        "temperature",
+        "week",
+        "est ",
+        "quick",
+        "reminder",
+        "near",
+    ]
     for i in a:
         flg = False
         for j in b:
@@ -108,7 +117,9 @@ class BLEUScorer(object):
                     for ref in refs:
                         refcnts = Counter(ngrams(ref, i + 1))
                         for ng in hypcnts:
-                            max_counts[ng] = max(max_counts.get(ng, 0), refcnts[ng])
+                            max_counts[ng] = max(
+                                max_counts.get(ng, 0), refcnts[ng]
+                            )
                     clipcnt = dict(
                         (ng, min(count, max_counts[ng]))
                         for ng, count in hypcnts.items()
@@ -130,8 +141,12 @@ class BLEUScorer(object):
         # computing bleu score
         p0 = 1e-7
         bp = 1 if c > r else math.exp(1 - float(r) / float(c))
-        p_ns = [float(clip_count[i]) / float(count[i] + p0) + p0 for i in range(4)]
-        s = math.fsum(w * math.log(p_n) for w, p_n in zip(weights, p_ns) if p_n)
+        p_ns = [
+            float(clip_count[i]) / float(count[i] + p0) + p0 for i in range(4)
+        ]
+        s = math.fsum(
+            w * math.log(p_n) for w, p_n in zip(weights, p_ns) if p_n
+        )
         bleu = bp * math.exp(s)
         return bleu
 
@@ -252,7 +267,9 @@ class GenericEvaluator:
         s = "<GO> " + s + " </s>"
         for item in self.entity_dict:
             # s = s.replace(item, 'VALUE_{}'.format(self.entity_dict[item]))
-            s = clean_replace(s, item, "{}_SLOT".format(self.entity_dict[item]))
+            s = clean_replace(
+                s, item, "{}_SLOT".format(self.entity_dict[item])
+            )
         return s
 
 
@@ -271,7 +288,9 @@ class CamRestEvaluator(GenericEvaluator):
         data = self.read_result_data()
         for i, row in enumerate(data):
             data[i]["response"] = self.clean(data[i]["response"])
-            data[i]["generated_response"] = self.clean(data[i]["generated_response"])
+            data[i]["generated_response"] = self.clean(
+                data[i]["generated_response"]
+            )
         bleu_score = self.bleu_metric(data, "bleu")
         success_f1 = self.success_f1_metric(data, "success")
         match = self.match_metric(data, "match", raw_data=raw_data)
@@ -416,7 +435,9 @@ class KvretEvaluator(GenericEvaluator):
         for item in self.entity_dict:
             if self.entity_dict[item] in slot[intent]:
                 # s = s.replace(item, 'VALUE_{}'.format(self.entity_dict[item]))
-                s = clean_replace(s, item, "{}_SLOT".format(self.entity_dict[item]))
+                s = clean_replace(
+                    s, item, "{}_SLOT".format(self.entity_dict[item])
+                )
         return s
 
     def _extract_constraint(self, z):
@@ -506,7 +527,9 @@ class KvretEvaluator(GenericEvaluator):
                 for entity_entry in entity_data[k]:
                     for entity_type, entity in entity_entry.items():
                         entity_type = (
-                            "poi_type" if entity_type == "type" else entity_type
+                            "poi_type"
+                            if entity_type == "type"
+                            else entity_type
                         )
                         entity = self._lemmatize(self._tokenize(entity))
                         entity_dict[entity] = entity_type
@@ -607,7 +630,9 @@ class MultiWozEvaluator(GenericEvaluator):
         data = self.read_result_data()
         for i, row in enumerate(data):
             data[i]["response"] = self.clean(data[i]["response"])
-            data[i]["generated_response"] = self.clean(data[i]["generated_response"])
+            data[i]["generated_response"] = self.clean(
+                data[i]["generated_response"]
+            )
         bleu_score = self.bleu_metric(data, "bleu")
         success_f1 = self.success_f1_metric(data, "success")
         match = self.match_metric(data, "match", raw_data=raw_data)

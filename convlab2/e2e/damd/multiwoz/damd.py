@@ -6,20 +6,19 @@ Created on Mon Mar 23 21:03:36 2020
 """
 import os
 import zipfile
+
 import torch
 
-from convlab2.util.file_util import cached_path
+from convlab2.dialog_agent import Agent
 from convlab2.e2e.damd.multiwoz.config import global_config as cfg
-from convlab2.e2e.damd.multiwoz.reader import MultiWozReader
 from convlab2.e2e.damd.multiwoz.damd_net import DAMD, cuda_, get_one_hot_input
 from convlab2.e2e.damd.multiwoz.ontology import eos_tokens
-from convlab2.dialog_agent import Agent
+from convlab2.e2e.damd.multiwoz.reader import MultiWozReader
+from convlab2.util.file_util import cached_path
 
 DEFAULT_DIRECTORY = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_ARCHIVE_FILE_URL = "https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/damd_multiwoz_data.zip"
-DEFAULT_MODEL_URL = (
-    "https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/damd_multiwoz.zip"
-)
+DEFAULT_MODEL_URL = "https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/damd_multiwoz.zip"
 
 
 class Damd(Agent):
@@ -34,7 +33,9 @@ class Damd(Agent):
             damd = Damd()
         """
         super(Damd, self).__init__(name=name)
-        if not os.path.exists(os.path.join(DEFAULT_DIRECTORY, "multiwoz/data")):
+        if not os.path.exists(
+            os.path.join(DEFAULT_DIRECTORY, "multiwoz/data")
+        ):
             print("down load data from", DEFAULT_ARCHIVE_FILE_URL)
             archive_file = cached_path(DEFAULT_ARCHIVE_FILE_URL)
             archive = zipfile.ZipFile(archive_file, "r")
@@ -102,7 +103,9 @@ class Damd(Agent):
         if "db_np" in inputs:
             inputs["db"] = cuda_(torch.from_numpy(inputs["db_np"]).float())
         for item in ["user", "usdx"]:
-            inputs[item] = cuda_(torch.from_numpy(inputs[item + "_unk_np"]).long())
+            inputs[item] = cuda_(
+                torch.from_numpy(inputs[item + "_unk_np"]).long()
+            )
             if item in ["user", "usdx"]:
                 inputs[item + "_nounk"] = cuda_(
                     torch.from_numpy(inputs[item + "_np"]).long()
@@ -110,7 +113,9 @@ class Damd(Agent):
             else:
                 inputs[item + "_nounk"] = inputs[item]
             if item in need_onehot:
-                inputs[item + "_onehot"] = get_one_hot_input(inputs[item + "_unk_np"])
+                inputs[item + "_onehot"] = get_one_hot_input(
+                    inputs[item + "_unk_np"]
+                )
 
         for item in ["resp", "bspn", "aspn", "bsdx"]:
             if "pv_" + item + "_unk_np" not in inputs:

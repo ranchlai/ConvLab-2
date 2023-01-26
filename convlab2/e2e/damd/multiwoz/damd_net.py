@@ -1,11 +1,15 @@
-import copy, operator
+# -*- coding: utf-8 -*-
+import copy
+import operator
 from queue import PriorityQueue
+
 import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import nn
 from torch.autograd import Variable
 from torch.distributions import Categorical
+
 from convlab2.e2e.damd.multiwoz import utils
 from convlab2.e2e.damd.multiwoz.config import global_config as cfg
 from convlab2.e2e.damd.multiwoz.ontology import all_domains
@@ -33,7 +37,9 @@ def init_gru(gru):
 def label_smoothing(labels, smoothing_rate, vocab_size_oov):
     with torch.no_grad():
         confidence = 1.0 - smoothing_rate
-        low_confidence = (1.0 - confidence) / labels.new_tensor(vocab_size_oov - 1)
+        low_confidence = (1.0 - confidence) / labels.new_tensor(
+            vocab_size_oov - 1
+        )
         y_tensor = labels.data if isinstance(labels, Variable) else labels
         y_tensor = y_tensor.type(torch.LongTensor).contiguous().view(-1, 1)
         n_dims = vocab_size_oov
@@ -59,7 +65,9 @@ def get_one_hot_input(x_input_np):
         y_tensor = y_tensor.type(torch.LongTensor).contiguous().view(-1, 1)
         n_dims = n_dims if n_dims is not None else int(torch.max(y_tensor)) + 1
         y_one_hot = (
-            torch.zeros(y_tensor.size()[0], n_dims).fill_(0.0).scatter_(1, y_tensor, 1)
+            torch.zeros(y_tensor.size()[0], n_dims)
+            .fill_(0.0)
+            .scatter_(1, y_tensor, 1)
         )  # 1e-10
         return cuda_(y_one_hot.view(*y.shape, -1))
 
@@ -71,7 +79,9 @@ def get_one_hot_input(x_input_np):
     # x_input_ = (x_input_np==unk)*(widx_offset + cfg.vocab_size-unk) + x_input_np
 
     # input_np[input_np==2] = 0
-    input_t = cuda_(torch.from_numpy(new_input_np).type(torch.LongTensor))  # [B, T]
+    input_t = cuda_(
+        torch.from_numpy(new_input_np).type(torch.LongTensor)
+    )  # [B, T]
     input_t_onehot = to_one_hot(
         input_t, n_dims=cfg.vocab_size + input_t.size()[1]
     )  # [B,T,V+T]
@@ -134,7 +144,9 @@ class LayerNormalization(nn.Module):
         mu = torch.mean(z, keepdim=True, dim=-1)
         sigma = torch.std(z, keepdim=True, dim=-1)
         ln_out = (z - mu.expand_as(z)) / (sigma.expand_as(z) + self.eps)
-        ln_out = ln_out * self.a_2.expand_as(ln_out) + self.b_2.expand_as(ln_out)
+        ln_out = ln_out * self.a_2.expand_as(ln_out) + self.b_2.expand_as(
+            ln_out
+        )
         return ln_out
 
 
@@ -173,7 +185,9 @@ class MultiLayerGRUwithLN(nn.Module):
                 )
             else:
                 input_size = (
-                    self.hidden_size if not self.bidirec else 2 * self.hidden_size
+                    self.hidden_size
+                    if not self.bidirec
+                    else 2 * self.hidden_size
                 )
                 gru = nn.GRU(
                     input_size,
@@ -187,7 +201,9 @@ class MultiLayerGRUwithLN(nn.Module):
             self.all_weights.extend(gru.all_weights)
             if self.layer_norm:
                 output_size = (
-                    self.hidden_size if not self.bidirec else 2 * self.hidden_size
+                    self.hidden_size
+                    if not self.bidirec
+                    else 2 * self.hidden_size
                 )
                 # ln = LayerNormalization(output_size)
                 ln = nn.LayerNorm(output_size)
@@ -262,7 +278,10 @@ class biGRUencoder(nn.Module):
         # self.gru.flatten_parameters()
         outputs, hidden = self.gru(embedded, hidden)
         # print(outputs.size())
-        outputs = outputs[:, :, : self.hidden_size] + outputs[:, :, self.hidden_size :]
+        outputs = (
+            outputs[:, :, : self.hidden_size]
+            + outputs[:, :, self.hidden_size :]
+        )
         return outputs, hidden
 
 
@@ -339,7 +358,9 @@ class Copy(nn.Module):
 #     return total_score.contiguous()   #[B, Tdec, vocab_size_oov]
 
 
-def get_final_scores(raw_scores, word_onehot_input, input_idx_oov, vocab_size_oov):
+def get_final_scores(
+    raw_scores, word_onehot_input, input_idx_oov, vocab_size_oov
+):
     """
     :param raw_scores: list of tensor of size [B, Tdec, V], [B, Tdec, Tenc1], [B, Tdec, Tenc1] ...
     :param word_onehot_input: list of nparray of size [B, Tenci, V+Tenci]
@@ -352,7 +373,9 @@ def get_final_scores(raw_scores, word_onehot_input, input_idx_oov, vocab_size_oo
         if idx == 0:
             continue
         one_hot = word_onehot_input[idx - 1]  # [B, Tenc_i, V+Tenc_i]
-        cps = torch.einsum("imj,ijn->imn", raw_sc, one_hot)  # [B, Tdec, V+Tenc_i]
+        cps = torch.einsum(
+            "imj,ijn->imn", raw_sc, one_hot
+        )  # [B, Tdec, V+Tenc_i]
         # cps[cps==0] = -1e20   # zero prob -> -inf log prob
         raw_scores[idx] = cps
 
@@ -369,7 +392,9 @@ def get_final_scores(raw_scores, word_onehot_input, input_idx_oov, vocab_size_oo
 
     # print('normalized_gen_scores:' , normalized_scores.cpu().detach().numpy()[0,:5, 0:40])
 
-    gen_score = normalized_scores[:, :, cum_idx[0] : cum_idx[1]]  # [B, Tdec, V]
+    gen_score = normalized_scores[
+        :, :, cum_idx[0] : cum_idx[1]
+    ]  # [B, Tdec, V]
     Tdec = gen_score.size(1)
     B = gen_score.size(0)
     V = gen_score.size(2)
@@ -417,7 +442,9 @@ class DomainSpanDecoder(nn.Module):
         )
         init_gru(self.gru)
 
-        self.Wgen = nn.Linear(cfg.hidden_size, cfg.vocab_size) if not Wgen else Wgen
+        self.Wgen = (
+            nn.Linear(cfg.hidden_size, cfg.vocab_size) if not Wgen else Wgen
+        )
 
         self.attn_user = Attn(cfg.hidden_size)
         self.attn_pvresp = (
@@ -465,7 +492,9 @@ class DomainSpanDecoder(nn.Module):
             )  # .to(dec_last_w.device)     # [B,1,T]
 
         # print('user:', inputs['user'][0:2, :])
-        context_user = self.attn_user(dec_last_h, hidden_states["user"], self.mask_user)
+        context_user = self.attn_user(
+            dec_last_h, hidden_states["user"], self.mask_user
+        )
         # context_user = self.attn_user(dec_last_h, huser, self.mask_user)
         gru_input.append(context_user)
         # print(context_user.size())
@@ -504,8 +533,12 @@ class DomainSpanDecoder(nn.Module):
         raw_scores.append(raw_gen_score)
 
         if not first_turn:
-            raw_cp_score_dspn = self.cp_pvdspn(hidden_states["dspn"], dec_hs)  # [B,Ta]
-            raw_cp_score_dspn.masked_fill_(self.mask_pvdspn.repeat(1, Tdec, 1), -1e20)
+            raw_cp_score_dspn = self.cp_pvdspn(
+                hidden_states["dspn"], dec_hs
+            )  # [B,Ta]
+            raw_cp_score_dspn.masked_fill_(
+                self.mask_pvdspn.repeat(1, Tdec, 1), -1e20
+            )
             raw_scores.append(raw_cp_score_dspn)
             word_onehot_input.append(inputs["pv_dspn_onehot"])
             input_idx_oov.append(inputs["pv_dspn_nounk"])
@@ -518,7 +551,9 @@ class DomainSpanDecoder(nn.Module):
 
 
 class BeliefSpanDecoder(nn.Module):
-    def __init__(self, embedding, vocab_size_oov, bspn_mode, Wgen=None, dropout=0.0):
+    def __init__(
+        self, embedding, vocab_size_oov, bspn_mode, Wgen=None, dropout=0.0
+    ):
         super().__init__()
         self.embedding = embedding
         self.embed_size = embedding.embedding_dim
@@ -535,7 +570,9 @@ class BeliefSpanDecoder(nn.Module):
         )
         init_gru(self.gru)
 
-        self.Wgen = nn.Linear(cfg.hidden_size, cfg.vocab_size) if not Wgen else Wgen
+        self.Wgen = (
+            nn.Linear(cfg.hidden_size, cfg.vocab_size) if not Wgen else Wgen
+        )
 
         self.attn_user = Attn(cfg.hidden_size)
         self.attn_pvresp = (
@@ -546,9 +583,13 @@ class BeliefSpanDecoder(nn.Module):
         )
 
         self.cp_user = Copy(cfg.hidden_size, 1.0)
-        self.cp_pvresp = self.cp_user if cfg.copy_param_share else Copy(cfg.hidden_size)
+        self.cp_pvresp = (
+            self.cp_user if cfg.copy_param_share else Copy(cfg.hidden_size)
+        )
         self.cp_pvbspn = (
-            self.cp_user if cfg.copy_param_share else Copy(cfg.hidden_size, 1.0)
+            self.cp_user
+            if cfg.copy_param_share
+            else Copy(cfg.hidden_size, 1.0)
         )
 
         self.mask_user = None
@@ -604,7 +645,9 @@ class BeliefSpanDecoder(nn.Module):
             )  # .to(dec_last_w.device)     # [B,1,T]
 
         # print('user:', inputs['user'][0:2, :])
-        context_user = self.attn_user(dec_last_h, hidden_states["user"], self.mask_user)
+        context_user = self.attn_user(
+            dec_last_h, hidden_states["user"], self.mask_user
+        )
         # context_user = self.attn_user(dec_last_h, huser, self.mask_user)
         gru_input.append(context_user)
         # print(context_user.size())
@@ -645,8 +688,12 @@ class BeliefSpanDecoder(nn.Module):
         raw_gen_score = self.Wgen(dec_hs)  # [B, Tdec, V]
         raw_scores.append(raw_gen_score)
 
-        raw_cp_score_user = self.cp_user(hidden_states["user"], dec_hs)  # [B, Tdec,Tu]
-        raw_cp_score_user.masked_fill_(self.mask_user.repeat(1, Tdec, 1), -1e20)
+        raw_cp_score_user = self.cp_user(
+            hidden_states["user"], dec_hs
+        )  # [B, Tdec,Tu]
+        raw_cp_score_user.masked_fill_(
+            self.mask_user.repeat(1, Tdec, 1), -1e20
+        )
         raw_scores.append(raw_cp_score_user)
         word_onehot_input.append(inputs["user_onehot"])
         input_idx_oov.append(inputs["user_nounk"])
@@ -655,7 +702,9 @@ class BeliefSpanDecoder(nn.Module):
             raw_cp_score_pvresp = self.cp_pvresp(
                 hidden_states["resp"], dec_hs
             )  # [B, Tdec,Tr]
-            raw_cp_score_pvresp.masked_fill_(self.mask_pvresp.repeat(1, Tdec, 1), -1e20)
+            raw_cp_score_pvresp.masked_fill_(
+                self.mask_pvresp.repeat(1, Tdec, 1), -1e20
+            )
             raw_scores.append(raw_cp_score_pvresp)
             word_onehot_input.append(inputs["pv_resp_onehot"])
             input_idx_oov.append(inputs["pv_resp_nounk"])
@@ -663,7 +712,9 @@ class BeliefSpanDecoder(nn.Module):
             raw_cp_score_pvbspn = self.cp_pvbspn(
                 hidden_states[self.bspn_mode], dec_hs
             )  # [B, Tdec, Tb]
-            raw_cp_score_pvbspn.masked_fill_(self.mask_pvbspn.repeat(1, Tdec, 1), -1e20)
+            raw_cp_score_pvbspn.masked_fill_(
+                self.mask_pvbspn.repeat(1, Tdec, 1), -1e20
+            )
             raw_scores.append(raw_cp_score_pvbspn)
             word_onehot_input.append(inputs["pv_%s_onehot" % self.bspn_mode])
             input_idx_oov.append(inputs["pv_%s_nounk" % self.bspn_mode])
@@ -700,24 +751,34 @@ class ActSpanDecoder(nn.Module):
         )
         init_gru(self.gru)
 
-        self.Wgen = nn.Linear(cfg.hidden_size, cfg.vocab_size) if not Wgen else Wgen
+        self.Wgen = (
+            nn.Linear(cfg.hidden_size, cfg.vocab_size) if not Wgen else Wgen
+        )
 
         self.attn_usdx = Attn(cfg.hidden_size)
         if cfg.enable_bspn:
             self.attn_bspn = (
-                self.attn_usdx if cfg.attn_param_share else Attn(cfg.hidden_size)
+                self.attn_usdx
+                if cfg.attn_param_share
+                else Attn(cfg.hidden_size)
             )
         if cfg.enable_dspn:
             self.attn_dspn = (
-                self.attn_usdx if cfg.attn_param_share else Attn(cfg.hidden_size)
+                self.attn_usdx
+                if cfg.attn_param_share
+                else Attn(cfg.hidden_size)
             )
         self.attn_pvaspn = (
             self.attn_usdx if cfg.attn_param_share else Attn(cfg.hidden_size)
         )
 
         self.cp_pvaspn = Copy(cfg.hidden_size)
-        self.cp_dspn = self.cp_pvaspn if cfg.copy_param_share else Copy(cfg.hidden_size)
-        self.cp_bspn = self.cp_pvaspn if cfg.copy_param_share else Copy(cfg.hidden_size)
+        self.cp_dspn = (
+            self.cp_pvaspn if cfg.copy_param_share else Copy(cfg.hidden_size)
+        )
+        self.cp_bspn = (
+            self.cp_pvaspn if cfg.copy_param_share else Copy(cfg.hidden_size)
+        )
 
         self.mask_usdx = None
         self.mask_bspn = None
@@ -790,7 +851,9 @@ class ActSpanDecoder(nn.Module):
                 )
             else:
                 context_bspn = self.attn_bspn(
-                    dec_last_h, hidden_states[cfg.bspn_mode][bidx], self.mask_bspn[bidx]
+                    dec_last_h,
+                    hidden_states[cfg.bspn_mode][bidx],
+                    self.mask_bspn[bidx],
                 )
             gru_input.append(context_bspn)
         if cfg.enable_dspn:
@@ -800,7 +863,9 @@ class ActSpanDecoder(nn.Module):
                 )
             else:
                 context_dspn = self.attn_dspn(
-                    dec_last_h, hidden_states["dspn"][bidx], self.mask_dspn[bidx]
+                    dec_last_h,
+                    hidden_states["dspn"][bidx],
+                    self.mask_dspn[bidx],
                 )
             gru_input.append(context_dspn)
         if cfg.use_pvaspn:
@@ -811,7 +876,9 @@ class ActSpanDecoder(nn.Module):
                     )
                 else:
                     context_pvaspn = self.attn_pvaspn(
-                        dec_last_h, hidden_states["aspn"][bidx], self.mask_pvaspn[bidx]
+                        dec_last_h,
+                        hidden_states["aspn"][bidx],
+                        self.mask_pvaspn[bidx],
                     )
                 # context_pvaspn = self.attn_pvaspn(dec_last_h, haspn, self.mask_pvaspn)
             else:
@@ -836,7 +903,9 @@ class ActSpanDecoder(nn.Module):
         # gru_out = self.dropout_layer(gru_out)
         return dec_last_h
 
-    def get_probs(self, inputs, hidden_states, dec_hs, first_turn=False, bidx=None):
+    def get_probs(
+        self, inputs, hidden_states, dec_hs, first_turn=False, bidx=None
+    ):
         """[summary]
         :param dec_hs: [B, Tdec, H]
         :param dec_ws: word index [B, Tdec]
@@ -855,7 +924,9 @@ class ActSpanDecoder(nn.Module):
                 raw_cp_score_bspn = self.cp_bspn(
                     hidden_states[cfg.bspn_mode], dec_hs
                 )  # [B,Tb]
-                raw_cp_score_bspn.masked_fill_(self.mask_bspn.repeat(1, Tdec, 1), -1e20)
+                raw_cp_score_bspn.masked_fill_(
+                    self.mask_bspn.repeat(1, Tdec, 1), -1e20
+                )
                 raw_scores.append(raw_cp_score_bspn)
                 word_onehot_input.append(inputs[cfg.bspn_mode + "_onehot"])
                 input_idx_oov.append(inputs[cfg.bspn_mode + "_nounk"])
@@ -867,7 +938,9 @@ class ActSpanDecoder(nn.Module):
                     self.mask_bspn[bidx].repeat(1, Tdec, 1), -1e20
                 )
                 raw_scores.append(raw_cp_score_bspn)
-                word_onehot_input.append(inputs[cfg.bspn_mode + "_onehot"][bidx])
+                word_onehot_input.append(
+                    inputs[cfg.bspn_mode + "_onehot"][bidx]
+                )
                 input_idx_oov.append(inputs[cfg.bspn_mode + "_nounk"][bidx])
             # print('raw_cp_score_bspn:' , raw_cp_score_bspn.cpu().detach().numpy()[0,:3, 0:40])
 
@@ -876,7 +949,9 @@ class ActSpanDecoder(nn.Module):
                 raw_cp_score_dspn = self.cp_dspn(
                     hidden_states["dspn"], dec_hs
                 )  # [B,Tb]
-                raw_cp_score_dspn.masked_fill_(self.mask_dspn.repeat(1, Tdec, 1), -1e20)
+                raw_cp_score_dspn.masked_fill_(
+                    self.mask_dspn.repeat(1, Tdec, 1), -1e20
+                )
                 raw_scores.append(raw_cp_score_dspn)
                 word_onehot_input.append(inputs["dspn_onehot"])
                 input_idx_oov.append(inputs["dspn_nounk"])
@@ -944,15 +1019,21 @@ class ResponseDecoder(nn.Module):
         )
         init_gru(self.gru)
 
-        self.Wgen = nn.Linear(cfg.hidden_size, cfg.vocab_size) if not Wgen else Wgen
+        self.Wgen = (
+            nn.Linear(cfg.hidden_size, cfg.vocab_size) if not Wgen else Wgen
+        )
         self.attn_usdx = Attn(cfg.hidden_size)
         if cfg.enable_bspn:
             self.attn_bspn = (
-                self.attn_usdx if cfg.attn_param_share else Attn(cfg.hidden_size)
+                self.attn_usdx
+                if cfg.attn_param_share
+                else Attn(cfg.hidden_size)
             )
         if cfg.enable_aspn:
             self.attn_aspn = (
-                self.attn_usdx if cfg.attn_param_share else Attn(cfg.hidden_size)
+                self.attn_usdx
+                if cfg.attn_param_share
+                else Attn(cfg.hidden_size)
             )
 
         self.cp_usdx = Copy(cfg.hidden_size)
@@ -1012,7 +1093,9 @@ class ResponseDecoder(nn.Module):
                     1
                 )  # .to(dec_last_w.device)     # [B,1,T]
 
-        context_usdx = self.attn_usdx(dec_last_h, hidden_states["usdx"], self.mask_usdx)
+        context_usdx = self.attn_usdx(
+            dec_last_h, hidden_states["usdx"], self.mask_usdx
+        )
         # context_usdx = self.attn_usdx(dec_last_h, husdx, self.mask_usdx)
         gru_input.append(context_usdx)
         if cfg.enable_bspn:
@@ -1053,8 +1136,12 @@ class ResponseDecoder(nn.Module):
         raw_scores.append(raw_gen_score)
         # print('raw_gen_score:' , raw_gen_score.cpu().detach().numpy()[0,:3, 0:40])
 
-        raw_cp_score_usdx = self.cp_usdx(hidden_states["usdx"], dec_hs)  # [B,Tu]
-        raw_cp_score_usdx.masked_fill_(self.mask_usdx.repeat(1, Tdec, 1), -1e20)
+        raw_cp_score_usdx = self.cp_usdx(
+            hidden_states["usdx"], dec_hs
+        )  # [B,Tu]
+        raw_cp_score_usdx.masked_fill_(
+            self.mask_usdx.repeat(1, Tdec, 1), -1e20
+        )
         raw_scores.append(raw_cp_score_usdx)
         word_onehot_input.append(inputs["usdx_onehot"])
         input_idx_oov.append(inputs["usdx_nounk"])
@@ -1063,15 +1150,21 @@ class ResponseDecoder(nn.Module):
             raw_cp_score_bspn = self.cp_bspn(
                 hidden_states[cfg.bspn_mode], dec_hs
             )  # [B,Tb]
-            raw_cp_score_bspn.masked_fill_(self.mask_bspn.repeat(1, Tdec, 1), -1e20)
+            raw_cp_score_bspn.masked_fill_(
+                self.mask_bspn.repeat(1, Tdec, 1), -1e20
+            )
             raw_scores.append(raw_cp_score_bspn)
             word_onehot_input.append(inputs[cfg.bspn_mode + "_onehot"])
             input_idx_oov.append(inputs[cfg.bspn_mode + "_nounk"])
             # print('raw_cp_score_bspn:' , raw_cp_score_bspn.cpu().detach().numpy()[0,:3, 0:40])
 
         if cfg.enable_aspn:
-            raw_cp_score_aspn = self.cp_aspn(hidden_states["aspn"], dec_hs)  # [B,Ta]
-            raw_cp_score_aspn.masked_fill_(self.mask_aspn.repeat(1, Tdec, 1), -1e20)
+            raw_cp_score_aspn = self.cp_aspn(
+                hidden_states["aspn"], dec_hs
+            )  # [B,Ta]
+            raw_cp_score_aspn.masked_fill_(
+                self.mask_aspn.repeat(1, Tdec, 1), -1e20
+            )
             raw_scores.append(raw_cp_score_aspn)
             word_onehot_input.append(inputs["aspn_onehot"])
             input_idx_oov.append(inputs["aspn_nounk"])
@@ -1139,7 +1232,9 @@ class DAMD(nn.Module):
         self.span_encoder = biGRUencoder(self.embedding)
 
         Wgen = (
-            nn.Linear(cfg.hidden_size, cfg.vocab_size) if cfg.copy_param_share else None
+            nn.Linear(cfg.hidden_size, cfg.vocab_size)
+            if cfg.copy_param_share
+            else None
         )
 
         # joint training of dialogue state tracker
@@ -1170,7 +1265,11 @@ class DAMD(nn.Module):
 
         if cfg.enable_dst and cfg.bspn_mode == "bsdx":
             self.dst_decoder = BeliefSpanDecoder(
-                self.embedding, self.vsize_oov, "bspn", Wgen=Wgen, dropout=self.dropout
+                self.embedding,
+                self.vsize_oov,
+                "bspn",
+                Wgen=Wgen,
+                dropout=self.dropout,
             )
             self.decoders["bspn"] = self.dst_decoder
 
@@ -1253,7 +1352,9 @@ class DAMD(nn.Module):
         def train_decode(name, init_hidden, hidden_states, probs, bidx=None):
 
             batch_size = inputs["user"].size(0) if bidx is None else len(bidx)
-            dec_last_w = cuda_(torch.ones(batch_size, 1).long() * self.go_idx[name])
+            dec_last_w = cuda_(
+                torch.ones(batch_size, 1).long() * self.go_idx[name]
+            )
             if bidx is None:
                 dec_last_h = (init_hidden[-1] + init_hidden[-2]).unsqueeze(0)
             else:
@@ -1297,7 +1398,9 @@ class DAMD(nn.Module):
                     hiddens.append(dec_last_h)
                     dec_last_w = inputs["aspn_aug_batch"][:, t].view(-1, 1)
 
-            dec_hs = torch.cat(hiddens, dim=0).transpose(0, 1)  # [1,B,H] ---> [B,T,H]
+            dec_hs = torch.cat(hiddens, dim=0).transpose(
+                0, 1
+            )  # [1,B,H] ---> [B,T,H]
             if bidx is None:
                 probs[name] = self.decoders[name].get_probs(
                     inputs, hidden_states, dec_hs, first_turn
@@ -1354,18 +1457,28 @@ class DAMD(nn.Module):
                 "bspn", user_enc_last_h, hidden_states, probs
             )
 
-        if cfg.enable_aspn and cfg.multi_acts_training and "aspn_aug" in inputs:
+        if (
+            cfg.enable_aspn
+            and cfg.multi_acts_training
+            and "aspn_aug" in inputs
+        ):
             probs["aspn_aug"] = []
             batch_size = inputs["user"].size(0)
 
             for b in range(len(inputs["aspn_bidx"]) // batch_size + 1):
-                bidx_batch = inputs["aspn_bidx"][b * batch_size : (b + 1) * batch_size]
+                bidx_batch = inputs["aspn_bidx"][
+                    b * batch_size : (b + 1) * batch_size
+                ]
                 if bidx_batch:
                     inputs["aspn_aug_batch"] = inputs["aspn_aug"][
                         b * batch_size : (b + 1) * batch_size, :
                     ]
                     _, ps = train_decode(
-                        "aspn", usdx_enc_last_h, hidden_states, None, bidx=bidx_batch
+                        "aspn",
+                        usdx_enc_last_h,
+                        hidden_states,
+                        None,
+                        bidx=bidx_batch,
                     )
                     probs["aspn_aug"].append(ps)
 
@@ -1396,7 +1509,9 @@ class DAMD(nn.Module):
             )
 
         if cfg.enable_bspn:
-            bspn_enc, bspn_enc_last_h = self.span_encoder(inputs["pv_" + cfg.bspn_mode])
+            bspn_enc, bspn_enc_last_h = self.span_encoder(
+                inputs["pv_" + cfg.bspn_mode]
+            )
             hs[cfg.bspn_mode] = bspn_enc
             init_hidden = (
                 user_enc_last_h if cfg.bspn_mode == "bspn" else usdx_enc_last_h
@@ -1407,7 +1522,9 @@ class DAMD(nn.Module):
 
             if not cfg.use_true_db_pointer and "bspn" in decoded:
                 for bi, bspn_list in enumerate(decoded["bspn"]):
-                    constraint_dict = self.reader.bspan_to_constraint_dict(bspn_list)
+                    constraint_dict = self.reader.bspan_to_constraint_dict(
+                        bspn_list
+                    )
                     turn_dom_bs = []
                     for domain, info_slots in constraint_dict.items():
                         if info_slots:
@@ -1435,15 +1552,21 @@ class DAMD(nn.Module):
                         if domain in self.reader.u:
                             turn_domain = [domain]
                             break
-                    self.reader.constraint_dict = copy.deepcopy(constraint_dict)
+                    self.reader.constraint_dict = copy.deepcopy(
+                        constraint_dict
+                    )
                     self.reader.turn_domain = copy.deepcopy(turn_domain)
 
                     matnums = self.reader.db.get_match_num(constraint_dict)
                     match_dom = (
-                        turn_domain[0] if len(turn_domain) == 1 else turn_domain[1]
+                        turn_domain[0]
+                        if len(turn_domain) == 1
+                        else turn_domain[1]
                     )
                     match_dom = (
-                        match_dom[1:-1] if match_dom.startswith("[") else match_dom
+                        match_dom[1:-1]
+                        if match_dom.startswith("[")
+                        else match_dom
                     )
                     match = matnums[match_dom]
                     dbvec = self.reader.db.addDBPointer(match_dom, match)
@@ -1472,11 +1595,21 @@ class DAMD(nn.Module):
             elif cfg.aspn_decode_mode == "beam":
                 if cfg.record_mode:
                     hs_nbest, decoded_nbest = self.beam_decode(
-                        "aspn", usdx_enc_last_h, first_turn, inputs, hs, decoded
+                        "aspn",
+                        usdx_enc_last_h,
+                        first_turn,
+                        inputs,
+                        hs,
+                        decoded,
                     )
                 else:
                     hs, decoded = self.beam_decode(
-                        "aspn", usdx_enc_last_h, first_turn, inputs, hs, decoded
+                        "aspn",
+                        usdx_enc_last_h,
+                        first_turn,
+                        inputs,
+                        hs,
+                        decoded,
                     )
             elif "sampling" in cfg.aspn_decode_mode:
                 hs, decoded = self.sampling_decode(
@@ -1500,7 +1633,9 @@ class DAMD(nn.Module):
                 )
                 for b in range(batch_size):
                     self.reader.resp_collect[b].append(decoded["resp"][b])
-                    self.reader.aspn_collect[b].append(list(inputs["aspn_np"][b][:]))
+                    self.reader.aspn_collect[b].append(
+                        list(inputs["aspn_np"][b][:])
+                    )
         else:
             hs, decoded = self.greedy_decode(
                 "resp", usdx_enc_last_h, first_turn, inputs, hs, decoded
@@ -1527,7 +1662,9 @@ class DAMD(nn.Module):
         index = action.view(-1).cpu().numpy().to_list()
         loss = 0
         for b in range(batch_size):
-            ref = self.reader.vocab.sentence_decode(inputs["aspn_np"][b], eos="<eos_a>")
+            ref = self.reader.vocab.sentence_decode(
+                inputs["aspn_np"][b], eos="<eos_a>"
+            )
             ref_acts = self.reader.aspan_to_act_list(ref)
             select = self.reader.vocab.sentence_decode(
                 decoded["aspn"][index][b], eos="<eos_a>"
@@ -1542,7 +1679,9 @@ class DAMD(nn.Module):
     ):
         max_len = cfg.max_nl_length if name == "resp" else cfg.max_span_length
         batch_size = inputs["user"].size(0)
-        dec_last_w = cuda_(torch.ones(batch_size, 1).long() * self.go_idx[name])
+        dec_last_w = cuda_(
+            torch.ones(batch_size, 1).long() * self.go_idx[name]
+        )
         dec_last_h = (init_hidden[-1] + init_hidden[-2]).unsqueeze(0)
         hiddens, decode_idx = [], []
         for t in range(max_len):
@@ -1611,8 +1750,12 @@ class DAMD(nn.Module):
 
         batch_size = inputs["user"].size(0)
 
-        dec_last_w_batch = cuda_(torch.ones(batch_size, 1).long() * self.go_idx[name])
-        dec_last_h_batch = (init_hidden[-1] + init_hidden[-2]).unsqueeze(0)  # [1,B,H]
+        dec_last_w_batch = cuda_(
+            torch.ones(batch_size, 1).long() * self.go_idx[name]
+        )
+        dec_last_h_batch = (init_hidden[-1] + init_hidden[-2]).unsqueeze(
+            0
+        )  # [1,B,H]
         hiddens, decode_idx = [], []
 
         for bidx in range(batch_size):
@@ -1645,7 +1788,10 @@ class DAMD(nn.Module):
                 # print(dec_last_w.size())
                 # print(dec_last_h.size())
 
-                if n.wordid.item() == self.eos_idx[name] and n.prevNode != None:
+                if (
+                    n.wordid.item() == self.eos_idx[name]
+                    and n.prevNode != None
+                ):
                     endnodes.append((score, n))
                     # if we reached maximum # of sentences required
                     if len(endnodes) >= number_required:
@@ -1670,7 +1816,9 @@ class DAMD(nn.Module):
                 )  # [B,1,V_oov]
 
                 # PUT HERE REAL BEAM SEARCH OF TOP
-                log_probs, dec_last_ws = torch.topk(prob_turn.squeeze(1), beam_width)
+                log_probs, dec_last_ws = torch.topk(
+                    prob_turn.squeeze(1), beam_width
+                )
 
                 for new_k in range(beam_width):
                     rank = new_k
@@ -1678,7 +1826,12 @@ class DAMD(nn.Module):
                     log_p = log_probs[0][new_k].item()
 
                     node = BeamSearchNode(
-                        dec_last_h, n, decoded_t, n.logp + log_p, n.leng + 1, rank
+                        dec_last_h,
+                        n,
+                        decoded_t,
+                        n.logp + log_p,
+                        n.leng + 1,
+                        rank,
                     )
                     score = -node.eval(cfg.beam_diverse_param)
                     try:
@@ -1708,15 +1861,21 @@ class DAMD(nn.Module):
                     decode_idx.append(n.wordid)
                     hs.append(n.h)
                 zeros = cuda_(
-                    torch.zeros(1, cfg.max_span_length - len(decode_idx)).long()
+                    torch.zeros(
+                        1, cfg.max_span_length - len(decode_idx)
+                    ).long()
                 )
                 decoded_T = torch.cat(
                     decode_idx[::-1] + [zeros], dim=1
                 )  # [1,1] ---> [1,T]
                 zeros = cuda_(
-                    torch.zeros(1, cfg.max_span_length - len(decode_idx), hs[0].size(2))
+                    torch.zeros(
+                        1, cfg.max_span_length - len(decode_idx), hs[0].size(2)
+                    )
                 )
-                hs = torch.cat(hs[::-1] + [zeros], dim=1)  # [1,1,H] ---> [1,T,H]
+                hs = torch.cat(
+                    hs[::-1] + [zeros], dim=1
+                )  # [1,1,H] ---> [1,T,H]
                 wid_seqs.append(decoded_T)
                 hiddens.append(hs)  # [nbest,1,H]
 
@@ -1728,7 +1887,9 @@ class DAMD(nn.Module):
         hiddens_batch = torch.cat(hiddens_batch, dim=1).transpose(
             0, 1
         )  # [B, nbest, T, H]
-        decoded_batch = torch.cat(decoded_batch, dim=1).transpose(0, 1)  # [B, nbest, T]
+        decoded_batch = torch.cat(decoded_batch, dim=1).transpose(
+            0, 1
+        )  # [B, nbest, T]
         if cfg.record_mode == False:
             hidden_states[name], inputs[name + "_np"] = self.aspn_selection(
                 inputs, decoded, hiddens_batch, decoded_batch
@@ -1738,7 +1899,8 @@ class DAMD(nn.Module):
             return hidden_states, decoded
         else:
             decoded[name] = [
-                list(_) for _ in decoded_batch.cpu().numpy()[:, cfg.nbest - 1, :]
+                list(_)
+                for _ in decoded_batch.cpu().numpy()[:, cfg.nbest - 1, :]
             ]
             return hiddens_batch, decoded_batch
 
@@ -1756,7 +1918,9 @@ class DAMD(nn.Module):
         hiddens_batch = []
         for s in range(cfg.nbest):
             # print('nbest:', s)
-            dec_last_w = cuda_(torch.ones(batch_size, 1).long() * self.go_idx[name])
+            dec_last_w = cuda_(
+                torch.ones(batch_size, 1).long() * self.go_idx[name]
+            )
             dec_last_h = (init_hidden[-1] + init_hidden[-2]).unsqueeze(0)
             hiddens, decode_idx = [], []
             for t in range(max_len):
@@ -1781,10 +1945,15 @@ class DAMD(nn.Module):
                     logprobs, topk_words = torch.topk(
                         prob_turn.squeeze(1), cfg.topk_num
                     )
-                    widx = torch.multinomial(torch.exp(logprobs), 1, replacement=True)
+                    widx = torch.multinomial(
+                        torch.exp(logprobs), 1, replacement=True
+                    )
                     dec_curr_w = torch.gather(topk_words, 1, widx)
                     for b in range(batch_size):
-                        if dec_last_w[b].item() == 8 or dec_last_w[b].item() == 0:
+                        if (
+                            dec_last_w[b].item() == 8
+                            or dec_last_w[b].item() == 0
+                        ):
                             dec_curr_w[b] = 0
                     dec_last_w = dec_curr_w.clone()
                 elif cfg.aspn_decode_mode == "nucleur_sampling":
@@ -1797,8 +1966,13 @@ class DAMD(nn.Module):
                         for pnum in range(1, 55):
                             if torch.sum(probs[b][:pnum]) >= cfg.nucleur_p:
                                 break
-                        sample = torch.multinomial(probs[b][:pnum], 1, replacement=True)
-                        if dec_last_w[b].item() == 8 or dec_last_w[b].item() == 0:
+                        sample = torch.multinomial(
+                            probs[b][:pnum], 1, replacement=True
+                        )
+                        if (
+                            dec_last_w[b].item() == 8
+                            or dec_last_w[b].item() == 0
+                        ):
                             dec_curr_w.append(cuda_(torch.zeros(1).long()))
                         else:
                             dec_curr_w.append(topk_words[b][sample])
@@ -1865,7 +2039,9 @@ class DAMD(nn.Module):
                 hidden_chosen.append(hiddens_batch[b][max_score_idx])
 
             hidden_chosen = torch.stack(hidden_chosen, dim=0)  # [B, T, H]
-            decode_chosen = torch.stack(decode_chosen, dim=0).cpu().numpy()  # [B,T]
+            decode_chosen = (
+                torch.stack(decode_chosen, dim=0).cpu().numpy()
+            )  # [B,T]
             self.reader.multi_acts_record = multi_acts  # [B, T]
         else:
             hidden_chosen = hiddens_batch[:, 0, :, :]  # [B, nbest, T, H]
@@ -1901,7 +2077,9 @@ class DAMD(nn.Module):
             )
 
         if cfg.enable_bspn:
-            bspn_enc, bspn_enc_last_h = self.span_encoder(inputs["pv_" + cfg.bspn_mode])
+            bspn_enc, bspn_enc_last_h = self.span_encoder(
+                inputs["pv_" + cfg.bspn_mode]
+            )
             hs[cfg.bspn_mode] = bspn_enc
             init_hidden = (
                 user_enc_last_h if cfg.bspn_mode == "bspn" else usdx_enc_last_h
@@ -1913,7 +2091,9 @@ class DAMD(nn.Module):
             if not cfg.use_true_db_pointer and "bspn" in decoded:
                 for bi, bspn_list in enumerate(decoded["bspn"]):
                     turn_domain = inputs["turn_domain"][bi]
-                    db_ptr = self.reader.bspan_to_DBpointer(bspn_list, turn_domain)
+                    db_ptr = self.reader.bspan_to_DBpointer(
+                        bspn_list, turn_domain
+                    )
                     book_ptr = "cannot be predicted, use the groud truth"
                     inputs["db_np"][bi, : cfg.pointer_dim - 2] = db_ptr
                 inputs["db"] = cuda_(torch.from_numpy(inputs["db_np"]).float())
@@ -1936,14 +2116,20 @@ class DAMD(nn.Module):
 
 def update_input(name, inputs):
     inputs[name + "_unk_np"] = copy.deepcopy(inputs[name + "_np"])
-    inputs[name + "_unk_np"][inputs[name + "_unk_np"] >= cfg.vocab_size] = 2  # <unk>
+    inputs[name + "_unk_np"][
+        inputs[name + "_unk_np"] >= cfg.vocab_size
+    ] = 2  # <unk>
     inputs[name + "_onehot"] = get_one_hot_input(inputs[name + "_unk_np"])
     inputs[name] = cuda_(torch.from_numpy(inputs[name + "_unk_np"]).long())
-    inputs[name + "_nounk"] = cuda_(torch.from_numpy(inputs[name + "_np"]).long())
+    inputs[name + "_nounk"] = cuda_(
+        torch.from_numpy(inputs[name + "_np"]).long()
+    )
 
 
 class BeamSearchNode(object):
-    def __init__(self, hiddenstate, previousNode, wordId, logProb, length, rank=None):
+    def __init__(
+        self, hiddenstate, previousNode, wordId, logProb, length, rank=None
+    ):
         """
         :param hiddenstate:
         :param previousNode:

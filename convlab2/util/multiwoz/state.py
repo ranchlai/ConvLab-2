@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 def default_state():
     state = dict(
         user_action=[],
@@ -37,7 +38,12 @@ def default_state():
         "hospital": {"book": {"booked": []}, "semi": {"department": ""}},
         "taxi": {
             "book": {"booked": []},
-            "semi": {"leaveAt": "", "destination": "", "departure": "", "arriveBy": ""},
+            "semi": {
+                "leaveAt": "",
+                "destination": "",
+                "departure": "",
+                "arriveBy": "",
+            },
         },
         "train": {
             "book": {"booked": [], "people": ""},

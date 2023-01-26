@@ -29,9 +29,9 @@ $ PYTHONPATH=../../.. python train.py multiwoz/configs/multiwoz_[mode].cfg
 
 Please refer to `svm/config.md` for how to write config file (`*.cfg`)
 
-The model will be saved on `model/svm_multiwoz_[mode].pickle`. Also, it will be zipped as `model/svm_multiwoz_[mode].zip`. 
+The model will be saved on `model/svm_multiwoz_[mode].pickle`. Also, it will be zipped as `model/svm_multiwoz_[mode].zip`.
 
-Trained models can be download on: 
+Trained models can be download on:
 
 - Trained on all data: [mode=all](https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/svm_multiwoz_all.zip)
 - Trained on user utterances only: [mode=usr](https://huggingface.co/ConvLab/ConvLab-2_models/resolve/main/svm_multiwoz_usr.zip)
@@ -100,4 +100,3 @@ We evaluate the precision/recall/f1 of predicted dialog act.
   url       = {http://aclweb.org/anthology/P17-4013}
 }
 ```
-

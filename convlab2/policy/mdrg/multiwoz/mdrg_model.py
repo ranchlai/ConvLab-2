@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+import functools
 import json
 import math
 import operator
@@ -11,8 +13,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import optim
-
-import functools
 
 from convlab2.policy.mdrg.multiwoz.default_policy import DefaultPolicy
 
@@ -57,15 +57,21 @@ def init_gru(gru, gain=1):
 
 def whatCellType(input_size, hidden_size, cell_type, dropout_rate):
     if cell_type == "rnn":
-        cell = nn.RNN(input_size, hidden_size, dropout=dropout_rate, batch_first=False)
+        cell = nn.RNN(
+            input_size, hidden_size, dropout=dropout_rate, batch_first=False
+        )
         init_gru(cell)
         return cell
     elif cell_type == "gru":
-        cell = nn.GRU(input_size, hidden_size, dropout=dropout_rate, batch_first=False)
+        cell = nn.GRU(
+            input_size, hidden_size, dropout=dropout_rate, batch_first=False
+        )
         init_gru(cell)
         return cell
     elif cell_type == "lstm":
-        cell = nn.LSTM(input_size, hidden_size, dropout=dropout_rate, batch_first=False)
+        cell = nn.LSTM(
+            input_size, hidden_size, dropout=dropout_rate, batch_first=False
+        )
         init_lstm(cell)
         return cell
     elif cell_type == "bigru":
@@ -92,7 +98,13 @@ def whatCellType(input_size, hidden_size, cell_type, dropout_rate):
 
 class EncoderRNN(nn.Module):
     def __init__(
-        self, input_size, embedding_size, hidden_size, cell_type, depth, dropout
+        self,
+        input_size,
+        embedding_size,
+        hidden_size,
+        cell_type,
+        depth,
+        dropout,
     ):
         super(EncoderRNN, self).__init__()
         self.input_size = input_size
@@ -134,22 +146,33 @@ class EncoderRNN(nn.Module):
         outputs, _ = torch.nn.utils.rnn.pad_packed_sequence(outputs)
         if self.bidirectional:
             outputs = (
-                outputs[:, :, : self.hidden_size] + outputs[:, :, self.hidden_size :]
+                outputs[:, :, : self.hidden_size]
+                + outputs[:, :, self.hidden_size :]
             )
 
-        outputs = outputs.transpose(0, 1)[unsort_idx].transpose(0, 1).contiguous()
+        outputs = (
+            outputs.transpose(0, 1)[unsort_idx].transpose(0, 1).contiguous()
+        )
 
         if isinstance(hidden, tuple):
             hidden = list(hidden)
             hidden[0] = (
-                hidden[0].transpose(0, 1)[unsort_idx].transpose(0, 1).contiguous()
+                hidden[0]
+                .transpose(0, 1)[unsort_idx]
+                .transpose(0, 1)
+                .contiguous()
             )
             hidden[1] = (
-                hidden[1].transpose(0, 1)[unsort_idx].transpose(0, 1).contiguous()
+                hidden[1]
+                .transpose(0, 1)[unsort_idx]
+                .transpose(0, 1)
+                .contiguous()
             )
             hidden = tuple(hidden)
         else:
-            hidden = hidden.transpose(0, 1)[unsort_idx].transpose(0, 1).contiguous()
+            hidden = (
+                hidden.transpose(0, 1)[unsort_idx].transpose(0, 1).contiguous()
+            )
 
         return outputs, hidden
 
@@ -177,14 +200,20 @@ class Attn(nn.Module):
 
         H = hidden.repeat(max_len, 1, 1).transpose(0, 1)
         encoder_outputs = encoder_outputs.transpose(0, 1)  # [T,B,H] -> [B,T,H]
-        attn_energies = self.score(H, encoder_outputs)  # compute attention score
-        return F.softmax(attn_energies, dim=1).unsqueeze(1)  # normalize with softmax
+        attn_energies = self.score(
+            H, encoder_outputs
+        )  # compute attention score
+        return F.softmax(attn_energies, dim=1).unsqueeze(
+            1
+        )  # normalize with softmax
 
     def score(self, hidden, encoder_outputs):
         cat = torch.cat([hidden, encoder_outputs], 2)
         energy = torch.tanh(self.attn(cat))  # [B*T*2H]->[B*T*H]
         energy = energy.transpose(2, 1)  # [B*H*T]
-        v = self.v.repeat(encoder_outputs.data.shape[0], 1).unsqueeze(1)  # [B*1*H]
+        v = self.v.repeat(encoder_outputs.data.shape[0], 1).unsqueeze(
+            1
+        )  # [B*1*H]
         energy = torch.bmm(v, energy)  # [B*1*T]
         return energy.squeeze(1)  # [B*T]
 
@@ -221,8 +250,12 @@ class SeqAttnDecoderRNN(nn.Module):
         )
         self.out = nn.Linear(hidden_size, output_size)
 
-        self.score = nn.Linear(self.hidden_size + self.hidden_size, self.hidden_size)
-        self.attn_combine = nn.Linear(embedding_size + hidden_size, embedding_size)
+        self.score = nn.Linear(
+            self.hidden_size + self.hidden_size, self.hidden_size
+        )
+        self.attn_combine = nn.Linear(
+            embedding_size + hidden_size, embedding_size
+        )
 
         # attention
         self.method = "concat"
@@ -244,7 +277,9 @@ class SeqAttnDecoderRNN(nn.Module):
         max_len = encoder_outputs.size(1)
         h_t = h_t.transpose(0, 1)  # [1,B,D] -> [B,1,D]
         h_t = h_t.repeat(1, max_len, 1)  # [B,1,D]  -> [B,T,D]
-        energy = self.attn(torch.cat((h_t, encoder_outputs), 2))  # [B,T,2D] -> [B,T,D]
+        energy = self.attn(
+            torch.cat((h_t, encoder_outputs), 2)
+        )  # [B,T,2D] -> [B,T,D]
         energy = torch.tanh(energy)
         energy = energy.transpose(2, 1)  # [B,H,T]
         v = self.v.repeat(encoder_outputs.size(0), 1).unsqueeze(1)  # [B,1,H]
@@ -468,7 +503,9 @@ class Model(nn.Module):
         batch_size, seq_len = input_tensor.size()
 
         # ENCODER
-        encoder_outputs, encoder_hidden = self.encoder(input_tensor, input_lengths)
+        encoder_outputs, encoder_hidden = self.encoder(
+            input_tensor, input_lengths
+        )
 
         # POLICY
         decoder_hidden = self.policy(encoder_hidden, db_tensor, bs_tensor)
@@ -480,7 +517,9 @@ class Model(nn.Module):
             [[SOS_token] for _ in range(batch_size)], device=self.device
         )
 
-        proba = torch.zeros(batch_size, target_length, self.vocab_size)  # [B,T,V]
+        proba = torch.zeros(
+            batch_size, target_length, self.vocab_size
+        )  # [B,T,V]
 
         for t in range(target_len):
             decoder_output, decoder_hidden = self.decoder(
@@ -491,11 +530,15 @@ class Model(nn.Module):
                 True if random.random() < self.args.teacher_ratio else False
             )
             if use_teacher_forcing:
-                decoder_input = target_tensor[:, t].view(-1, 1)  # [B,1] Teacher forcing
+                decoder_input = target_tensor[:, t].view(
+                    -1, 1
+                )  # [B,1] Teacher forcing
             else:
                 # Without teacher forcing: use its own predictions as the next input
                 topv, topi = decoder_output.topk(1)
-                decoder_input = topi.squeeze().detach()  # detach from history as input
+                decoder_input = (
+                    topi.squeeze().detach()
+                )  # detach from history as input
 
             proba[:, t, :] = decoder_output
 
@@ -514,13 +557,17 @@ class Model(nn.Module):
     ):
         with torch.no_grad():
             # ENCODER
-            encoder_outputs, encoder_hidden = self.encoder(input_tensor, input_lengths)
+            encoder_outputs, encoder_hidden = self.encoder(
+                input_tensor, input_lengths
+            )
 
             # POLICY
             decoder_hidden = self.policy(encoder_hidden, db_tensor, bs_tensor)
 
             # GENERATION
-            decoded_words = self.decode(target_tensor, decoder_hidden, encoder_outputs)
+            decoded_words = self.decode(
+                target_tensor, decoder_hidden, encoder_outputs
+            )
 
         return decoded_words, 0
 
@@ -542,11 +589,17 @@ class Model(nn.Module):
                 # Beam start
                 self.topk = 1
                 endnodes = []  # stored end nodes
-                number_required = min((self.topk + 1), self.topk - len(endnodes))
-                decoder_input = torch.LongTensor([[SOS_token]], device=self.device)
+                number_required = min(
+                    (self.topk + 1), self.topk - len(endnodes)
+                )
+                decoder_input = torch.LongTensor(
+                    [[SOS_token]], device=self.device
+                )
 
                 # starting node hidden vector, prevNode, wordid, logp, leng,
-                node = BeamSearchNode(decoder_hidden, None, decoder_input, 0, 1)
+                node = BeamSearchNode(
+                    decoder_hidden, None, decoder_input, 0, 1
+                )
                 nodes = PriorityQueue()  # start the queue
                 nodes.put((-node.eval(None, None, None, None), node))
 
@@ -577,7 +630,9 @@ class Model(nn.Module):
                         decoder_input, decoder_hidden, encoder_output
                     )
 
-                    log_prob, indexes = torch.topk(decoder_output, self.args.beam_width)
+                    log_prob, indexes = torch.topk(
+                        decoder_output, self.args.beam_width
+                    )
                     nextnodes = []
 
                     for new_k in range(self.args.beam_width):
@@ -585,7 +640,11 @@ class Model(nn.Module):
                         log_p = log_prob[0][new_k].item()
 
                         node = BeamSearchNode(
-                            decoder_hidden, n, decoded_t, n.logp + log_p, n.leng + 1
+                            decoder_hidden,
+                            n,
+                            decoded_t,
+                            n.logp + log_p,
+                            n.leng + 1,
                         )
                         score = -node.eval(None, None, None, None)
                         nextnodes.append((score, node))
@@ -616,7 +675,8 @@ class Model(nn.Module):
 
                 decoded_words = utterances[0]
                 decoded_sentence = [
-                    self.output_index2word(str(ind.item())) for ind in decoded_words
+                    self.output_index2word(str(ind.item()))
+                    for ind in decoded_words
                 ]
                 # print(decoded_sentence)
                 decoded_sentences.append(" ".join(decoded_sentence[1:-1]))
@@ -661,13 +721,19 @@ class Model(nn.Module):
         return decoded_sentences
 
     def clipGradients(self):
-        grad = torch.nn.utils.clip_grad_norm_(self.parameters(), self.args.clip)
+        grad = torch.nn.utils.clip_grad_norm_(
+            self.parameters(), self.args.clip
+        )
         return grad
 
     def saveModel(self, iter):
         print("Saving parameters..")
-        if not os.path.exists(os.path.join(os.path.dirname(__file__), self.model_dir)):
-            os.makedirs(os.path.join(os.path.dirname(__file__), self.model_dir))
+        if not os.path.exists(
+            os.path.join(os.path.dirname(__file__), self.model_dir)
+        ):
+            os.makedirs(
+                os.path.join(os.path.dirname(__file__), self.model_dir)
+            )
         # print(self.model_dir)
 
         torch.save(
@@ -694,7 +760,8 @@ class Model(nn.Module):
 
         with open(
             os.path.join(
-                os.path.dirname(__file__), self.model_dir + self.model_name + ".config"
+                os.path.dirname(__file__),
+                self.model_dir + self.model_name + ".config",
             ),
             "w",
         ) as f:
@@ -706,7 +773,11 @@ class Model(nn.Module):
             torch.load(
                 os.path.join(
                     os.path.dirname(__file__),
-                    self.model_dir + self.model_name + "-" + str(iter) + ".enc",
+                    self.model_dir
+                    + self.model_name
+                    + "-"
+                    + str(iter)
+                    + ".enc",
                 )
             )
         )
@@ -714,7 +785,11 @@ class Model(nn.Module):
             torch.load(
                 os.path.join(
                     os.path.dirname(__file__),
-                    self.model_dir + self.model_name + "-" + str(iter) + ".pol",
+                    self.model_dir
+                    + self.model_name
+                    + "-"
+                    + str(iter)
+                    + ".pol",
                 )
             )
         )
@@ -722,7 +797,11 @@ class Model(nn.Module):
             torch.load(
                 os.path.join(
                     os.path.dirname(__file__),
-                    self.model_dir + self.model_name + "-" + str(iter) + ".dec",
+                    self.model_dir
+                    + self.model_name
+                    + "-"
+                    + str(iter)
+                    + ".dec",
                 )
             )
         )
@@ -752,7 +831,9 @@ class Model(nn.Module):
             return 2
 
     def getCount(self):
-        learnable_parameters = filter(lambda p: p.requires_grad, self.parameters())
+        learnable_parameters = filter(
+            lambda p: p.requires_grad, self.parameters()
+        )
         param_cnt = sum(
             [
                 functools.reduce((lambda x, y: x * y), param.shape)
@@ -762,6 +843,8 @@ class Model(nn.Module):
         print("Model has", param_cnt, " parameters.")
 
     def printGrad(self):
-        learnable_parameters = filter(lambda p: p.requires_grad, self.parameters())
+        learnable_parameters = filter(
+            lambda p: p.requires_grad, self.parameters()
+        )
         for idx, param in enumerate(learnable_parameters):
             print(param.grad, param.shape)

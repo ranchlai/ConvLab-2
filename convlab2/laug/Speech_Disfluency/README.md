@@ -1,6 +1,6 @@
 ## Speech_Disfluency
 
-The interruption points are predictedby a Bi-LSTM+CRF model. 
+The interruption points are predictedby a Bi-LSTM+CRF model.
 
 The fillerwords, restart terms, and edit terms and their occurrence frequency are all sampled from their distribution in SwitchBoard.
 

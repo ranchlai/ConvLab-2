@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 """
 import json
@@ -5,7 +6,15 @@ import os
 import random
 
 # loading databases
-domains = ["restaurant", "hotel", "attraction", "train", "hospital", "taxi", "police"]
+domains = [
+    "restaurant",
+    "hotel",
+    "attraction",
+    "train",
+    "hospital",
+    "taxi",
+    "police",
+]
 dbs = {}
 for domain in domains:
     db_path = os.path.join(
@@ -14,7 +23,9 @@ for domain in domains:
                 os.path.dirname(
                     os.path.dirname(
                         os.path.dirname(
-                            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                            os.path.dirname(
+                                os.path.dirname(os.path.abspath(__file__))
+                            )
                         )
                     )
                 )
@@ -61,14 +72,18 @@ def query(domain, constraints, ignore_open=True):
                 if key not in record:
                     continue
                 if key == "leaveAt":
-                    val1 = int(val.split(":")[0]) * 100 + int(val.split(":")[1])
+                    val1 = int(val.split(":")[0]) * 100 + int(
+                        val.split(":")[1]
+                    )
                     val2 = int(record["leaveAt"].split(":")[0]) * 100 + int(
                         record["leaveAt"].split(":")[1]
                     )
                     if val1 > val2:
                         break
                 elif key == "arriveBy":
-                    val1 = int(val.split(":")[0]) * 100 + int(val.split(":")[1])
+                    val1 = int(val.split(":")[0]) * 100 + int(
+                        val.split(":")[1]
+                    )
                     val2 = int(record["arriveBy"].split(":")[0]) * 100 + int(
                         record["arriveBy"].split(":")[1]
                     )

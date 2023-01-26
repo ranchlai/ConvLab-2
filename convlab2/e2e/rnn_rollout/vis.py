@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2017-present, Facebook, Inc.
 # All rights reserved.
 #
@@ -9,8 +10,8 @@ A visualization library. Relies on visdom.
 
 import pdb
 
-import visdom
 import numpy as np
+import visdom
 
 
 class Plot(object):
@@ -42,7 +43,10 @@ class Plot(object):
         return np.array([x]), np.array([y])
 
     def update(self, metric, x, y):
-        assert metric in self.metrics, "metric %s is not in %s" % (metric, self.metrics)
+        assert metric in self.metrics, "metric %s is not in %s" % (
+            metric,
+            self.metrics,
+        )
         X, Y = self._update_metric(metric, x, y)
         if self.win is None:
             self.opts["legend"] = [
@@ -56,7 +60,9 @@ class Plot(object):
 class ModulePlot(object):
     """A helper class that plots norms of weights and gradients for a given module."""
 
-    def __init__(self, module, plot_weight=False, plot_grad=False, running_n=100):
+    def __init__(
+        self, module, plot_weight=False, plot_grad=False, running_n=100
+    ):
         self.module = module
         self.plot_weight = plot_weight
         self.plot_grad = plot_grad
@@ -88,7 +94,11 @@ class ModulePlot(object):
             for k, p in m._parameters.items():
                 if self.plot_weight:
                     self.plots[n + "_w"].update(k, x, p.norm().item())
-                if self.plot_grad and hasattr(p, "grad") and p.grad is not None:
+                if (
+                    self.plot_grad
+                    and hasattr(p, "grad")
+                    and p.grad is not None
+                ):
                     self.plots[n + "_g"].update(k, x, p.grad.norm().item())
 
         self._for_all(update_plot, self.module)

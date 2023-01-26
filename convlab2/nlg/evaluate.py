@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Evaluate NLU models on specified dataset
 Metric: dataset level Precision/Recall/F1
@@ -8,10 +9,11 @@ import json
 import random
 import sys
 import zipfile
+from pprint import pprint
+
 import numpy
 import torch
-from nltk.translate.bleu_score import corpus_bleu, SmoothingFunction
-from pprint import pprint
+from nltk.translate.bleu_score import SmoothingFunction, corpus_bleu
 from tqdm import tqdm
 
 
@@ -25,14 +27,23 @@ def get_bleu4(dialog_acts, golden_utts, gen_utts):
             if act == "Request" or domain == "general":
                 continue
             else:
-                if s == "Internet" or s == "Parking" or s == "none" or v == "none":
+                if (
+                    s == "Internet"
+                    or s == "Parking"
+                    or s == "none"
+                    or v == "none"
+                ):
                     continue
                 else:
                     v = v.lower()
                     if (" " + v in utt) or (v + " " in utt):
-                        utt = utt.replace(v, "{}-{}".format(act + "-" + domain, s), 1)
+                        utt = utt.replace(
+                            v, "{}-{}".format(act + "-" + domain, s), 1
+                        )
                     if (" " + v in gen) or (v + " " in gen):
-                        gen = gen.replace(v, "{}-{}".format(act + "-" + domain, s), 1)
+                        gen = gen.replace(
+                            v, "{}-{}".format(act + "-" + domain, s), 1
+                        )
         hash_key = ""
         for da in sorted(das, key=lambda x: x[0] + x[1] + x[2]):
             hash_key += "-".join(da[:-1]) + ";"
@@ -88,10 +99,16 @@ if __name__ == "__main__":
         else:
             raise Exception("Available models: SCLSTM, TEMPLATE")
 
-        from convlab2.util.dataloader.module_dataloader import SingleTurnNLGDataloader
-        from convlab2.util.dataloader.dataset_dataloader import MultiWOZDataloader
+        from convlab2.util.dataloader.dataset_dataloader import (
+            MultiWOZDataloader,
+        )
+        from convlab2.util.dataloader.module_dataloader import (
+            SingleTurnNLGDataloader,
+        )
 
-        dataloader = SingleTurnNLGDataloader(dataset_dataloader=MultiWOZDataloader())
+        dataloader = SingleTurnNLGDataloader(
+            dataset_dataloader=MultiWOZDataloader()
+        )
         data = dataloader.load_data(data_key="test", role=role)["test"]
 
         dialog_acts = []
@@ -111,7 +128,11 @@ if __name__ == "__main__":
         print("Calculate bleu-4")
         print("BLEU-4: %.4f" % bleu4)
 
-        print("Model on {} sentences role={}".format(len(data["utterance"]), role))
+        print(
+            "Model on {} sentences role={}".format(
+                len(data["utterance"]), role
+            )
+        )
 
     else:
         raise Exception("currently supported dataset: MultiWOZ")

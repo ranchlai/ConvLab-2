@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
@@ -30,7 +31,9 @@ class MultiLabelF1Measure(Metric):
         ignore_classes : List[str], optional.
             Labels which will be ignored when computing metrics.
         """
-        self._label_vocabulary = vocabulary.get_index_to_token_vocabulary(namespace)
+        self._label_vocabulary = vocabulary.get_index_to_token_vocabulary(
+            namespace
+        )
         self._ignore_classes: List[str] = ignore_classes or []
         self._coarse = coarse
 
@@ -65,11 +68,15 @@ class MultiLabelF1Measure(Metric):
 
         if self._coarse:
             num_positives = predictions.sum()
-            num_false_positives = ((predictions - gold_labels) > 0).long().sum()
+            num_false_positives = (
+                ((predictions - gold_labels) > 0).long().sum()
+            )
             self._false_positives["coarse_overall"] += num_false_positives
             num_true_positives = num_positives - num_false_positives
             self._true_positives["coarse_overall"] += num_true_positives
-            num_false_negatives = ((gold_labels - predictions) > 0).long().sum()
+            num_false_negatives = (
+                ((gold_labels - predictions) > 0).long().sum()
+            )
             self._false_negatives["coarse_overall"] += num_false_negatives
         else:
             # Iterate over timesteps in batch.
@@ -81,9 +88,13 @@ class MultiLabelF1Measure(Metric):
                     label = self._label_vocabulary[label_id]
                     if prediction[label_id] == 1 and gold_label[label_id] == 1:
                         self._true_positives[label] += 1
-                    elif prediction[label_id] == 1 and gold_label[label_id] == 0:
+                    elif (
+                        prediction[label_id] == 1 and gold_label[label_id] == 0
+                    ):
                         self._false_positives[label] += 1
-                    elif prediction[label_id] == 0 and gold_label[label_id] == 1:
+                    elif (
+                        prediction[label_id] == 0 and gold_label[label_id] == 1
+                    ):
                         self._false_negatives[label] += 1
 
     def get_metric(self, reset: bool = False):

@@ -44,7 +44,7 @@ state = {'user_action': [["Inform", "Hotel", "Area", "east"], ["Inform", "Hotel"
 
 # Please call `init_session` before a new session, this clears policy's history info.
 sys_policy.init_session()
-    
+
 # method `predict` takes state output from tracker, and generates system's dialog act.
 sys_da = sys_policy.predict(state)
 ```
@@ -73,4 +73,3 @@ user_action, session_over = user_simulator.predict({'system_action': sys_action}
   organization={Association for Computational Linguistics}
 }
 ```
-

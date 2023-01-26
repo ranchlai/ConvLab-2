@@ -4,7 +4,7 @@
 
 - Annotations: character-level span for non-categorical slots. No slot descriptions.
 
-Statistics: 
+Statistics:
 
 |       | \# dialogues | \# utterances | avg. turns | avg. tokens | \# domains |
 | ----- | ------------ | ------------- | ---------- | ----------- | ---------- |

@@ -1,14 +1,18 @@
+# -*- coding: utf-8 -*-
 import copy
-import zipfile
 import json
-import os
-from collections import Counter
-from tqdm import tqdm
 import logging
+import os
 import sys
+import zipfile
+from collections import Counter
+
+from tqdm import tqdm
 
 sys.path.append(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
 )
 logging.basicConfig(level=logging.INFO)
 from convlab2.util.file_util import read_zipped_json, write_zipped_json
@@ -115,13 +119,20 @@ def get_state_update(prev_state, cur_state, usr_da, turn_idx, dialog_idx):
             continue
         if k in cat_slots:
             ret["categorical"].append(
-                {"domain": "restaurant", "slot": k, "value": cur_state["restaurant"][k]}
+                {
+                    "domain": "restaurant",
+                    "slot": k,
+                    "value": cur_state["restaurant"][k],
+                }
             )
         else:
             found = False
             for _da in usr_da["non-categorical"]:
 
-                if _da["slot"] == k and _da["value"] == cur_state["restaurant"][k]:
+                if (
+                    _da["slot"] == k
+                    and _da["value"] == cur_state["restaurant"][k]
+                ):
                     found = True
                     if v == "dontcare":
                         ret["non-categorical"].append(
@@ -259,7 +270,9 @@ def preprocess():
                         )
 
                     cur_state = convert_state(bs)
-                    cur_usr_da = convert_da(usr_da, usr_utt, all_binary_intents)
+                    cur_usr_da = convert_da(
+                        usr_da, usr_utt, all_binary_intents
+                    )
 
                     ret["turns"].append(
                         {
@@ -269,7 +282,11 @@ def preprocess():
                             "state": cur_state,
                             "dialogue_act": cur_usr_da,
                             "state_update": get_state_update(
-                                prev_state, cur_state, cur_usr_da, i, ret["dialogue_id"]
+                                prev_state,
+                                cur_state,
+                                cur_usr_da,
+                                i,
+                                ret["dialogue_id"],
                             ),
                         }
                     )
@@ -333,7 +350,11 @@ def preprocess():
 
         new_ont["state"] = {"restaurant": {k: "" for k in all_slot_value}}
 
-        json.dump(new_ont, open(os.path.join(self_dir, "ontology.json"), "w"), indent=4)
+        json.dump(
+            new_ont,
+            open(os.path.join(self_dir, "ontology.json"), "w"),
+            indent=4,
+        )
 
     else:
         # read from file

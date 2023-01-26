@@ -25,5 +25,7 @@ def paraphrase_span_detection(new_text, span_info):
 def span2tuple(span_info):
     t = []
     for span in span_info:
-        t.append((span[0].split("-")[1], span[0].split("-")[0], span[1], span[2]))
+        t.append(
+            (span[0].split("-")[1], span[0].split("-")[0], span[1], span[2])
+        )
     return t

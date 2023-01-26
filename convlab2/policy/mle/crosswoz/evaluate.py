@@ -1,20 +1,23 @@
-from convlab2.policy.mle.crosswoz.mle import MLE
-from convlab2.dst.rule.crosswoz.dst import RuleDST
-from convlab2.util.crosswoz.state import default_state
-from convlab2.policy.rule.crosswoz.rule_simulator import Simulator
-from convlab2.dialog_agent import PipelineAgent, BiSession
-from convlab2.util.crosswoz.lexicalize import delexicalize_da
-from convlab2.nlu.jointBERT.crosswoz.nlu import BERTNLU
-from convlab2.nlg.template.crosswoz.nlg import TemplateNLG
-from convlab2.nlg.sclstm.crosswoz.sc_lstm import SCLSTM
-import os
-import zipfile
+# -*- coding: utf-8 -*-
 import json
-from copy import deepcopy
+import os
 import random
-import numpy as np
+import zipfile
+from copy import deepcopy
 from pprint import pprint
+
+import numpy as np
 import torch
+
+from convlab2.dialog_agent import BiSession, PipelineAgent
+from convlab2.dst.rule.crosswoz.dst import RuleDST
+from convlab2.nlg.sclstm.crosswoz.sc_lstm import SCLSTM
+from convlab2.nlg.template.crosswoz.nlg import TemplateNLG
+from convlab2.nlu.jointBERT.crosswoz.nlu import BERTNLU
+from convlab2.policy.mle.crosswoz.mle import MLE
+from convlab2.policy.rule.crosswoz.rule_simulator import Simulator
+from convlab2.util.crosswoz.lexicalize import delexicalize_da
+from convlab2.util.crosswoz.state import default_state
 
 
 def read_zipped_json(filepath, filename):
@@ -39,7 +42,9 @@ def calculateF1(predict_golden):
     precision = 1.0 * TP / (TP + FP) if (TP + FP) else 0.0
     recall = 1.0 * TP / (TP + FN) if (TP + FN) else 0.0
     F1 = (
-        2.0 * precision * recall / (precision + recall) if (precision + recall) else 0.0
+        2.0 * precision * recall / (precision + recall)
+        if (precision + recall)
+        else 0.0
     )
     return precision, recall, F1
 
@@ -69,7 +74,9 @@ def evaluate_corpus_f1(policy, data, goal_type=None):
                 # print(predict_da)
                 # print()
                 # if 'Select' in [x[0] for x in sess['messages'][i - 1]['dialog_act']]:
-                da_predict_golden.append({"predict": predict_da, "golden": golden_da})
+                da_predict_golden.append(
+                    {"predict": predict_da, "golden": golden_da}
+                )
                 delex_da_predict_golden.append(
                     {
                         "predict": delexicalize_da(predict_da),
@@ -123,7 +130,10 @@ def end2end_evaluate_simulation(policy):
         random_seeds.pop(0)
         sess.init_session()
         # print(usr_policy.goal_type)
-        if len(task_finish[usr_policy.goal_type]) == simulate_sess_num * repeat:
+        if (
+            len(task_finish[usr_policy.goal_type])
+            == simulate_sess_num * repeat
+        ):
             continue
         for i in range(15):
             sys_response, user_response, session_over, reward = sess.next_turn(
@@ -147,7 +157,9 @@ def end2end_evaluate_simulation(policy):
                 print(k)
                 all_samples = []
                 for i in range(repeat):
-                    samples = v[i * simulate_sess_num : (i + 1) * simulate_sess_num]
+                    samples = v[
+                        i * simulate_sess_num : (i + 1) * simulate_sess_num
+                    ]
                     all_samples += samples
                     print(
                         sum(samples),
@@ -156,9 +168,14 @@ def end2end_evaluate_simulation(policy):
                     )
                 print(
                     "avg",
-                    (sum(all_samples) / len(all_samples)) if len(all_samples) else 0,
+                    (sum(all_samples) / len(all_samples))
+                    if len(all_samples)
+                    else 0,
                 )
-        if min([len(x) for x in task_finish.values()]) == simulate_sess_num * repeat:
+        if (
+            min([len(x) for x in task_finish.values()])
+            == simulate_sess_num * repeat
+        ):
             break
         # pprint(usr_policy.original_goal)
         # pprint(task_finish)
@@ -174,7 +191,10 @@ def end2end_evaluate_simulation(policy):
                 len(samples),
                 (sum(samples) / len(samples)) if len(samples) else 0,
             )
-        print("avg", (sum(all_samples) / len(all_samples)) if len(all_samples) else 0)
+        print(
+            "avg",
+            (sum(all_samples) / len(all_samples)) if len(all_samples) else 0,
+        )
 
 
 def da_evaluate_simulation(policy):
@@ -212,7 +232,10 @@ def da_evaluate_simulation(policy):
         random_seeds.pop(0)
         sess.init_session()
         # print(usr_policy.goal_type)
-        if len(task_finish[usr_policy.goal_type]) == simulate_sess_num * repeat:
+        if (
+            len(task_finish[usr_policy.goal_type])
+            == simulate_sess_num * repeat
+        ):
             continue
         for i in range(15):
             sys_response, user_response, session_over, reward = sess.next_turn(
@@ -237,7 +260,9 @@ def da_evaluate_simulation(policy):
                 print(k)
                 all_samples = []
                 for i in range(repeat):
-                    samples = v[i * simulate_sess_num : (i + 1) * simulate_sess_num]
+                    samples = v[
+                        i * simulate_sess_num : (i + 1) * simulate_sess_num
+                    ]
                     all_samples += samples
                     print(
                         sum(samples),
@@ -246,9 +271,14 @@ def da_evaluate_simulation(policy):
                     )
                 print(
                     "avg",
-                    (sum(all_samples) / len(all_samples)) if len(all_samples) else 0,
+                    (sum(all_samples) / len(all_samples))
+                    if len(all_samples)
+                    else 0,
                 )
-        if min([len(x) for x in task_finish.values()]) == simulate_sess_num * repeat:
+        if (
+            min([len(x) for x in task_finish.values()])
+            == simulate_sess_num * repeat
+        ):
             break
         # pprint(usr_policy.original_goal)
         # pprint(task_finish)
@@ -264,7 +294,10 @@ def da_evaluate_simulation(policy):
                 len(samples),
                 (sum(samples) / len(samples)) if len(samples) else 0,
             )
-        print("avg", (sum(all_samples) / len(all_samples)) if len(all_samples) else 0)
+        print(
+            "avg",
+            (sum(all_samples) / len(all_samples)) if len(all_samples) else 0,
+        )
 
 
 if __name__ == "__main__":
@@ -274,7 +307,8 @@ if __name__ == "__main__":
     torch.manual_seed(random_seed)
     test_data = os.path.abspath(
         os.path.join(
-            os.path.abspath(__file__), "../../../../../data/crosswoz/test.json.zip"
+            os.path.abspath(__file__),
+            "../../../../../data/crosswoz/test.json.zip",
         )
     )
     test_data = read_zipped_json(test_data, "test.json")

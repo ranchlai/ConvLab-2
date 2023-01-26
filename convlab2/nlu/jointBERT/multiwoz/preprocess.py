@@ -1,7 +1,8 @@
+# -*- coding: utf-8 -*-
 import json
 import os
-import zipfile
 import sys
+import zipfile
 from collections import Counter
 
 
@@ -86,7 +87,9 @@ def preprocess(mode):
                                 "do n't care",
                                 "dontcare",
                             ]:
-                                intents.append(dacts + "+" + dact[0] + "*" + dact[1])
+                                intents.append(
+                                    dacts + "+" + dact[0] + "*" + dact[1]
+                                )
                 processed_data[key].append(
                     [
                         tokens,
@@ -109,7 +112,10 @@ def preprocess(mode):
         print("loaded {}, size {}".format(key, len(processed_data[key])))
         json.dump(
             processed_data[key],
-            open(os.path.join(processed_data_dir, "{}_data.json".format(key)), "w"),
+            open(
+                os.path.join(processed_data_dir, "{}_data.json".format(key)),
+                "w",
+            ),
             indent=2,
         )
 
@@ -117,7 +123,9 @@ def preprocess(mode):
     print("sentence label num:", len(all_intent))
     print("tag num:", len(all_tag))
     json.dump(
-        all_da, open(os.path.join(processed_data_dir, "all_act.json"), "w"), indent=2
+        all_da,
+        open(os.path.join(processed_data_dir, "all_act.json"), "w"),
+        indent=2,
     )
     json.dump(
         all_intent,
@@ -125,7 +133,9 @@ def preprocess(mode):
         indent=2,
     )
     json.dump(
-        all_tag, open(os.path.join(processed_data_dir, "tag_vocab.json"), "w"), indent=2
+        all_tag,
+        open(os.path.join(processed_data_dir, "tag_vocab.json"), "w"),
+        indent=2,
     )
 
 

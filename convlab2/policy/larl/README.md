@@ -25,12 +25,12 @@ For model training, go to experiments_woz directory and follow the steps below:
 
 ### Step 2: Reinforcement Learning
 Set the system model folder path in the script:
-       
+
     folder = '2019-04-15-12-43-05-sl_cat'
     epoch_id = '8'
 
 And then set the user model folder path in the script
-    
+
     sim_epoch_id = '5'
     simulator_folder = '2019-04-15-12-43-38-sl_word'  # set to the log folder of the user model
 

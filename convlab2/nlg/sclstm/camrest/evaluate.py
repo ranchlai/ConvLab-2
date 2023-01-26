@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Evaluate NLG models on utterances of Camrest test dataset
 Metric: dataset level BLEU-4, slot error rate
@@ -10,7 +11,7 @@ import zipfile
 
 import numpy as np
 import torch
-from nltk.translate.bleu_score import corpus_bleu, SmoothingFunction
+from nltk.translate.bleu_score import SmoothingFunction, corpus_bleu
 
 from convlab2.nlg.sclstm.camrest import SCLSTM
 
@@ -131,14 +132,18 @@ if __name__ == "__main__":
                 dialog_acts.append(turn["usr"]["dialog_act"])
                 golden_utts.append(turn["usr"]["transcript"])
                 gen_utts.append(model.generate(turn["usr"]["dialog_act"]))
-                gen_slots.append(model.generate_slots(turn["usr"]["dialog_act"]))
+                gen_slots.append(
+                    model.generate_slots(turn["usr"]["dialog_act"])
+                )
             if data_key == "sys" or data_key == "all":
                 sen_num += 1
                 model = model_sys
                 dialog_acts.append(turn["sys"]["dialog_act"])
                 golden_utts.append(turn["sys"]["sent"])
                 gen_utts.append(model.generate(turn["sys"]["dialog_act"]))
-                gen_slots.append(model.generate_slots(turn["sys"]["dialog_act"]))
+                gen_slots.append(
+                    model.generate_slots(turn["sys"]["dialog_act"])
+                )
 
     bleu4 = get_bleu4(dialog_acts, golden_utts, gen_utts)
 

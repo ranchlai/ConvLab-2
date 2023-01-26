@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
+import math
+import random
+from collections import Counter
+
 import numpy as np
 import torch
-import random
 from transformers import BertTokenizer
-import math
-from collections import Counter
 
 
 class Dataloader:
@@ -81,7 +83,9 @@ class Dataloader:
         split_tokens = []
         new_tag_seq = []
         new2ori = {}
-        basic_tokens = self.tokenizer.basic_tokenizer.tokenize(" ".join(word_seq))
+        basic_tokens = self.tokenizer.basic_tokenizer.tokenize(
+            " ".join(word_seq)
+        )
         accum = ""
         i, j = 0, 0
         for i, token in enumerate(basic_tokens):
@@ -100,7 +104,10 @@ class Dataloader:
         return split_tokens, new_tag_seq, new2ori
 
     def seq_tag2id(self, tags):
-        return [self.tag2id[x] if x in self.tag2id else self.tag2id["O"] for x in tags]
+        return [
+            self.tag2id[x] if x in self.tag2id else self.tag2id["O"]
+            for x in tags
+        ]
 
     def seq_id2tag(self, ids):
         return [self.id2tag[x] for x in ids]
@@ -114,11 +121,21 @@ class Dataloader:
     def pad_batch(self, batch_data):
         batch_size = len(batch_data)
         max_seq_len = max([len(x[-3]) for x in batch_data]) + 2
-        word_mask_tensor = torch.zeros((batch_size, max_seq_len), dtype=torch.long)
-        word_seq_tensor = torch.zeros((batch_size, max_seq_len), dtype=torch.long)
-        tag_mask_tensor = torch.zeros((batch_size, max_seq_len), dtype=torch.long)
-        tag_seq_tensor = torch.zeros((batch_size, max_seq_len), dtype=torch.long)
-        intent_tensor = torch.zeros((batch_size, self.intent_dim), dtype=torch.float)
+        word_mask_tensor = torch.zeros(
+            (batch_size, max_seq_len), dtype=torch.long
+        )
+        word_seq_tensor = torch.zeros(
+            (batch_size, max_seq_len), dtype=torch.long
+        )
+        tag_mask_tensor = torch.zeros(
+            (batch_size, max_seq_len), dtype=torch.long
+        )
+        tag_seq_tensor = torch.zeros(
+            (batch_size, max_seq_len), dtype=torch.long
+        )
+        intent_tensor = torch.zeros(
+            (batch_size, self.intent_dim), dtype=torch.float
+        )
         context_max_seq_len = max([len(x[-5]) for x in batch_data])
         context_mask_tensor = torch.zeros(
             (batch_size, context_max_seq_len), dtype=torch.long
@@ -136,12 +153,18 @@ class Dataloader:
             word_seq_tensor[i, :sen_len] = torch.LongTensor([indexed_tokens])
             tag_seq_tensor[i, 1 : sen_len - 1] = torch.LongTensor(tags)
             word_mask_tensor[i, :sen_len] = torch.LongTensor([1] * sen_len)
-            tag_mask_tensor[i, 1 : sen_len - 1] = torch.LongTensor([1] * (sen_len - 2))
+            tag_mask_tensor[i, 1 : sen_len - 1] = torch.LongTensor(
+                [1] * (sen_len - 2)
+            )
             for j in intents:
                 intent_tensor[i, j] = 1.0
             context_len = len(batch_data[i][-5])
-            context_seq_tensor[i, :context_len] = torch.LongTensor([batch_data[i][-5]])
-            context_mask_tensor[i, :context_len] = torch.LongTensor([1] * context_len)
+            context_seq_tensor[i, :context_len] = torch.LongTensor(
+                [batch_data[i][-5]]
+            )
+            context_mask_tensor[i, :context_len] = torch.LongTensor(
+                [1] * context_len
+            )
 
         return (
             word_seq_tensor,
@@ -160,5 +183,7 @@ class Dataloader:
     def yield_batches(self, batch_size, data_key):
         batch_num = math.ceil(len(self.data[data_key]) / batch_size)
         for i in range(batch_num):
-            batch_data = self.data[data_key][i * batch_size : (i + 1) * batch_size]
+            batch_data = self.data[data_key][
+                i * batch_size : (i + 1) * batch_size
+            ]
             yield self.pad_batch(batch_data), batch_data, len(batch_data)

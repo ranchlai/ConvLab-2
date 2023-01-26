@@ -1,10 +1,11 @@
+# -*- coding: utf-8 -*-
 import json
 import os
 
-from convlab2.util.multiwoz.state import default_state
-from convlab2.dst.rule.multiwoz.dst_util import normalize_value
 from convlab2.dst.dst import DST
+from convlab2.dst.rule.multiwoz.dst_util import normalize_value
 from convlab2.util.multiwoz.multiwoz_slot_trans import REF_SYS_DA
+from convlab2.util.multiwoz.state import default_state
 
 
 class RuleDST(DST):
@@ -49,7 +50,9 @@ class RuleDST(DST):
                     assert domain in self.state["belief_state"]
                 except:
                     raise Exception(
-                        "Error: domain <{}> not in new belief state".format(domain)
+                        "Error: domain <{}> not in new belief state".format(
+                            domain
+                        )
                     )
                 domain_dic = self.state["belief_state"][domain]
                 assert "semi" in domain_dic
@@ -60,16 +63,20 @@ class RuleDST(DST):
                 elif k in domain_dic["book"]:
                     self.state["belief_state"][domain]["book"][k] = value
                 elif k.lower() in domain_dic["book"]:
-                    self.state["belief_state"][domain]["book"][k.lower()] = value
+                    self.state["belief_state"][domain]["book"][
+                        k.lower()
+                    ] = value
                 elif k == "trainID" and domain == "train":
-                    self.state["belief_state"][domain]["book"][k] = normalize_value(
-                        self.value_dict, domain, k, value
-                    )
+                    self.state["belief_state"][domain]["book"][
+                        k
+                    ] = normalize_value(self.value_dict, domain, k, value)
                 elif k != "none":
                     # raise Exception('unknown slot name <{}> of domain <{}>'.format(k, domain))
                     with open("unknown_slot.log", "a+") as f:
                         f.write(
-                            "unknown slot name <{}> of domain <{}>\n".format(k, domain)
+                            "unknown slot name <{}> of domain <{}>\n".format(
+                                k, domain
+                            )
                         )
             elif intent == "request":
                 k = REF_SYS_DA[domain.capitalize()].get(slot, slot)
@@ -96,7 +103,10 @@ if __name__ == "__main__":
 
     # For example, the action below has a key "Hotel-Inform", in which "Hotel" is domain and "Inform" is action type.
     # Each list in the value of "Hotel-Inform" is a slot-value pair. "Area" is slot and "east" is value. "Star" is slot and "4" is value.
-    action = [["Inform", "Hotel", "Area", "east"], ["Inform", "Hotel", "Stars", "4"]]
+    action = [
+        ["Inform", "Hotel", "Area", "east"],
+        ["Inform", "Hotel", "Stars", "4"],
+    ]
 
     # method `update` updates the attribute `state` of tracker, and returns it.
     state = dst.update(action)

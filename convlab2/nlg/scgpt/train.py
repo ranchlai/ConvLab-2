@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
 
 import argparse
@@ -8,12 +9,16 @@ import pickle
 import random
 import re
 import shutil
-
 import sys
 
 import numpy as np
 import torch
-from torch.utils.data import DataLoader, Dataset, SequentialSampler, RandomSampler
+from torch.utils.data import (
+    DataLoader,
+    Dataset,
+    RandomSampler,
+    SequentialSampler,
+)
 from torch.utils.data.distributed import DistributedSampler
 
 try:
@@ -22,14 +27,15 @@ except:
     from tensorboardX import SummaryWriter
 
 from tqdm import tqdm, trange
-
 from transformers import (
     WEIGHTS_NAME,
     AdamW,
-    get_linear_schedule_with_warmup,
     BertConfig,
     BertForMaskedLM,
     BertTokenizer,
+    DistilBertConfig,
+    DistilBertForMaskedLM,
+    DistilBertTokenizer,
     GPT2Config,
     GPT2LMHeadModel,
     GPT2Tokenizer,
@@ -39,12 +45,8 @@ from transformers import (
     RobertaConfig,
     RobertaForMaskedLM,
     RobertaTokenizer,
-    DistilBertConfig,
-    DistilBertForMaskedLM,
-    DistilBertTokenizer,
-    BertTokenizer,
+    get_linear_schedule_with_warmup,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -54,12 +56,18 @@ MODEL_CLASSES = {
     "openai-gpt": (OpenAIGPTConfig, OpenAIGPTLMHeadModel, OpenAIGPTTokenizer),
     "bert": (BertConfig, BertForMaskedLM, BertTokenizer),
     "roberta": (RobertaConfig, RobertaForMaskedLM, RobertaTokenizer),
-    "distilbert": (DistilBertConfig, DistilBertForMaskedLM, DistilBertTokenizer),
+    "distilbert": (
+        DistilBertConfig,
+        DistilBertForMaskedLM,
+        DistilBertTokenizer,
+    ),
 }
 
 
 class TextDataset(Dataset):
-    def __init__(self, tokenizer, args, file_path="train", block_size=512, max_seq=80):
+    def __init__(
+        self, tokenizer, args, file_path="train", block_size=512, max_seq=80
+    ):
         assert os.path.isfile(file_path)
         directory, filename = os.path.split(file_path)
         cached_features_file = os.path.join(
@@ -74,7 +82,9 @@ class TextDataset(Dataset):
         )
 
         if os.path.exists(cached_features_file) and not args.overwrite_cache:
-            logger.info("Loading features from cached file %s", cached_features_file)
+            logger.info(
+                "Loading features from cached file %s", cached_features_file
+            )
             with open(cached_features_file, "rb") as handle:
                 self.examples = pickle.load(handle)
         else:
@@ -109,9 +119,13 @@ class TextDataset(Dataset):
             # If your dataset is small, first you should loook for a bigger one :-) and second you
             # can change this behavior by adding (model specific) padding.
 
-            logger.info("Saving features into cached file %s", cached_features_file)
+            logger.info(
+                "Saving features into cached file %s", cached_features_file
+            )
             with open(cached_features_file, "wb") as handle:
-                pickle.dump(self.examples, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                pickle.dump(
+                    self.examples, handle, protocol=pickle.HIGHEST_PROTOCOL
+                )
 
     def __len__(self):
         return len(self.examples)
@@ -144,7 +158,9 @@ class TextSeqDataset(Dataset):
         )
 
         if os.path.exists(cached_features_file) and not args.overwrite_cache:
-            logger.info("Loading features from cached file %s", cached_features_file)
+            logger.info(
+                "Loading features from cached file %s", cached_features_file
+            )
             with open(cached_features_file, "rb") as handle:
                 self.examples = pickle.load(handle)
         else:
@@ -203,9 +219,13 @@ class TextSeqDataset(Dataset):
             # can change this behavior by adding (model specific) padding.
             if args.with_code_loss:
                 self.labels = self.examples
-            logger.info("Saving features into cached file %s", cached_features_file)
+            logger.info(
+                "Saving features into cached file %s", cached_features_file
+            )
             with open(cached_features_file, "wb") as handle:
-                pickle.dump(self.examples, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                pickle.dump(
+                    self.examples, handle, protocol=pickle.HIGHEST_PROTOCOL
+                )
 
     def __len__(self):
         return len(self.examples)
@@ -255,7 +275,9 @@ def _rotate_checkpoints(args, checkpoint_prefix, use_mtime=False):
         if use_mtime:
             ordering_and_checkpoint_path.append((os.path.getmtime(path), path))
         else:
-            regex_match = re.match(".*{}-([0-9]+)".format(checkpoint_prefix), path)
+            regex_match = re.match(
+                ".*{}-([0-9]+)".format(checkpoint_prefix), path
+            )
             if regex_match and regex_match.groups():
                 ordering_and_checkpoint_path.append(
                     (int(regex_match.groups()[0]), path)
@@ -266,7 +288,9 @@ def _rotate_checkpoints(args, checkpoint_prefix, use_mtime=False):
     number_of_checkpoints_to_delete = max(
         0, len(checkpoints_sorted) - args.save_total_limit
     )
-    checkpoints_to_be_deleted = checkpoints_sorted[:number_of_checkpoints_to_delete]
+    checkpoints_to_be_deleted = checkpoints_sorted[
+        :number_of_checkpoints_to_delete
+    ]
     for checkpoint in checkpoints_to_be_deleted:
         logger.info(
             "Deleting older checkpoint [{}] due to args.save_total_limit".format(
@@ -295,7 +319,9 @@ def mask_tokens(inputs, tokenizer, args):
     indices_replaced = (
         torch.bernoulli(torch.full(labels.shape, 0.8)).bool() & masked_indices
     )
-    inputs[indices_replaced] = tokenizer.convert_tokens_to_ids(tokenizer.mask_token)
+    inputs[indices_replaced] = tokenizer.convert_tokens_to_ids(
+        tokenizer.mask_token
+    )
 
     # 10% of the time, we replace masked input tokens with random word
     indices_random = (
@@ -303,7 +329,9 @@ def mask_tokens(inputs, tokenizer, args):
         & masked_indices
         & ~indices_replaced
     )
-    random_words = torch.randint(len(tokenizer), labels.shape, dtype=torch.long)
+    random_words = torch.randint(
+        len(tokenizer), labels.shape, dtype=torch.long
+    )
     inputs[indices_random] = random_words[indices_random]
 
     # The rest of the time (10% of the time) we keep the masked input tokens unchanged
@@ -360,10 +388,14 @@ def train(args, train_dataset, model, tokenizer):
         },
     ]
     optimizer = AdamW(
-        optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon
+        optimizer_grouped_parameters,
+        lr=args.learning_rate,
+        eps=args.adam_epsilon,
     )
     scheduler = get_linear_schedule_with_warmup(
-        optimizer, num_warmup_steps=args.warmup_steps, num_training_steps=t_total
+        optimizer,
+        num_warmup_steps=args.warmup_steps,
+        num_training_steps=t_total,
     )
     if args.fp16:
         try:
@@ -394,7 +426,8 @@ def train(args, train_dataset, model, tokenizer):
     logger.info("  Num examples = %d", len(train_dataset))
     logger.info("  Num Epochs = %d", args.num_train_epochs)
     logger.info(
-        "  Instantaneous batch size per GPU = %d", args.per_gpu_train_batch_size
+        "  Instantaneous batch size per GPU = %d",
+        args.per_gpu_train_batch_size,
     )
     logger.info(
         "  Total train batch size (w. parallel, distributed & accumulation) = %d",
@@ -402,16 +435,22 @@ def train(args, train_dataset, model, tokenizer):
         * args.gradient_accumulation_steps
         * (torch.distributed.get_world_size() if args.local_rank != -1 else 1),
     )
-    logger.info("  Gradient Accumulation steps = %d", args.gradient_accumulation_steps)
+    logger.info(
+        "  Gradient Accumulation steps = %d", args.gradient_accumulation_steps
+    )
     logger.info("  Total optimization steps = %d", t_total)
 
     global_step = 0
     tr_loss, logging_loss = 0.0, 0.0
     model.zero_grad()
     train_iterator = trange(
-        int(args.num_train_epochs), desc="Epoch", disable=args.local_rank not in [-1, 0]
+        int(args.num_train_epochs),
+        desc="Epoch",
+        disable=args.local_rank not in [-1, 0],
     )
-    set_seed(args)  # Added here for reproducibility (even between python 2 and 3)
+    set_seed(
+        args
+    )  # Added here for reproducibility (even between python 2 and 3)
     for e in train_iterator:
 
         # epoch_iterator = tqdm(train_dataloader, desc="Iteration", disable=args.local_rank not in [-1, 0])
@@ -436,7 +475,9 @@ def train(args, train_dataset, model, tokenizer):
             ]  # model outputs are always tuple in transformers (see doc)
 
             if args.n_gpu > 1:
-                loss = loss.mean()  # mean() to average on multi-gpu parallel training
+                loss = (
+                    loss.mean()
+                )  # mean() to average on multi-gpu parallel training
             if args.gradient_accumulation_steps > 1:
                 loss = loss / args.gradient_accumulation_steps
 
@@ -475,7 +516,9 @@ def train(args, train_dataset, model, tokenizer):
                             tb_writer.add_scalar(
                                 "eval_{}".format(key), value, global_step
                             )
-                    tb_writer.add_scalar("lr", scheduler.get_lr()[0], global_step)
+                    tb_writer.add_scalar(
+                        "lr", scheduler.get_lr()[0], global_step
+                    )
                     tb_writer.add_scalar(
                         "loss",
                         (tr_loss - logging_loss) / args.logging_steps,
@@ -494,7 +537,8 @@ def train(args, train_dataset, model, tokenizer):
                     checkpoint_prefix = "checkpoint"
                     # Save model checkpoint
                     output_dir = os.path.join(
-                        args.output_dir, "{}-{}".format(checkpoint_prefix, global_step)
+                        args.output_dir,
+                        "{}-{}".format(checkpoint_prefix, global_step),
                     )
                     if not os.path.exists(output_dir):
                         os.makedirs(output_dir)
@@ -503,7 +547,9 @@ def train(args, train_dataset, model, tokenizer):
                     )  # Take care of distributed/parallel training
                     model_to_save.save_pretrained(output_dir)
                     tokenizer.save_pretrained(output_dir)
-                    torch.save(args, os.path.join(output_dir, "training_args.bin"))
+                    torch.save(
+                        args, os.path.join(output_dir, "training_args.bin")
+                    )
                     logger.info("Saving model checkpoint to %s", output_dir)
 
                     _rotate_checkpoints(args, checkpoint_prefix)
@@ -580,7 +626,9 @@ def evaluate(args, model, tokenizer, prefix=""):
 
     result = {"perplexity": perplexity}
 
-    output_eval_file = os.path.join(eval_output_dir, prefix, "eval_results.txt")
+    output_eval_file = os.path.join(
+        eval_output_dir, prefix, "eval_results.txt"
+    )
     with open(output_eval_file, "w") as writer:
         logger.info("***** Eval results {} *****".format(prefix))
         for key in sorted(result.keys()):
@@ -672,7 +720,9 @@ def main():
         "--do_train", action="store_true", help="Whether to run training."
     )
     parser.add_argument(
-        "--do_eval", action="store_true", help="Whether to run eval on the dev set."
+        "--do_eval",
+        action="store_true",
+        help="Whether to run eval on the dev set.",
     )
     parser.add_argument(
         "--evaluate_during_training",
@@ -710,10 +760,16 @@ def main():
         help="The initial learning rate for Adam.",
     )
     parser.add_argument(
-        "--weight_decay", default=0.0, type=float, help="Weight deay if we apply some."
+        "--weight_decay",
+        default=0.0,
+        type=float,
+        help="Weight deay if we apply some.",
     )
     parser.add_argument(
-        "--adam_epsilon", default=1e-8, type=float, help="Epsilon for Adam optimizer."
+        "--adam_epsilon",
+        default=1e-8,
+        type=float,
+        help="Epsilon for Adam optimizer.",
     )
     parser.add_argument(
         "--max_grad_norm", default=1.0, type=float, help="Max gradient norm."
@@ -731,11 +787,17 @@ def main():
         help="If > 0: set total number of training steps to perform. Override num_train_epochs.",
     )
     parser.add_argument(
-        "--warmup_steps", default=0, type=int, help="Linear warmup over warmup_steps."
+        "--warmup_steps",
+        default=0,
+        type=int,
+        help="Linear warmup over warmup_steps.",
     )
 
     parser.add_argument(
-        "--logging_steps", type=int, default=100, help="Log every X updates steps."
+        "--logging_steps",
+        type=int,
+        default=100,
+        help="Log every X updates steps.",
     )
     parser.add_argument(
         "--save_steps",
@@ -755,7 +817,9 @@ def main():
         help="Evaluate all checkpoints starting with the same prefix as model_name_or_path ending and ending with step number",
     )
     parser.add_argument(
-        "--no_cuda", action="store_true", help="Avoid using CUDA when available"
+        "--no_cuda",
+        action="store_true",
+        help="Avoid using CUDA when available",
     )
     parser.add_argument(
         "--overwrite_output_dir",
@@ -879,7 +943,9 @@ def main():
         cache_dir=args.cache_dir if args.cache_dir else None,
     )
     tokenizer = tokenizer_class.from_pretrained(
-        args.tokenizer_name if args.tokenizer_name else args.model_name_or_path,
+        args.tokenizer_name
+        if args.tokenizer_name
+        else args.model_name_or_path,
         # tokenizer = BertTokenizer(vocab_file='../GPT2-chitchat/vocabulary/vocab_small.txt', eos_token='<T>',
         do_lower_case=args.do_lower_case,
         cache_dir=args.cache_dir if args.cache_dir else None,
@@ -908,16 +974,22 @@ def main():
         if args.local_rank not in [-1, 0]:
             torch.distributed.barrier()  # Barrier to make sure only the first process in distributed training process the dataset, and the others will use the cache
 
-        train_dataset = load_and_cache_examples(args, tokenizer, evaluate=False)
+        train_dataset = load_and_cache_examples(
+            args, tokenizer, evaluate=False
+        )
 
         if args.local_rank == 0:
             torch.distributed.barrier()
 
         global_step, tr_loss = train(args, train_dataset, model, tokenizer)
-        logger.info(" global_step = %s, average loss = %s", global_step, tr_loss)
+        logger.info(
+            " global_step = %s, average loss = %s", global_step, tr_loss
+        )
 
     # Saving best-practices: if you use save_pretrained for the model and tokenizer, you can reload them using from_pretrained()
-    if args.do_train and (args.local_rank == -1 or torch.distributed.get_rank() == 0):
+    if args.do_train and (
+        args.local_rank == -1 or torch.distributed.get_rank() == 0
+    ):
         # Create output directory if needed
         if not os.path.exists(args.output_dir) and args.local_rank in [-1, 0]:
             os.makedirs(args.output_dir)
@@ -949,7 +1021,9 @@ def main():
             checkpoints = list(
                 os.path.dirname(c)
                 for c in sorted(
-                    glob.glob(args.output_dir + "/**/" + WEIGHTS_NAME, recursive=True)
+                    glob.glob(
+                        args.output_dir + "/**/" + WEIGHTS_NAME, recursive=True
+                    )
                 )
             )
             logging.getLogger("transformers.modeling_utils").setLevel(
@@ -957,15 +1031,21 @@ def main():
             )  # Reduce logging
         logger.info("Evaluate the following checkpoints: %s", checkpoints)
         for checkpoint in checkpoints:
-            global_step = checkpoint.split("-")[-1] if len(checkpoints) > 1 else ""
+            global_step = (
+                checkpoint.split("-")[-1] if len(checkpoints) > 1 else ""
+            )
             prefix = (
-                checkpoint.split("/")[-1] if checkpoint.find("checkpoint") != -1 else ""
+                checkpoint.split("/")[-1]
+                if checkpoint.find("checkpoint") != -1
+                else ""
             )
 
             model = model_class.from_pretrained(checkpoint)
             model.to(args.device)
             result = evaluate(args, model, tokenizer, prefix=prefix)
-            result = dict((k + "_{}".format(global_step), v) for k, v in result.items())
+            result = dict(
+                (k + "_{}".format(global_step), v) for k, v in result.items()
+            )
             results.update(result)
 
     return results

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2017-present, Facebook, Inc.
 # All rights reserved.
 #
@@ -5,18 +6,18 @@
 # LICENSE file in the root directory of this source tree.
 
 import argparse
-import random
-import time
-import itertools
-import sys
 import copy
+import itertools
+import random
 import re
+import sys
+import time
 
-import torch
-from torch import optim
-import torch.nn as nn
-from torch.autograd import Variable
 import numpy as np
+import torch
+import torch.nn as nn
+from torch import optim
+from torch.autograd import Variable
 
 import convlab2.e2e.rnn_rollout.vis as vis
 
@@ -24,7 +25,9 @@ import convlab2.e2e.rnn_rollout.vis as vis
 class Criterion(object):
     """Weighted CrossEntropyLoss."""
 
-    def __init__(self, dictionary, device_id=None, bad_toks=[], reduction="mean"):
+    def __init__(
+        self, dictionary, device_id=None, bad_toks=[], reduction="mean"
+    ):
         w = torch.Tensor(len(dictionary)).fill_(1)
         for tok in bad_toks:
             w[dictionary.get_idx(tok)] = 0.0
@@ -126,9 +129,12 @@ class EngineBase(object):
         validset, validset_stats = validdata
 
         train_loss, train_time = self.train_pass(trainset)
-        valid_loss, valid_select_loss, valid_partner_ctx_loss, extra = self.valid_pass(
-            validset, validset_stats
-        )
+        (
+            valid_loss,
+            valid_select_loss,
+            valid_partner_ctx_loss,
+            extra,
+        ) = self.valid_pass(validset, validset_stats)
 
         if self.verbose:
             print(
@@ -146,7 +152,11 @@ class EngineBase(object):
             if self.model.args.partner_ctx_weight != 0:
                 print(
                     "| epoch %03d | validpartnerctxloss %.3f | validpartnerctxppl %.3f"
-                    % (epoch, valid_partner_ctx_loss, np.exp(valid_partner_ctx_loss))
+                    % (
+                        epoch,
+                        valid_partner_ctx_loss,
+                        np.exp(valid_partner_ctx_loss),
+                    )
                 )
 
         if self.args.visual:
@@ -155,7 +165,9 @@ class EngineBase(object):
             self.loss_plot.update("valid_select", epoch, valid_select_loss)
             self.ppl_plot.update("train", epoch, np.exp(train_loss))
             self.ppl_plot.update("valid", epoch, np.exp(valid_loss))
-            self.ppl_plot.update("valid_select", epoch, np.exp(valid_select_loss))
+            self.ppl_plot.update(
+                "valid_select", epoch, np.exp(valid_select_loss)
+            )
 
         return train_loss, valid_loss, valid_select_loss, extra
 
@@ -175,7 +187,9 @@ class EngineBase(object):
                 epoch, lr, traindata, validdata
             )
 
-            combined_valid_loss = self.combine_loss(valid_loss, valid_select_loss)
+            combined_valid_loss = self.combine_loss(
+                valid_loss, valid_select_loss
+            )
             if combined_valid_loss < best_combined_valid_loss:
                 best_combined_valid_loss = combined_valid_loss
                 best_model = copy.deepcopy(self.model)

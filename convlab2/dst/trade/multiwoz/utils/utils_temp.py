@@ -1,20 +1,21 @@
+# -*- coding: utf-8 -*-
+import datetime
 import json
-import torch
-import torch.utils.data as data
-import unicodedata
-import string
-import re
-import random
-import time
+import logging
 import math
+import random
+import re
+import string
+import time
+import unicodedata
+
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
-from torch import optim
 import torch.nn.functional as F
+import torch.utils.data as data
+from torch import optim
+from torch.autograd import Variable
 from utils.config import *
-import logging
-import datetime
 
 MEM_TOKEN_SIZE = 4
 
@@ -50,7 +51,9 @@ class Dataset(data.Dataset):
 
     # data_item = {'content_arr':content_arr, 'bot_action':bot_action, 'bot_action_idx':bot_action_idx,
     #                 'ent_query':ent_query, 'ent_query_idx':ent_query_idx, 'gold_response':gold_response}
-    def __init__(self, data_item, src_word2id, trg_word2id, max_len, query2idx):
+    def __init__(
+        self, data_item, src_word2id, trg_word2id, max_len, query2idx
+    ):
         """Reads source and target sequences from txt files."""
         self.dialID = data_item["dialID"]
         self.turnID = data_item["turnID"]
@@ -181,7 +184,9 @@ def collate_fn(data):
 # Turn a Unicode string to plain ASCII, thanks to http://stackoverflow.com/a/518232/2809427
 def unicode_to_ascii(s):
     return "".join(
-        c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn"
+        c
+        for c in unicodedata.normalize("NFD", s)
+        if unicodedata.category(c) != "Mn"
     )
 
 
@@ -243,7 +248,9 @@ def read_langs(file_name, entity, cand2DLidx, idx2candDL, max_line=None):
                             if index:
                                 index = max(index)
                                 # cnt_ptr += 1
-                                ent_query_idx[bot_action.split(" ")[idx]] = index
+                                ent_query_idx[
+                                    bot_action.split(" ")[idx]
+                                ] = index
                                 ent_query[bot_action.split(" ")[idx]] = key
                             else:
                                 print("[Wrong] Cannot find the entity")
@@ -253,7 +260,9 @@ def read_langs(file_name, entity, cand2DLidx, idx2candDL, max_line=None):
                     if ent_query == {}:
                         ent_query = {"UNK": "$$$$"}
                         ent_query_idx = {"UNK": len(content_arr)}
-                        content_arr_temp = content_arr + [["$$$$"] * MEM_TOKEN_SIZE]
+                        content_arr_temp = content_arr + [
+                            ["$$$$"] * MEM_TOKEN_SIZE
+                        ]
                     else:
                         content_arr_temp = content_arr
                     # ent = []
@@ -297,13 +306,19 @@ def read_langs(file_name, entity, cand2DLidx, idx2candDL, max_line=None):
     # logging.info("Pointer percentace= {} ".format(cnt_ptr/(cnt_ptr+cnt_voc)))
     logging.info("Max responce Len: {}".format(max_r_len))
     logging.info("Max Input Len: {}".format(max_len))
-    logging.info("Avg. User Utterances: {}".format(user_counter * 1.0 / dialog_counter))
+    logging.info(
+        "Avg. User Utterances: {}".format(user_counter * 1.0 / dialog_counter)
+    )
     logging.info(
         "Avg. Bot Utterances: {}".format(system_counter * 1.0 / dialog_counter)
     )
-    logging.info("Avg. KB results: {}".format(KB_counter * 1.0 / dialog_counter))
     logging.info(
-        "Avg. responce Len: {}".format(system_res_counter * 1.0 / system_counter)
+        "Avg. KB results: {}".format(KB_counter * 1.0 / dialog_counter)
+    )
+    logging.info(
+        "Avg. responce Len: {}".format(
+            system_res_counter * 1.0 / system_counter
+        )
     )
 
     print("Sample: ", data[5])
@@ -315,15 +330,19 @@ def generate_memory(sent, speaker, time):
     sent_token = sent.split(" ")
     if speaker == "$u" or speaker == "$s":
         for idx, word in enumerate(sent_token):
-            temp = [word, speaker, "turn" + str(time), "word" + str(idx)] + ["PAD"] * (
-                MEM_TOKEN_SIZE - 4
-            )
+            temp = [word, speaker, "turn" + str(time), "word" + str(idx)] + [
+                "PAD"
+            ] * (MEM_TOKEN_SIZE - 4)
             sent_new.append(temp)
     else:
         if sent_token[1] == "R_rating":
-            sent_token = sent_token + ["PAD"] * (MEM_TOKEN_SIZE - len(sent_token))
+            sent_token = sent_token + ["PAD"] * (
+                MEM_TOKEN_SIZE - len(sent_token)
+            )
         else:
-            sent_token = sent_token[::-1] + ["PAD"] * (MEM_TOKEN_SIZE - len(sent_token))
+            sent_token = sent_token[::-1] + ["PAD"] * (
+                MEM_TOKEN_SIZE - len(sent_token)
+            )
         sent_new.append(sent_token)
     return sent_new
 
@@ -362,9 +381,14 @@ def get_seq(pairs, lang, batch_size, type, max_len, query2idx):
         "gold_response": gold_response,
     }
 
-    dataset = Dataset(data_item, lang.word2index, lang.word2index, max_len, query2idx)
+    dataset = Dataset(
+        data_item, lang.word2index, lang.word2index, max_len, query2idx
+    )
     data_loader = torch.utils.data.DataLoader(
-        dataset=dataset, batch_size=batch_size, shuffle=type, collate_fn=collate_fn
+        dataset=dataset,
+        batch_size=batch_size,
+        shuffle=type,
+        collate_fn=collate_fn,
     )
     return data_loader
 
@@ -432,7 +456,9 @@ def load_candidates(task_id, candidates_f):
 def candid2DL(candid_path, kb_path, task_id):
     type_dict = get_type_dict(kb_path, dstc2=(task_id == 6))
     ent_list = entityList(kb_path, int(task_id))
-    candidates, _, _ = load_candidates(task_id=task_id, candidates_f=candid_path)
+    candidates, _, _ = load_candidates(
+        task_id=task_id, candidates_f=candid_path
+    )
     candid_all = []
     candid2candDL = {}
     for index, cand in enumerate(candidates):
@@ -440,7 +466,10 @@ def candid2DL(candid_path, kb_path, task_id):
         for index, word in enumerate(cand_DL):
             if word in ent_list:
                 for type_name in type_dict:
-                    if word in type_dict[type_name] and type_name != "R_rating":
+                    if (
+                        word in type_dict[type_name]
+                        and type_name != "R_rating"
+                    ):
                         cand_DL[index] = type_name
                         break
         cand_DL = " ".join(cand_DL)
@@ -458,12 +487,14 @@ def candid2DL(candid_path, kb_path, task_id):
 
 
 def prepare_data_seq(task, batch_size=100):
-    file_train = "data/dialog-bAbI-tasks/dialog-babi-task{}trn.txt".format(task)
+    file_train = "data/dialog-bAbI-tasks/dialog-babi-task{}trn.txt".format(
+        task
+    )
     file_dev = "data/dialog-bAbI-tasks/dialog-babi-task{}dev.txt".format(task)
     file_test = "data/dialog-bAbI-tasks/dialog-babi-task{}tst.txt".format(task)
     if int(task) != 6:
-        file_test_OOV = "data/dialog-bAbI-tasks/dialog-babi-task{}tst-OOV.txt".format(
-            task
+        file_test_OOV = (
+            "data/dialog-bAbI-tasks/dialog-babi-task{}tst-OOV.txt".format(task)
         )
         candid_file_path = "data/dialog-bAbI-tasks/dialog-babi-candidates.txt"
         kb_path = "data/dialog-bAbI-tasks/dialog-babi-kb-all.txt"
@@ -503,7 +534,9 @@ def prepare_data_seq(task, batch_size=100):
             file_test_OOV, ent, cand2DLidx, idx2candDL, max_line=None
         )
 
-    max_len = max(max_len_train, max_len_dev, max_len_test, max_len_test_OOV) + 1
+    max_len = (
+        max(max_len_train, max_len_dev, max_len_test, max_len_test_OOV) + 1
+    )
     max_r = -1  # max(max_r_train,max_r_dev,max_r_test,max_r_test_OOV) +1
     lang = Lang()
 
@@ -512,7 +545,9 @@ def prepare_data_seq(task, batch_size=100):
     test = get_seq(pair_test, lang, batch_size, False, max_len, query2idx)
 
     if int(task) != 6:
-        testOOV = get_seq(pair_test_OOV, lang, batch_size, False, max_len, query2idx)
+        testOOV = get_seq(
+            pair_test_OOV, lang, batch_size, False, max_len, query2idx
+        )
     else:
         testOOV = []
 
@@ -525,7 +560,17 @@ def prepare_data_seq(task, batch_size=100):
     logging.info("Vocab_size %s " % lang.n_words)
     logging.info("USE_CUDA={}".format(USE_CUDA))
 
-    return train, dev, test, testOOV, lang, max_len, max_r, idx2candDL, query2idx
+    return (
+        train,
+        dev,
+        test,
+        testOOV,
+        lang,
+        max_len,
+        max_r,
+        idx2candDL,
+        query2idx,
+    )
 
 
 if __name__ == "__main__":

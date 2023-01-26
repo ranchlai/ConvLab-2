@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 from convlab2.util.crosswoz.dbquery import Database
 db = Database()
@@ -6,9 +7,10 @@ db.query(state['belief_state'], cur_domain)
 import json
 import os
 import re
-from convlab2.util.crosswoz.state import default_state
-from pprint import pprint
 from collections import Counter
+from pprint import pprint
+
+from convlab2.util.crosswoz.state import default_state
 
 
 def contains(arr, s):
@@ -27,9 +29,13 @@ class Database(object):
                 os.path.abspath(__file__), "../../../../data/crosswoz/database"
             )
         )
-        with open(os.path.join(db_dir, "metro_db.json"), "r", encoding="utf-8") as f:
+        with open(
+            os.path.join(db_dir, "metro_db.json"), "r", encoding="utf-8"
+        ) as f:
             self.data["地铁"] = json.load(f)
-        with open(os.path.join(db_dir, "hotel_db.json"), "r", encoding="utf-8") as f:
+        with open(
+            os.path.join(db_dir, "hotel_db.json"), "r", encoding="utf-8"
+        ) as f:
             self.data["酒店"] = json.load(f)
         with open(
             os.path.join(db_dir, "restaurant_db.json"), "r", encoding="utf-8"
@@ -176,7 +182,10 @@ class Database(object):
             if not s or not e:
                 return []
             if field == "出租":
-                return ["出租 (%s - %s)" % (s, e), {"领域": "出租", "车型": "#CX", "车牌": "#CP"}]
+                return [
+                    "出租 (%s - %s)" % (s, e),
+                    {"领域": "出租", "车型": "#CX", "车牌": "#CP"},
+                ]
             else:
 
                 def func1(item):
@@ -190,7 +199,9 @@ class Database(object):
 
                 return list(
                     filter(lambda item: not item is None, list(map(func1, db)))
-                ) + list(filter(lambda item: not item is None, list(map(func2, db))))
+                ) + list(
+                    filter(lambda item: not item is None, list(map(func2, db)))
+                )
 
         def func3(item):
             details = item[1]

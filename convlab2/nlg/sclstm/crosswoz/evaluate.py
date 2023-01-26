@@ -1,23 +1,24 @@
+# -*- coding: utf-8 -*-
 """
 Evaluate NLG models on utterances of Multiwoz_zh test dataset
 Metric: dataset level BLEU-4, slot error rate
 Usage: python evaluate.py [usr|sys|all]
 """
+import copy
 import json
+import os
+import pickle as pkl
 import random
+import re
 import sys
 import zipfile
-import copy
-import re
-import jieba
 from collections import defaultdict
 from pprint import pprint
-import pickle as pkl
-import os
 
+import jieba
 import numpy as np
 import torch
-from nltk.translate.bleu_score import corpus_bleu, SmoothingFunction
+from nltk.translate.bleu_score import SmoothingFunction, corpus_bleu
 
 from convlab2.nlg.sclstm.crosswoz import SCLSTM
 
@@ -69,8 +70,12 @@ def value_replace(sentences, dialog_act):
 
         if "酒店设施" in intent:
             try:
-                sentences = sentences.replace("[" + intent + "]", act[2].split("-")[1])
-                sentences = sentences.replace("[" + intent + "1]", act[2].split("-")[1])
+                sentences = sentences.replace(
+                    "[" + intent + "]", act[2].split("-")[1]
+                )
+                sentences = sentences.replace(
+                    "[" + intent + "1]", act[2].split("-")[1]
+                )
             except Exception as e:
                 print("Act causing problem in replacement:")
                 pprint(act)
@@ -82,7 +87,10 @@ def value_replace(sentences, dialog_act):
             )  # if multiple same intents and this is 1st
 
     if "[" in sentences and "]" in sentences:
-        print("\n\nValue replacement not completed!!! Current sentence: %s" % sentences)
+        print(
+            "\n\nValue replacement not completed!!! Current sentence: %s"
+            % sentences
+        )
         print("current da:")
         print(dialog_act)
         print("ori sen", ori_sen)
@@ -163,13 +171,19 @@ def get_bleu4(dialog_acts, golden_utts, gen_utts, data_key):
             gens.append([x for x in jieba.lcut(lex_gen) if x.strip()])
             refs.append(
                 [
-                    [x for x in jieba.lcut(value_replace(s, lex_das)) if x.strip()]
+                    [
+                        x
+                        for x in jieba.lcut(value_replace(s, lex_das))
+                        if x.strip()
+                    ]
                     for s in das2utts[das]["refs"]
                 ]
             )
 
     with open(
-        os.path.join("", "generated_sens_%s.json" % data_key), "w", encoding="utf-8"
+        os.path.join("", "generated_sens_%s.json" % data_key),
+        "w",
+        encoding="utf-8",
     ) as f:
         json.dump(
             {"refs": refs, "gens": gens},
@@ -201,7 +215,12 @@ def get_err_slot(dialog_acts, gen_slots):
             if "Request" in da or "general" in da:
                 continue
             for s, v in das[da]:
-                if s == "Internet" or s == "Parking" or s == "none" or v == "none":
+                if (
+                    s == "Internet"
+                    or s == "Parking"
+                    or s == "none"
+                    or v == "none"
+                ):
                     continue
                 slot = da.lower() + "-" + s.lower()
                 counter.setdefault(slot, 0)

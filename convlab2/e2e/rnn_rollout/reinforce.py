@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2017-present, Facebook, Inc.
 # All rights reserved.
 #
@@ -12,22 +13,21 @@ import time
 
 import numpy as np
 import torch
-from torch import optim
-from torch import autograd
 import torch.nn as nn
+from torch import autograd, optim
 
-import data
 import convlab2.e2e.rnn_rollout.utils as utils
-from convlab2.e2e.rnn_rollout.utils import ContextGenerator
+import data
 from convlab2.e2e.rnn_rollout.agent import (
+    HierarchicalAgent,
+    RlAgent,
     RnnAgent,
     RnnRolloutAgent,
-    RlAgent,
-    HierarchicalAgent,
 )
 from convlab2.e2e.rnn_rollout.dialog import Dialog, DialogLogger
-from convlab2.e2e.rnn_rollout.selfplay import get_agent_type
 from convlab2.e2e.rnn_rollout.domain import get_domain
+from convlab2.e2e.rnn_rollout.selfplay import get_agent_type
+from convlab2.e2e.rnn_rollout.utils import ContextGenerator
 
 
 class Reinforce(object):
@@ -46,7 +46,10 @@ class Reinforce(object):
         n = 0
         for ctxs in self.ctx_gen.iter(self.args.nepoch):
             n += 1
-            if self.args.sv_train_freq > 0 and n % self.args.sv_train_freq == 0:
+            if (
+                self.args.sv_train_freq > 0
+                and n % self.args.sv_train_freq == 0
+            ):
                 batch = random.choice(trainset)
                 self.engine.model.train()
                 self.engine.train_batch(batch)
@@ -82,17 +85,28 @@ class Reinforce(object):
 
 def main():
     parser = argparse.ArgumentParser(description="Reinforce")
-    parser.add_argument("--alice_model_file", type=str, help="Alice model file")
+    parser.add_argument(
+        "--alice_model_file", type=str, help="Alice model file"
+    )
     parser.add_argument("--bob_model_file", type=str, help="Bob model file")
-    parser.add_argument("--output_model_file", type=str, help="output model file")
+    parser.add_argument(
+        "--output_model_file", type=str, help="output model file"
+    )
     parser.add_argument("--context_file", type=str, help="context file")
-    parser.add_argument("--temperature", type=float, default=1.0, help="temperature")
+    parser.add_argument(
+        "--temperature", type=float, default=1.0, help="temperature"
+    )
     parser.add_argument(
         "--pred_temperature", type=float, default=1.0, help="temperature"
     )
-    parser.add_argument("--cuda", action="store_true", default=False, help="use CUDA")
     parser.add_argument(
-        "--verbose", action="store_true", default=False, help="print out converations"
+        "--cuda", action="store_true", default=False, help="use CUDA"
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        default=False,
+        help="print out converations",
     )
     parser.add_argument("--seed", type=int, default=1, help="random seed")
     parser.add_argument(
@@ -108,20 +122,40 @@ def main():
         help="log successful dialogs to file for training",
     )
     parser.add_argument(
-        "--smart_bob", action="store_true", default=False, help="make Bob smart again"
+        "--smart_bob",
+        action="store_true",
+        default=False,
+        help="make Bob smart again",
     )
-    parser.add_argument("--gamma", type=float, default=0.99, help="discount factor")
-    parser.add_argument("--eps", type=float, default=0.5, help="eps greedy")
-    parser.add_argument("--momentum", type=float, default=0.1, help="momentum for sgd")
-    parser.add_argument("--lr", type=float, default=0.1, help="learning rate")
-    parser.add_argument("--clip", type=float, default=0.1, help="gradient clip")
-    parser.add_argument("--rl_lr", type=float, default=0.002, help="RL learning rate")
-    parser.add_argument("--rl_clip", type=float, default=2.0, help="RL gradient clip")
-    parser.add_argument("--ref_text", type=str, help="file with the reference text")
     parser.add_argument(
-        "--sv_train_freq", type=int, default=-1, help="supervision train frequency"
+        "--gamma", type=float, default=0.99, help="discount factor"
     )
-    parser.add_argument("--nepoch", type=int, default=1, help="number of epochs")
+    parser.add_argument("--eps", type=float, default=0.5, help="eps greedy")
+    parser.add_argument(
+        "--momentum", type=float, default=0.1, help="momentum for sgd"
+    )
+    parser.add_argument("--lr", type=float, default=0.1, help="learning rate")
+    parser.add_argument(
+        "--clip", type=float, default=0.1, help="gradient clip"
+    )
+    parser.add_argument(
+        "--rl_lr", type=float, default=0.002, help="RL learning rate"
+    )
+    parser.add_argument(
+        "--rl_clip", type=float, default=2.0, help="RL gradient clip"
+    )
+    parser.add_argument(
+        "--ref_text", type=str, help="file with the reference text"
+    )
+    parser.add_argument(
+        "--sv_train_freq",
+        type=int,
+        default=-1,
+        help="supervision train frequency",
+    )
+    parser.add_argument(
+        "--nepoch", type=int, default=1, help="number of epochs"
+    )
     parser.add_argument(
         "--hierarchical",
         action="store_true",
@@ -132,7 +166,10 @@ def main():
         "--visual", action="store_true", default=False, help="plot graphs"
     )
     parser.add_argument(
-        "--domain", type=str, default="object_division", help="domain for the dialogue"
+        "--domain",
+        type=str,
+        default="object_division",
+        help="domain for the dialogue",
     )
     parser.add_argument(
         "--selection_model_file",
@@ -141,7 +178,10 @@ def main():
         help="path to save the final model",
     )
     parser.add_argument(
-        "--data", type=str, default="data/negotiate", help="location of the data corpus"
+        "--data",
+        type=str,
+        default="data/negotiate",
+        help="location of the data corpus",
     )
     parser.add_argument(
         "--unk_threshold",
@@ -154,7 +194,10 @@ def main():
         "--validate", action="store_true", default=False, help="plot graphs"
     )
     parser.add_argument(
-        "--scratch", action="store_true", default=False, help="erase prediciton weights"
+        "--scratch",
+        action="store_true",
+        default=False,
+        help="erase prediciton weights",
     )
     parser.add_argument(
         "--sep_sel",

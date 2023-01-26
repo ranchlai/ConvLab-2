@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 REF_USR_DA = {
     "Attraction": {
         "area": "Area",
@@ -29,7 +30,12 @@ REF_USR_DA = {
         "postcode": "Post",
         "phone": "Phone",
     },
-    "Police": {"address": "Addr", "postcode": "Post", "phone": "Phone", "name": "Name"},
+    "Police": {
+        "address": "Addr",
+        "postcode": "Post",
+        "phone": "Phone",
+        "name": "Name",
+    },
     "Restaurant": {
         "food": "Food",
         "pricerange": "Price",

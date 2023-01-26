@@ -1,6 +1,7 @@
+# -*- coding: utf-8 -*-
 import json
-from pprint import pprint
 import zipfile
+from pprint import pprint
 
 
 def read_zipped_json(filepath, filename):
@@ -21,7 +22,9 @@ def get_goal_type(data, mode):
     return goal_types
 
 
-def calculateF1(predict_golden, goal_type=None, intent=None, domain=None, slot=None):
+def calculateF1(
+    predict_golden, goal_type=None, intent=None, domain=None, slot=None
+):
     if domain == "General":
         domain = None
         intent = "General"
@@ -53,7 +56,9 @@ def calculateF1(predict_golden, goal_type=None, intent=None, domain=None, slot=N
 
 
 if __name__ == "__main__":
-    predict_golden = json.load(open("output/all_context/output.json", encoding="utf-8"))
+    predict_golden = json.load(
+        open("output/all_context/output.json", encoding="utf-8")
+    )
     print("all", calculateF1(predict_golden))
     goal_types = get_goal_type(
         read_zipped_json(
@@ -74,7 +79,14 @@ if __name__ == "__main__":
                 for x in calculateF1(type_predict_golden[goal_type])
             ]
         )
-    intents = ["Inform", "Request", "General", "Recommend", "Select", "NoOffer"]
+    intents = [
+        "Inform",
+        "Request",
+        "General",
+        "Recommend",
+        "Select",
+        "NoOffer",
+    ]
     domains = ["景点", "酒店", "餐馆", "出租", "地铁", "General"]
     intent_predict_golden = dict.fromkeys(intents)
     domain_predict_golden = dict.fromkeys(domains)

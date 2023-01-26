@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Policy Interface"""
 from convlab2.util.module import Module
 

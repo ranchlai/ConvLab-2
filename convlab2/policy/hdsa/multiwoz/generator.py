@@ -1,11 +1,16 @@
-import re
+# -*- coding: utf-8 -*-
 import json
-import torch
 import os
-import zipfile
 import pickle
-from convlab2.policy.hdsa.multiwoz.transformer.Transformer import TableSemanticDecoder
+import re
+import zipfile
+
+import torch
+
 from convlab2.policy.hdsa.multiwoz.transformer import Constants
+from convlab2.policy.hdsa.multiwoz.transformer.Transformer import (
+    TableSemanticDecoder,
+)
 from convlab2.util.file_util import cached_path
 
 timepat = re.compile("\d{1,2}[:]\d{1,2}")
@@ -129,20 +134,29 @@ def delexicaliseReferenceNumber(sent, turn, replacements):
                     val = "[" + domain + "_" + slot + "]"
                 else:
                     val = "[" + domain + "_" + slot + "]"
-                key = normalize(turn[domain]["book"]["booked"][0][slot], replacements)
-                sent = (" " + sent + " ").replace(" " + key + " ", " " + val + " ")
+                key = normalize(
+                    turn[domain]["book"]["booked"][0][slot], replacements
+                )
+                sent = (" " + sent + " ").replace(
+                    " " + key + " ", " " + val + " "
+                )
 
                 # try reference with hashtag
                 key = normalize(
                     "#" + turn[domain]["book"]["booked"][0][slot], replacements
                 )
-                sent = (" " + sent + " ").replace(" " + key + " ", " " + val + " ")
+                sent = (" " + sent + " ").replace(
+                    " " + key + " ", " " + val + " "
+                )
 
                 # try reference with ref#
                 key = normalize(
-                    "ref#" + turn[domain]["book"]["booked"][0][slot], replacements
+                    "ref#" + turn[domain]["book"]["booked"][0][slot],
+                    replacements,
                 )
-                sent = (" " + sent + " ").replace(" " + key + " ", " " + val + " ")
+                sent = (" " + sent + " ").replace(
+                    " " + key + " ", " " + val + " "
+                )
     return sent
 
 
@@ -203,7 +217,9 @@ class Tokenizer(object):
     def convert_tokens_to_ids(self, sent, template=None):
         return [self.get_word_id(w, template) for w in sent]
 
-    def convert_id_to_tokens(self, word_ids, template_ids=None, remain_eos=False):
+    def convert_id_to_tokens(
+        self, word_ids, template_ids=None, remain_eos=False
+    ):
         if isinstance(word_ids, list):
             if remain_eos:
                 return " ".join(
@@ -240,7 +256,9 @@ class Tokenizer(object):
                 )
 
     def convert_template(self, template_ids):
-        return [self.get_word(wid) for wid in template_ids if wid != Constants.PAD]
+        return [
+            self.get_word(wid) for wid in template_ids if wid != Constants.PAD
+        ]
 
 
 class HDSA_generator:
@@ -288,7 +306,9 @@ class HDSA_generator:
             self.replacements = []
             for line in f:
                 tok_from, tok_to = line.replace("\n", "").split("\t")
-                self.replacements.append((" " + tok_from + " ", " " + tok_to + " "))
+                self.replacements.append(
+                    (" " + tok_from + " ", " " + tok_to + " ")
+                )
 
     def init_session(self):
         self.history = []
@@ -301,7 +321,9 @@ class HDSA_generator:
         usr = delexicalise(" ".join(usr_post.split()), self.dic)
 
         # parsing reference number GIVEN belief state
-        usr = delexicaliseReferenceNumber(usr, state["belief_state"], self.replacements)
+        usr = delexicaliseReferenceNumber(
+            usr, state["belief_state"], self.replacements
+        )
 
         # changes to numbers only here
         digitpat = re.compile("\d+")
@@ -326,7 +348,9 @@ class HDSA_generator:
 
         if not self.history:
             self.history = (
-                tokens[1:-1] + [Constants.SEP_WORD] + self.tokenizer.tokenize(pred)
+                tokens[1:-1]
+                + [Constants.SEP_WORD]
+                + self.tokenizer.tokenize(pred)
             )
         else:
             self.history = (
@@ -357,15 +381,29 @@ class HDSA_generator:
                     key = "pricerange"
                 elif domain == "value":
                     if key == "place":
-                        if "arrive" in pred or "to" in pred or "arriving" in pred:
+                        if (
+                            "arrive" in pred
+                            or "to" in pred
+                            or "arriving" in pred
+                        ):
                             key = "destination"
-                        elif "leave" in pred or "from" in pred or "leaving" in pred:
+                        elif (
+                            "leave" in pred
+                            or "from" in pred
+                            or "leaving" in pred
+                        ):
                             key = "departure"
                     elif key == "time":
-                        if "arrive" in pred or "arrival" in pred or "arriving" in pred:
+                        if (
+                            "arrive" in pred
+                            or "arrival" in pred
+                            or "arriving" in pred
+                        ):
                             key = "arriveBy"
                         elif (
-                            "leave" in pred or "departure" in pred or "leaving" in pred
+                            "leave" in pred
+                            or "departure" in pred
+                            or "leaving" in pred
                         ):
                             key = "leaveAt"
                     elif key == "count":

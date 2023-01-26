@@ -1,11 +1,14 @@
+# -*- coding: utf-8 -*-
+import math
+
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
 import torch.nn.functional as F
-import math
-from convlab2.policy.hdsa.multiwoz.transformer.Beam import Beam
-from convlab2.policy.hdsa.multiwoz.transformer import Constants
 from torch.autograd import Variable
+
+from convlab2.policy.hdsa.multiwoz.transformer import Constants
+from convlab2.policy.hdsa.multiwoz.transformer.Beam import Beam
 
 
 class Sclstm(nn.Module):
@@ -27,7 +30,9 @@ class Sclstm(nn.Module):
 
         self.softmax = nn.Softmax(1)
 
-    def _step(self, input_t, last_hidden, last_cell, last_dt, src_enc, src_mask):
+    def _step(
+        self, input_t, last_hidden, last_cell, last_dt, src_enc, src_mask
+    ):
         """
         * Do feedforward for one step *
         Args:
@@ -42,7 +47,9 @@ class Sclstm(nn.Module):
         input_t = torch.cat([input_t, ctx], -1)
         # get all gates
         w2h = self.w2h(input_t)  # (batch_size, hidden_size*5)
-        w2h = torch.split(w2h, self.hidden_size, dim=1)  # (batch_size, hidden_size) * 4
+        w2h = torch.split(
+            w2h, self.hidden_size, dim=1
+        )  # (batch_size, hidden_size) * 4
         h2h = self.h2h(last_hidden)
         h2h = torch.split(h2h, self.hidden_size, dim=1)
 
@@ -91,7 +98,12 @@ class Sclstm(nn.Module):
 
         for t in range(max_len):
             hidden, cell, dt = self._step(
-                input_seq[:, t, :], last_hidden, last_cell, last_dt, src_enc, src_mask
+                input_seq[:, t, :],
+                last_hidden,
+                last_cell,
+                last_dt,
+                src_enc,
+                src_mask,
             )
             last_hidden, last_cell, last_dt = hidden, cell, dt
             output_all.append(hidden.unsqueeze(1))
@@ -113,7 +125,8 @@ class PositionalEmbedding(nn.Module):
 
         position = torch.arange(0, max_len).float().unsqueeze(1)
         div_term = (
-            torch.arange(0, d_model, 2).float() * -(math.log(10000.0) / d_model)
+            torch.arange(0, d_model, 2).float()
+            * -(math.log(10000.0) / d_model)
         ).exp()
 
         pe[:, 0::2] = torch.sin(position * div_term)
@@ -131,8 +144,12 @@ class EncoderLayer(nn.Module):
 
     def __init__(self, d_model, d_inner, n_head, d_k, d_v, dropout=0.1):
         super(EncoderLayer, self).__init__()
-        self.slf_attn = MultiHeadAttention(n_head, d_model, d_k, d_v, dropout=dropout)
-        self.pos_ffn = PositionwiseFeedForward(d_model, d_inner, dropout=dropout)
+        self.slf_attn = MultiHeadAttention(
+            n_head, d_model, d_k, d_v, dropout=dropout
+        )
+        self.pos_ffn = PositionwiseFeedForward(
+            d_model, d_inner, dropout=dropout
+        )
 
     def forward(self, enc_input, non_pad_mask=None, slf_attn_mask=None):
         enc_output, enc_slf_attn = self.slf_attn(
@@ -157,11 +174,19 @@ class AverageHeadAttention(nn.Module):
         self.w_qs = nn.Linear(d_model, n_head * d_k)
         self.w_ks = nn.Linear(d_model, n_head * d_k)
         self.w_vs = nn.Linear(d_model, n_head * d_v)
-        nn.init.normal_(self.w_qs.weight, mean=0, std=np.sqrt(2.0 / (d_model + d_k)))
-        nn.init.normal_(self.w_ks.weight, mean=0, std=np.sqrt(2.0 / (d_model + d_k)))
-        nn.init.normal_(self.w_vs.weight, mean=0, std=np.sqrt(2.0 / (d_model + d_v)))
+        nn.init.normal_(
+            self.w_qs.weight, mean=0, std=np.sqrt(2.0 / (d_model + d_k))
+        )
+        nn.init.normal_(
+            self.w_ks.weight, mean=0, std=np.sqrt(2.0 / (d_model + d_k))
+        )
+        nn.init.normal_(
+            self.w_vs.weight, mean=0, std=np.sqrt(2.0 / (d_model + d_v))
+        )
 
-        self.attention = ScaledDotProductAttention(temperature=np.power(d_k, 0.5))
+        self.attention = ScaledDotProductAttention(
+            temperature=np.power(d_k, 0.5)
+        )
         self.layer_norm = nn.LayerNorm(d_model)
 
         self.fc = nn.Linear(d_v, d_model)
@@ -182,9 +207,15 @@ class AverageHeadAttention(nn.Module):
         k = self.w_ks(k).view(sz_b, len_k, n_head, d_k)
         v = self.w_vs(v).view(sz_b, len_v, n_head, d_v)
 
-        q = q.permute(2, 0, 1, 3).contiguous().view(-1, len_q, d_k)  # (n*b) x lq x dk
-        k = k.permute(2, 0, 1, 3).contiguous().view(-1, len_k, d_k)  # (n*b) x lk x dk
-        v = v.permute(2, 0, 1, 3).contiguous().view(-1, len_v, d_v)  # (n*b) x lv x dv
+        q = (
+            q.permute(2, 0, 1, 3).contiguous().view(-1, len_q, d_k)
+        )  # (n*b) x lq x dk
+        k = (
+            k.permute(2, 0, 1, 3).contiguous().view(-1, len_k, d_k)
+        )  # (n*b) x lk x dk
+        v = (
+            v.permute(2, 0, 1, 3).contiguous().view(-1, len_v, d_v)
+        )  # (n*b) x lv x dv
 
         mask = mask.repeat(n_head, 1, 1)  # (n*b) x .. x ..
         output, attn = self.attention(q, k, v, mask=mask)
@@ -216,11 +247,19 @@ class MultiHeadAttention(nn.Module):
         self.w_qs = nn.Linear(d_model, n_head * d_k)
         self.w_ks = nn.Linear(d_model, n_head * d_k)
         self.w_vs = nn.Linear(d_model, n_head * d_v)
-        nn.init.normal_(self.w_qs.weight, mean=0, std=np.sqrt(2.0 / (d_model + d_k)))
-        nn.init.normal_(self.w_ks.weight, mean=0, std=np.sqrt(2.0 / (d_model + d_k)))
-        nn.init.normal_(self.w_vs.weight, mean=0, std=np.sqrt(2.0 / (d_model + d_v)))
+        nn.init.normal_(
+            self.w_qs.weight, mean=0, std=np.sqrt(2.0 / (d_model + d_k))
+        )
+        nn.init.normal_(
+            self.w_ks.weight, mean=0, std=np.sqrt(2.0 / (d_model + d_k))
+        )
+        nn.init.normal_(
+            self.w_vs.weight, mean=0, std=np.sqrt(2.0 / (d_model + d_v))
+        )
 
-        self.attention = ScaledDotProductAttention(temperature=np.power(d_k, 0.5))
+        self.attention = ScaledDotProductAttention(
+            temperature=np.power(d_k, 0.5)
+        )
         self.layer_norm = nn.LayerNorm(d_model)
 
         self.fc = nn.Linear(n_head * d_v, d_model)
@@ -242,9 +281,15 @@ class MultiHeadAttention(nn.Module):
         k = self.w_ks(k).view(sz_b, len_k, n_head, d_k)
         v = self.w_vs(v).view(sz_b, len_v, n_head, d_v)
 
-        q = q.permute(2, 0, 1, 3).contiguous().view(-1, len_q, d_k)  # (n*b) x lq x dk
-        k = k.permute(2, 0, 1, 3).contiguous().view(-1, len_k, d_k)  # (n*b) x lk x dk
-        v = v.permute(2, 0, 1, 3).contiguous().view(-1, len_v, d_v)  # (n*b) x lv x dv
+        q = (
+            q.permute(2, 0, 1, 3).contiguous().view(-1, len_q, d_k)
+        )  # (n*b) x lq x dk
+        k = (
+            k.permute(2, 0, 1, 3).contiguous().view(-1, len_k, d_k)
+        )  # (n*b) x lk x dk
+        v = (
+            v.permute(2, 0, 1, 3).contiguous().view(-1, len_v, d_v)
+        )  # (n*b) x lv x dv
 
         mask = mask.repeat(n_head, 1, 1)  # (n*b) x .. x ..
         output, attn = self.attention(q, k, v, mask=mask)
@@ -338,7 +383,9 @@ def get_attn_key_pad_mask(seq_k, seq_q):
     # Expand to fit the shape of key query attention matrix.
     len_q = seq_q.size(1)
     padding_mask = seq_k.eq(Constants.PAD)
-    padding_mask = padding_mask.unsqueeze(1).expand(-1, len_q, -1)  # b x lq x lk
+    padding_mask = padding_mask.unsqueeze(1).expand(
+        -1, len_q, -1
+    )  # b x lq x lk
 
     return padding_mask
 
@@ -348,9 +395,12 @@ def get_subsequent_mask(seq):
 
     sz_b, len_s = seq.size()
     subsequent_mask = torch.triu(
-        torch.ones((len_s, len_s), device=seq.device, dtype=torch.uint8), diagonal=1
+        torch.ones((len_s, len_s), device=seq.device, dtype=torch.uint8),
+        diagonal=1,
     )
-    subsequent_mask = subsequent_mask.unsqueeze(0).expand(sz_b, -1, -1)  # b x ls x ls
+    subsequent_mask = subsequent_mask.unsqueeze(0).expand(
+        sz_b, -1, -1
+    )  # b x ls x ls
 
     return subsequent_mask
 
@@ -389,7 +439,9 @@ class Transformer(nn.Module):
 
         self.layer_stack = nn.ModuleList(
             [
-                EncoderLayer(d_model, d_inner, n_head, d_k, d_v, dropout=dropout)
+                EncoderLayer(
+                    d_model, d_inner, n_head, d_k, d_v, dropout=dropout
+                )
                 for _ in range(n_layers)
             ]
         )
@@ -406,11 +458,14 @@ class Transformer(nn.Module):
 
         for enc_layer in self.layer_stack:
             enc_output, enc_slf_attn = enc_layer(
-                enc_output, non_pad_mask=non_pad_mask, slf_attn_mask=slf_attn_mask
+                enc_output,
+                non_pad_mask=non_pad_mask,
+                slf_attn_mask=slf_attn_mask,
             )
 
         dot_prod = torch.sum(
-            enc_output[:, :, None, :] * ontology_embedding[None, None, :, :], -1
+            enc_output[:, :, None, :] * ontology_embedding[None, None, :, :],
+            -1,
         )
         # index = length[:, None, None].repeat(1, 1, dot_prod.size(-1))
         # pooled_dot_prod = dot_prod.gather(1, index).squeeze()
@@ -422,9 +477,13 @@ class Transformer(nn.Module):
 class AvgDecoderLayer(nn.Module):
     """Compose with three layers"""
 
-    def __init__(self, d_model, d_inner, n_head, d_k, d_v, n_head_enc, dropout=0.1):
+    def __init__(
+        self, d_model, d_inner, n_head, d_k, d_v, n_head_enc, dropout=0.1
+    ):
         super(AvgDecoderLayer, self).__init__()
-        self.slf_attn = AverageHeadAttention(n_head, d_model, d_k, d_v, dropout=dropout)
+        self.slf_attn = AverageHeadAttention(
+            n_head, d_model, d_k, d_v, dropout=dropout
+        )
         self.enc_attn = MultiHeadAttention(
             n_head_enc,
             d_model,
@@ -432,7 +491,9 @@ class AvgDecoderLayer(nn.Module):
             d_model // n_head_enc,
             dropout=dropout,
         )
-        self.pos_ffn = PositionwiseFeedForward(d_model, d_inner, dropout=dropout)
+        self.pos_ffn = PositionwiseFeedForward(
+            d_model, d_inner, dropout=dropout
+        )
 
     def forward(
         self,
@@ -463,9 +524,15 @@ class DecoderLayer(nn.Module):
 
     def __init__(self, d_model, d_inner, n_head, d_k, d_v, dropout=0.1):
         super(DecoderLayer, self).__init__()
-        self.slf_attn = MultiHeadAttention(n_head, d_model, d_k, d_v, dropout=dropout)
-        self.enc_attn = MultiHeadAttention(n_head, d_model, d_k, d_v, dropout=dropout)
-        self.pos_ffn = PositionwiseFeedForward(d_model, d_inner, dropout=dropout)
+        self.slf_attn = MultiHeadAttention(
+            n_head, d_model, d_k, d_v, dropout=dropout
+        )
+        self.enc_attn = MultiHeadAttention(
+            n_head, d_model, d_k, d_v, dropout=dropout
+        )
+        self.pos_ffn = PositionwiseFeedForward(
+            d_model, d_inner, dropout=dropout
+        )
 
     def forward(
         self,
@@ -495,7 +562,14 @@ class TransformerDecoder(nn.Module):
     """A decoder model with self attention mechanism."""
 
     def __init__(
-        self, vocab_size, d_word_vec, n_layers, d_model, n_head, act_dim, dropout=0.1
+        self,
+        vocab_size,
+        d_word_vec,
+        n_layers,
+        d_model,
+        n_head,
+        act_dim,
+        dropout=0.1,
     ):
 
         super(TransformerDecoder, self).__init__()
@@ -512,14 +586,18 @@ class TransformerDecoder(nn.Module):
 
         self.enc_layer_stack = nn.ModuleList(
             [
-                EncoderLayer(d_model, d_inner, n_head, d_k, d_v, dropout=dropout)
+                EncoderLayer(
+                    d_model, d_inner, n_head, d_k, d_v, dropout=dropout
+                )
                 for _ in range(n_layers)
             ]
         )
 
         self.layer_stack = nn.ModuleList(
             [
-                DecoderLayer(d_model, d_inner, n_head, d_k, d_v, dropout=dropout)
+                DecoderLayer(
+                    d_model, d_inner, n_head, d_k, d_v, dropout=dropout
+                )
                 for _ in range(n_layers)
             ]
         )
@@ -540,7 +618,9 @@ class TransformerDecoder(nn.Module):
         non_pad_mask = get_non_pad_mask(tgt_seq)
 
         slf_attn_mask_subseq = get_subsequent_mask(tgt_seq)
-        slf_attn_mask_keypad = get_attn_key_pad_mask(seq_k=tgt_seq, seq_q=tgt_seq)
+        slf_attn_mask_keypad = get_attn_key_pad_mask(
+            seq_k=tgt_seq, seq_q=tgt_seq
+        )
         slf_attn_mask = (slf_attn_mask_keypad + slf_attn_mask_subseq).gt(0)
         dec_enc_attn_mask = get_attn_key_pad_mask(seq_k=src_seq, seq_q=tgt_seq)
 
@@ -586,11 +666,15 @@ class TransformerDecoder(nn.Module):
             )
             # active_template_output = collect_active_part(template_output, active_inst_idx, n_prev_active_inst, n_bm)
 
-            active_inst_idx_to_position_map = get_inst_idx_to_tensor_position_map(
-                active_inst_idx_list
+            active_inst_idx_to_position_map = (
+                get_inst_idx_to_tensor_position_map(active_inst_idx_list)
             )
 
-            return active_act_vecs, active_src_seq, active_inst_idx_to_position_map
+            return (
+                active_act_vecs,
+                active_src_seq,
+                active_inst_idx_to_position_map,
+            )
 
         def beam_decode_step(
             inst_dec_beams,
@@ -614,7 +698,8 @@ class TransformerDecoder(nn.Module):
             dec_partial_seq = dec_partial_seq.view(-1, len_dec_seq)
 
             logits = (
-                self.forward(dec_partial_seq, src_seq, act_vecs)[:, -1, :] / Constants.T
+                self.forward(dec_partial_seq, src_seq, act_vecs)[:, -1, :]
+                / Constants.T
             )
             word_prob = F.log_softmax(logits, dim=1)
             word_prob = word_prob.view(n_active_inst, n_bm, -1)
@@ -660,8 +745,15 @@ class TransformerDecoder(nn.Module):
                 if not active_inst_idx_list:
                     break  # all instances have finished their path to <EOS>
 
-                act_vecs, src_seq, inst_idx_to_position_map = collate_active_info(
-                    act_vecs, src_seq, inst_idx_to_position_map, active_inst_idx_list
+                (
+                    act_vecs,
+                    src_seq,
+                    inst_idx_to_position_map,
+                ) = collate_active_info(
+                    act_vecs,
+                    src_seq,
+                    inst_idx_to_position_map,
+                    active_inst_idx_list,
                 )
 
         def collect_hypothesis_and_scores(inst_dec_beams, n_best):
@@ -689,7 +781,9 @@ class TransformerDecoder(nn.Module):
             """
             return all_hyp, all_scores
 
-        batch_hyp, batch_scores = collect_hypothesis_and_scores(inst_dec_beams, n_bm)
+        batch_hyp, batch_scores = collect_hypothesis_and_scores(
+            inst_dec_beams, n_bm
+        )
 
         result = []
         for _ in batch_hyp:
@@ -705,7 +799,9 @@ class TransformerDecoder(nn.Module):
 
 
 class TableSemanticDecoder(nn.Module):
-    def __init__(self, vocab_size, d_word_vec, n_layers, d_model, n_head, dropout=0.1):
+    def __init__(
+        self, vocab_size, d_word_vec, n_layers, d_model, n_head, dropout=0.1
+    ):
 
         # super(TableSemanticDecoder, self).__init__(vocab_size, d_word_vec, n_layers, d_model, n_head, dropout)
         super(TableSemanticDecoder, self).__init__()
@@ -721,7 +817,9 @@ class TableSemanticDecoder(nn.Module):
 
         self.layer_stack = nn.ModuleList(
             [
-                EncoderLayer(d_model, d_inner, n_head, d_k, d_v, dropout=dropout)
+                EncoderLayer(
+                    d_model, d_inner, n_head, d_k, d_v, dropout=dropout
+                )
                 for _ in range(n_layers)
             ]
         )
@@ -798,7 +896,9 @@ class TableSemanticDecoder(nn.Module):
         # -- Prepare masks
         non_pad_mask = get_non_pad_mask(tgt_seq)
         slf_attn_mask_subseq = get_subsequent_mask(tgt_seq)
-        slf_attn_mask_keypad = get_attn_key_pad_mask(seq_k=tgt_seq, seq_q=tgt_seq)
+        slf_attn_mask_keypad = get_attn_key_pad_mask(
+            seq_k=tgt_seq, seq_q=tgt_seq
+        )
         slf_attn_mask = (slf_attn_mask_keypad + slf_attn_mask_subseq).gt(0)
         dec_enc_attn_mask = get_attn_key_pad_mask(seq_k=src_seq, seq_q=tgt_seq)
 
@@ -807,9 +907,12 @@ class TableSemanticDecoder(nn.Module):
         domain_vecs = act_vecs[:, : len(Constants.domains)]
         function_vecs = act_vecs[
             :,
-            len(Constants.domains) : len(Constants.domains) + len(Constants.functions),
+            len(Constants.domains) : len(Constants.domains)
+            + len(Constants.functions),
         ]
-        argument_vecs = act_vecs[:, len(Constants.domains) + len(Constants.functions) :]
+        argument_vecs = act_vecs[
+            :, len(Constants.domains) + len(Constants.functions) :
+        ]
         if self.take_domain:
             dec_inp, _, _ = self.prior_layer_stack(
                 domain_vecs,
@@ -892,11 +995,15 @@ class TableSemanticDecoder(nn.Module):
             )
             # active_template_output = collect_active_part(template_output, active_inst_idx, n_prev_active_inst, n_bm)
 
-            active_inst_idx_to_position_map = get_inst_idx_to_tensor_position_map(
-                active_inst_idx_list
+            active_inst_idx_to_position_map = (
+                get_inst_idx_to_tensor_position_map(active_inst_idx_list)
             )
 
-            return active_act_vecs, active_src_seq, active_inst_idx_to_position_map
+            return (
+                active_act_vecs,
+                active_src_seq,
+                active_inst_idx_to_position_map,
+            )
 
         def beam_decode_step(
             inst_dec_beams,
@@ -920,7 +1027,8 @@ class TableSemanticDecoder(nn.Module):
             dec_partial_seq = dec_partial_seq.view(-1, len_dec_seq)
 
             logits = (
-                self.forward(dec_partial_seq, src_seq, act_vecs)[:, -1, :] / Constants.T
+                self.forward(dec_partial_seq, src_seq, act_vecs)[:, -1, :]
+                / Constants.T
             )
             word_prob = F.log_softmax(logits, dim=1)
             word_prob = word_prob.view(n_active_inst, n_bm, -1)
@@ -966,8 +1074,15 @@ class TableSemanticDecoder(nn.Module):
                 if not active_inst_idx_list:
                     break  # all instances have finished their path to <EOS>
 
-                act_vecs, src_seq, inst_idx_to_position_map = collate_active_info(
-                    act_vecs, src_seq, inst_idx_to_position_map, active_inst_idx_list
+                (
+                    act_vecs,
+                    src_seq,
+                    inst_idx_to_position_map,
+                ) = collate_active_info(
+                    act_vecs,
+                    src_seq,
+                    inst_idx_to_position_map,
+                    active_inst_idx_list,
                 )
 
         def collect_hypothesis_and_scores(inst_dec_beams, n_best):
@@ -987,7 +1102,9 @@ class TableSemanticDecoder(nn.Module):
                 all_scores.append([normed_scores[idx] for idx in idxs])
             return all_hyp, all_scores
 
-        batch_hyp, batch_scores = collect_hypothesis_and_scores(inst_dec_beams, n_bm)
+        batch_hyp, batch_scores = collect_hypothesis_and_scores(
+            inst_dec_beams, n_bm
+        )
 
         result = []
         for _ in batch_hyp:
@@ -1010,7 +1127,9 @@ def get_inst_idx_to_tensor_position_map(inst_idx_list):
     }
 
 
-def collect_active_part(beamed_tensor, curr_active_inst_idx, n_prev_active_inst, n_bm):
+def collect_active_part(
+    beamed_tensor, curr_active_inst_idx, n_prev_active_inst, n_bm
+):
     """Collect tensor parts associated to active instances."""
     _, *d_hs = beamed_tensor.size()
     n_curr_active_inst = len(curr_active_inst_idx)

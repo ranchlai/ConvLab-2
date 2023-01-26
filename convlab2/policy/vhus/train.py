@@ -2,15 +2,16 @@
 """
 @author: truthless
 """
-import os
 import logging
+import os
+
 import numpy as np
 import torch
 import torch.nn as nn
 
-from convlab2.util.train_util import to_device
 from convlab2.policy.vhus.usermodule import VHUS
-from convlab2.policy.vhus.util import padding_data, kl_gaussian
+from convlab2.policy.vhus.util import kl_gaussian, padding_data
+from convlab2.util.train_util import to_device
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -27,9 +28,9 @@ def batch_iter(x, y, z, batch_size=64):
     for i in range(num_batch):
         start_id = i * batch_size
         end_id = min((i + 1) * batch_size, data_len)
-        yield x_shuffle[start_id:end_id], y_shuffle[start_id:end_id], z_shuffle[
+        yield x_shuffle[start_id:end_id], y_shuffle[
             start_id:end_id
-        ]
+        ], z_shuffle[start_id:end_id]
 
 
 class VHUS_Trainer:
@@ -56,10 +57,27 @@ class VHUS_Trainer:
             val_goals,
             val_usrdas,
             val_sysdas,
-        ) = manager.train_test_val_split_seg(seq_goals, seq_usr_dass, seq_sys_dass)
-        self.data_train = (train_goals, train_usrdas, train_sysdas, config["batchsz"])
-        self.data_valid = (val_goals, val_usrdas, val_sysdas, config["batchsz"])
-        self.data_test = (test_goals, test_usrdas, test_sysdas, config["batchsz"])
+        ) = manager.train_test_val_split_seg(
+            seq_goals, seq_usr_dass, seq_sys_dass
+        )
+        self.data_train = (
+            train_goals,
+            train_usrdas,
+            train_sysdas,
+            config["batchsz"],
+        )
+        self.data_valid = (
+            val_goals,
+            val_usrdas,
+            val_sysdas,
+            config["batchsz"],
+        )
+        self.data_test = (
+            test_goals,
+            test_usrdas,
+            test_sysdas,
+            config["batchsz"],
+        )
         self.alpha = config["alpha"]
         self.optim = torch.optim.Adam(self.user.parameters(), lr=config["lr"])
         self.nll_loss = nn.NLLLoss(ignore_index=0)  # PAD=0
@@ -75,7 +93,10 @@ class VHUS_Trainer:
             batch_input["origin_responses"],
         )
 
-        loss_a, targets_a = 0, batch_input["origin_responses"][:, 1:]  # remove sos_id
+        loss_a, targets_a = (
+            0,
+            batch_input["origin_responses"][:, 1:],
+        )  # remove sos_id
         for i, a_weight in enumerate(a_weights):
             loss_a += self.nll_loss(a_weight, targets_a[:, i])
         loss_a /= i
@@ -149,7 +170,10 @@ class VHUS_Trainer:
 
         a_loss, t_loss = 0.0, 0.0
         data_test_iter = batch_iter(
-            self.data_test[0], self.data_test[1], self.data_test[2], self.data_test[3]
+            self.data_test[0],
+            self.data_test[1],
+            self.data_test[2],
+            self.data_test[3],
         )
         for i, data in enumerate(data_test_iter):
             loss_a, loss_t = self.user_loop(data)
@@ -195,7 +219,10 @@ class VHUS_Trainer:
             return TP, FP, FN
 
         data_test_iter = batch_iter(
-            self.data_test[0], self.data_test[1], self.data_test[2], self.data_test[3]
+            self.data_test[0],
+            self.data_test[1],
+            self.data_test[2],
+            self.data_test[3],
         )
         a_TP, a_FP, a_FN, t_corr, t_tot = 0, 0, 0, 0, 0
         eos_id = self.user.usr_decoder.eos_id
@@ -220,7 +247,9 @@ class VHUS_Trainer:
             targets_a = []
             for ua_sess in data[1]:
                 for ua in ua_sess:
-                    targets_a.append(sequential(self.manager.id2sentence(ua[1:-1])))
+                    targets_a.append(
+                        sequential(self.manager.id2sentence(ua[1:-1]))
+                    )
             TP, FP, FN = f1(a, targets_a)
             a_TP += TP
             a_FP += FP
@@ -243,6 +272,9 @@ class VHUS_Trainer:
             os.makedirs(directory)
 
         torch.save(
-            self.user.state_dict(), directory + "/" + str(epoch) + "_simulator.mdl"
+            self.user.state_dict(),
+            directory + "/" + str(epoch) + "_simulator.mdl",
         )
-        logging.info("<<user simulator>> epoch {}: saved network to mdl".format(epoch))
+        logging.info(
+            "<<user simulator>> epoch {}: saved network to mdl".format(epoch)
+        )

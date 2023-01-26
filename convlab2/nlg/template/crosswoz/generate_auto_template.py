@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
+import functools
 import json
+import os
+import zipfile
 from collections import defaultdict
 from copy import copy
-import functools
-import zipfile
-import os
 
 
 def read_zipped_json(filepath, filename):
@@ -13,7 +14,9 @@ def read_zipped_json(filepath, filename):
 
 def main():
     file_path = "../../../../../data/crosswoz/train.json.zip"
-    file_path = os.path.abspath(os.path.join(os.path.abspath(__file__), file_path))
+    file_path = os.path.abspath(
+        os.path.join(os.path.abspath(__file__), file_path)
+    )
     print(os.path.abspath(file_path))
     data = read_zipped_json(file_path, "train.json")
 
@@ -184,10 +187,14 @@ def main():
         if "Inform" in intent2 and "无" in intent2:
             intent2 = "Inform+主体+属性+无"
         try:
-            assert intent1 in intent_order[role] and intent2 in intent_order[role]
+            assert (
+                intent1 in intent_order[role] and intent2 in intent_order[role]
+            )
         except AssertionError:
             print(role, intent1, intent2)
-        return intent_order[role].index(intent1) - intent_order[role].index(intent2)
+        return intent_order[role].index(intent1) - intent_order[role].index(
+            intent2
+        )
 
     dialogue_id = 1
     for dialogue in data.values():
@@ -208,13 +215,18 @@ def main():
                 if "酒店设施" in cur_act[2]:
                     facility = cur_act[2].split("-")[1]
                     if cur_act[0] == "Inform":
-                        cur_act[2] = cur_act[2].split("-")[0] + "+" + cur_act[3]
+                        cur_act[2] = (
+                            cur_act[2].split("-")[0] + "+" + cur_act[3]
+                        )
                     elif cur_act[0] == "Request":
                         cur_act[2] = cur_act[2].split("-")[0]
                 if cur_act[0] == "Select":
                     cur_act[2] = "源领域+" + cur_act[3]
                 intent = "+".join(cur_act[:-1])
-                if "+".join(cur_act) == "Inform+景点+门票+免费" or cur_act[-1] == "无":
+                if (
+                    "+".join(cur_act) == "Inform+景点+门票+免费"
+                    or cur_act[-1] == "无"
+                ):
                     intent = "+".join(cur_act)
                 intent_list.append(intent)
 
@@ -239,8 +251,12 @@ def main():
                         )
 
                         if intent_frequency[intent] > 1:
-                            content = content.replace(placeholder, placeholder_one)
-                            content = content.replace(value, placeholder_with_number)
+                            content = content.replace(
+                                placeholder, placeholder_one
+                            )
+                            content = content.replace(
+                                value, placeholder_with_number
+                            )
                         else:
                             content = content.replace(value, placeholder)
                     else:
@@ -248,7 +264,9 @@ def main():
 
             # multi-intent name
             try:
-                intent_list = sorted(intent_list, key=functools.cmp_to_key(cmp_intent))
+                intent_list = sorted(
+                    intent_list, key=functools.cmp_to_key(cmp_intent)
+                )
             except:
                 print(round["content"])
             multi_intent = "*".join(intent_list)
@@ -263,12 +281,20 @@ def main():
 
     with open("auto_user_template_nlg.json", "w", encoding="utf-8") as f:
         json.dump(
-            user_multi_intent_dict, f, indent=4, sort_keys=True, ensure_ascii=False
+            user_multi_intent_dict,
+            f,
+            indent=4,
+            sort_keys=True,
+            ensure_ascii=False,
         )
 
     with open("auto_system_template_nlg.json", "w", encoding="utf-8") as f:
         json.dump(
-            sys_multi_intent_dict, f, indent=4, sort_keys=True, ensure_ascii=False
+            sys_multi_intent_dict,
+            f,
+            indent=4,
+            sort_keys=True,
+            ensure_ascii=False,
         )
 
 

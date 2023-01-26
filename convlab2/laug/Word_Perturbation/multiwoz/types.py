@@ -1,4 +1,5 @@
-from typing import TypeVar, NewType, Union, List, Dict
+# -*- coding: utf-8 -*-
+from typing import Dict, List, NewType, TypeVar, Union
 
 SampleType = TypeVar("SampleType")
 

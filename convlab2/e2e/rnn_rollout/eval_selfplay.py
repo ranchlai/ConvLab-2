@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2017-present, Facebook, Inc.
 # All rights reserved.
 #
@@ -9,17 +10,17 @@ It computes agreement rate, average score and Pareto optimality.
 """
 
 import argparse
+import itertools
+import pdb
+import random
+import re
 import sys
 import time
-import random
-import itertools
-import re
-import pdb
 
 import numpy as np
 
-import data
 import convlab2.e2e.rnn_rollout.utils as utils
+import data
 from convlab2.e2e.rnn_rollout.domain import get_domain
 
 
@@ -91,7 +92,10 @@ def main():
         "--log_file", type=str, default="", help="location of the log file"
     )
     parser.add_argument(
-        "--domain", type=str, default="object_division", help="domain for the dialogue"
+        "--domain",
+        type=str,
+        default="object_division",
+        help="domain for the dialogue",
     )
 
     args = parser.parse_args()
@@ -128,7 +132,10 @@ def main():
         avg_score2 += score2
         avg_can_improve += int(can_improve)
 
-    print("pareto opt (%%)\t:\t%.2f" % (100.0 * (1 - avg_can_improve / avg_agree)))
+    print(
+        "pareto opt (%%)\t:\t%.2f"
+        % (100.0 * (1 - avg_can_improve / avg_agree))
+    )
     print("agree (%%)\t:\t%.2f" % (100.0 * avg_agree / len(dataset)))
     print(
         "score (all)\t:\t%.2f vs. %.2f"

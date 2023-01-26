@@ -1,12 +1,15 @@
+# -*- coding: utf-8 -*-
 import argparse
-import os
 import json
-from torch.utils.tensorboard import SummaryWriter
+import os
 import random
-import numpy as np
 import zipfile
+
+import numpy as np
 import torch
+from torch.utils.tensorboard import SummaryWriter
 from transformers import AdamW, get_linear_schedule_with_warmup
+
 from convlab2.nlu.jointBERT.dataloader import Dataloader
 from convlab2.nlu.jointBERT.jointBERT import JointBERT
 
@@ -34,22 +37,22 @@ if __name__ == "__main__":
     if "multiwoz" in data_dir:
         print("-" * 20 + "dataset:multiwoz" + "-" * 20)
         from convlab2.nlu.jointBERT.multiwoz.postprocess import (
-            is_slot_da,
             calculateF1,
+            is_slot_da,
             recover_intent,
         )
     elif "camrest" in data_dir:
         print("-" * 20 + "dataset:camrest" + "-" * 20)
         from convlab2.nlu.jointBERT.camrest.postprocess import (
-            is_slot_da,
             calculateF1,
+            is_slot_da,
             recover_intent,
         )
     elif "crosswoz" in data_dir:
         print("-" * 20 + "dataset:crosswoz" + "-" * 20)
         from convlab2.nlu.jointBERT.crosswoz.postprocess import (
-            is_slot_da,
             calculateF1,
+            is_slot_da,
             recover_intent,
         )
 
@@ -64,12 +67,16 @@ if __name__ == "__main__":
     print("tag num:", len(tag_vocab))
     for data_key in ["train", "val", "test"]:
         dataloader.load_data(
-            json.load(open(os.path.join(data_dir, "{}_data.json".format(data_key)))),
+            json.load(
+                open(os.path.join(data_dir, "{}_data.json".format(data_key)))
+            ),
             data_key,
             cut_sen_len=config["cut_sen_len"],
             use_bert_tokenizer=config["use_bert_tokenizer"],
         )
-        print("{} set size: {}".format(data_key, len(dataloader.data[data_key])))
+        print(
+            "{} set size: {}".format(data_key, len(dataloader.data[data_key]))
+        )
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -182,9 +189,11 @@ if __name__ == "__main__":
 
             val_slot_loss, val_intent_loss = 0, 0
             model.eval()
-            for pad_batch, ori_batch, real_batch_size in dataloader.yield_batches(
-                batch_size, data_key="val"
-            ):
+            for (
+                pad_batch,
+                ori_batch,
+                real_batch_size,
+            ) in dataloader.yield_batches(batch_size, data_key="val"):
                 pad_batch = tuple(t.to(DEVICE) for t in pad_batch)
                 (
                     word_seq_tensor,
@@ -199,7 +208,12 @@ if __name__ == "__main__":
                     context_seq_tensor, context_mask_tensor = None, None
 
                 with torch.no_grad():
-                    slot_logits, intent_logits, slot_loss, intent_loss = model.forward(
+                    (
+                        slot_logits,
+                        intent_logits,
+                        slot_loss,
+                        intent_loss,
+                    ) = model.forward(
                         word_seq_tensor,
                         word_mask_tensor,
                         tag_seq_tensor,
@@ -232,7 +246,9 @@ if __name__ == "__main__":
                     )
                     predict_golden["intent"].append(
                         {
-                            "predict": [x for x in predicts if not is_slot_da(x)],
+                            "predict": [
+                                x for x in predicts if not is_slot_da(x)
+                            ],
                             "golden": [x for x in labels if not is_slot_da(x)],
                         }
                     )
@@ -241,7 +257,9 @@ if __name__ == "__main__":
                 writer.add_text(
                     "val_sample_{}".format(j),
                     json.dumps(
-                        predict_golden["overall"][j], indent=2, ensure_ascii=False
+                        predict_golden["overall"][j],
+                        indent=2,
+                        ensure_ascii=False,
                     ),
                     global_step=step,
                 )
@@ -253,10 +271,16 @@ if __name__ == "__main__":
             print("\t slot loss:", val_slot_loss)
             print("\t intent loss:", val_intent_loss)
 
-            writer.add_scalar("intent_loss/train", train_intent_loss, global_step=step)
-            writer.add_scalar("intent_loss/val", val_intent_loss, global_step=step)
+            writer.add_scalar(
+                "intent_loss/train", train_intent_loss, global_step=step
+            )
+            writer.add_scalar(
+                "intent_loss/val", val_intent_loss, global_step=step
+            )
 
-            writer.add_scalar("slot_loss/train", train_slot_loss, global_step=step)
+            writer.add_scalar(
+                "slot_loss/train", train_slot_loss, global_step=step
+            )
             writer.add_scalar("slot_loss/val", val_slot_loss, global_step=step)
 
             for x in ["intent", "slot", "overall"]:
@@ -269,13 +293,16 @@ if __name__ == "__main__":
                 writer.add_scalar(
                     "val_{}/precision".format(x), precision, global_step=step
                 )
-                writer.add_scalar("val_{}/recall".format(x), recall, global_step=step)
+                writer.add_scalar(
+                    "val_{}/recall".format(x), recall, global_step=step
+                )
                 writer.add_scalar("val_{}/F1".format(x), F1, global_step=step)
 
             if F1 > best_val_f1:
                 best_val_f1 = F1
                 torch.save(
-                    model.state_dict(), os.path.join(output_dir, "pytorch_model.bin")
+                    model.state_dict(),
+                    os.path.join(output_dir, "pytorch_model.bin"),
                 )
                 print("best val F1 %.4f" % best_val_f1)
                 print("save on", output_dir)

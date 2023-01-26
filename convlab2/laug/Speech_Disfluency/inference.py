@@ -1,8 +1,11 @@
-from .LSTMCRF import BiLSTM_CRF
+# -*- coding: utf-8 -*-
 import json
+import os
+
 import numpy as np
 import torch
-import os
+
+from .LSTMCRF import BiLSTM_CRF
 
 START_TAG = "<START>"
 STOP_TAG = "<STOP>"
@@ -43,9 +46,13 @@ weights = torch.stack(weights, 0).float()
 
 tag_to_ix = {"O": 0, "F": 1, "R": 2, START_TAG: 3, STOP_TAG: 4}
 
-model = BiLSTM_CRF(len(word_to_ix), tag_to_ix, EMBEDDING_DIM, HIDDEN_DIM, weights)
+model = BiLSTM_CRF(
+    len(word_to_ix), tag_to_ix, EMBEDDING_DIM, HIDDEN_DIM, weights
+)
 model_path = os.path.dirname(os.path.abspath(__file__))
-model.load_state_dict(torch.load(os.path.join(model_path, "model/LSTMCRF.bin")))
+model.load_state_dict(
+    torch.load(os.path.join(model_path, "model/LSTMCRF.bin"))
+)
 
 
 def IP_model(word_list):

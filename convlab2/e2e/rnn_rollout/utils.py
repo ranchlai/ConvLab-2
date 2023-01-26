@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2017-present, Facebook, Inc.
 # All rights reserved.
 #
@@ -7,13 +8,13 @@
 Various helpers.
 """
 
-import random
 import copy
 import pdb
+import random
 import sys
 
-import torch
 import numpy as np
+import torch
 
 
 def is_selection(out):

@@ -1,12 +1,15 @@
-import zipfile
+# -*- coding: utf-8 -*-
 import json
 import os
-from pprint import pprint
-from copy import deepcopy
-from collections import Counter
-from tqdm import tqdm
-from convlab2.util.file_util import read_zipped_json, write_zipped_json
 import re
+import zipfile
+from collections import Counter
+from copy import deepcopy
+from pprint import pprint
+
+from tqdm import tqdm
+
+from convlab2.util.file_util import read_zipped_json, write_zipped_json
 
 self_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -295,7 +298,9 @@ def normalize_da(intent, slot, value, utterance):
     elif isinstance(value, bool):
         slot_type = get_slot_type(slot)
         value = str(value)
-        assert slot_type == "categorical" or slot_type == "binary", print(slot, value)
+        assert slot_type == "categorical" or slot_type == "binary", print(
+            slot, value
+        )
         return slot_type, {
             "intent": intent,
             "domain": "travel",
@@ -323,9 +328,9 @@ def preprocess():
     new_dir = os.path.join(self_dir, "original_data")
     if not os.path.exists(original_zipped_path):
         raise FileNotFoundError(original_zipped_path)
-    if not os.path.exists(os.path.join(self_dir, "data.zip")) or not os.path.exists(
-        os.path.join(self_dir, "ontology.json")
-    ):
+    if not os.path.exists(
+        os.path.join(self_dir, "data.zip")
+    ) or not os.path.exists(os.path.join(self_dir, "ontology.json")):
         print("unzip to", new_dir)
         print("This may take several minutes")
         archive = zipfile.ZipFile(original_zipped_path, "r")
@@ -342,7 +347,9 @@ def preprocess():
                 "user_id": d["user_id"],
                 "system_id": d["wizard_id"],
                 "userSurveyRating": d["labels"]["userSurveyRating"],
-                "wizardSurveyTaskSuccessful": d["labels"]["wizardSurveyTaskSuccessful"],
+                "wizardSurveyTaskSuccessful": d["labels"][
+                    "wizardSurveyTaskSuccessful"
+                ],
                 "domains": ["travel"],
                 "turns": [],
             }
@@ -381,9 +388,9 @@ def preprocess():
                             if (
                                 da_type == "categorical"
                                 and value
-                                not in ontology["domains"]["travel"]["slots"][slot][
-                                    "possible_values"
-                                ]
+                                not in ontology["domains"]["travel"]["slots"][
+                                    slot
+                                ]["possible_values"]
                             ):
                                 ontology["domains"]["travel"]["slots"][slot][
                                     "possible_values"
@@ -407,7 +414,9 @@ def preprocess():
             ontology["binary_dialogue_act"], key=lambda x: x["intent"]
         )
         json.dump(
-            ontology, open(os.path.join(self_dir, "ontology.json"), "w"), indent=2
+            ontology,
+            open(os.path.join(self_dir, "ontology.json"), "w"),
+            indent=2,
         )
         json.dump(processed_dialogue, open("data.json", "w"), indent=2)
         write_zipped_json(os.path.join(self_dir, "data.zip"), "data.json")

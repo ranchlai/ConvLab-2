@@ -1,18 +1,27 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
 from math import log10
-from typing import Dict, Optional, List, Any
+from typing import Any, Dict, List, Optional
 
 import allennlp.nn.util as util
 import numpy as np
 import torch
-from allennlp.common.checks import check_dimensions_match, ConfigurationError
+from allennlp.common.checks import ConfigurationError, check_dimensions_match
 from allennlp.data import Vocabulary
-from allennlp.data.dataset_readers.dataset_utils.span_utils import bio_tags_to_spans
+from allennlp.data.dataset_readers.dataset_utils.span_utils import (
+    bio_tags_to_spans,
+)
 from allennlp.models.model import Model
-from allennlp.modules import Attention, ConditionalRandomField, FeedForward
-from allennlp.modules import Seq2SeqEncoder, TimeDistributed, TextFieldEmbedder
+from allennlp.modules import (
+    Attention,
+    ConditionalRandomField,
+    FeedForward,
+    Seq2SeqEncoder,
+    TextFieldEmbedder,
+    TimeDistributed,
+)
 from allennlp.modules.attention import LegacyAttention
 from allennlp.modules.conditional_random_field import allowed_transitions
 from allennlp.modules.similarity_functions import SimilarityFunction
@@ -112,7 +121,9 @@ class MILU(Model):
             projection_input_dim += self.encoder.get_output_dim()
         if self.attention_for_intent:
             projection_input_dim += self.encoder.get_output_dim()
-        self.intent_projection_layer = Linear(projection_input_dim, self.num_intents)
+        self.intent_projection_layer = Linear(
+            projection_input_dim, self.num_intents
+        )
 
         if num_train_examples:
             try:
@@ -121,11 +132,13 @@ class MILU(Model):
                         log10(
                             (
                                 num_train_examples
-                                - self.vocab._retained_counter[intent_label_namespace][
-                                    t
-                                ]
+                                - self.vocab._retained_counter[
+                                    intent_label_namespace
+                                ][t]
                             )
-                            / self.vocab._retained_counter[intent_label_namespace][t]
+                            / self.vocab._retained_counter[
+                                intent_label_namespace
+                            ][t]
                         )
                         for i, t in self.vocab.get_index_to_token_vocabulary(
                             intent_label_namespace
@@ -145,7 +158,11 @@ class MILU(Model):
             # pos_weight = torch.tensor([(lambda t: 1. if "general" in t else nongeneral_intent_weight)(t) for i, t in
             pos_weight = torch.tensor(
                 [
-                    (lambda t: nongeneral_intent_weight if "Request" in t else 1.0)(t)
+                    (
+                        lambda t: nongeneral_intent_weight
+                        if "Request" in t
+                        else 1.0
+                    )(t)
                     for i, t in self.vocab.get_index_to_token_vocabulary(
                         intent_label_namespace
                     ).items()
@@ -183,7 +200,9 @@ class MILU(Model):
                     "constrain_crf_decoding is True, but "
                     "no label_encoding was specified."
                 )
-            labels = self.vocab.get_index_to_token_vocabulary(sequence_label_namespace)
+            labels = self.vocab.get_index_to_token_vocabulary(
+                sequence_label_namespace
+            )
             constraints = allowed_transitions(label_encoding, labels)
         else:
             constraints = None
@@ -205,7 +224,8 @@ class MILU(Model):
         if calculate_span_f1:
             if not label_encoding:
                 raise ConfigurationError(
-                    "calculate_span_f1 is True, but " "no label_encoding was specified."
+                    "calculate_span_f1 is True, but "
+                    "no label_encoding was specified."
                 )
             self._f1_metric = SpanBasedF1Measure(
                 vocab,
@@ -260,7 +280,9 @@ class MILU(Model):
                 embedded_context_input = self.dropout(embedded_context_input)
 
             context_mask = util.get_text_field_mask(context_tokens)
-            encoded_context = self.encoder(embedded_context_input, context_mask)
+            encoded_context = self.encoder(
+                embedded_context_input, context_mask
+            )
 
             if self.dropout:
                 encoded_context = self.dropout(encoded_context)
@@ -306,7 +328,9 @@ class MILU(Model):
             )
 
         tag_encoded_text = (
-            self.tag_encoder(encoded_text, mask) if self.tag_encoder else encoded_text
+            self.tag_encoder(encoded_text, mask)
+            if self.tag_encoder
+            else encoded_text
         )
 
         if self.dropout and self.tag_encoder:
@@ -316,7 +340,9 @@ class MILU(Model):
             attention_weights = self.attention(
                 encoded_summary, encoded_context, context_mask.float()
             )
-            attended_context = util.weighted_sum(encoded_context, attention_weights)
+            attended_context = util.weighted_sum(
+                encoded_context, attention_weights
+            )
 
         if self.context_for_intent:
             encoded_summary = torch.cat(
@@ -324,7 +350,9 @@ class MILU(Model):
             )
 
         if self.attention_for_intent:
-            encoded_summary = torch.cat([encoded_summary, attended_context], dim=-1)
+            encoded_summary = torch.cat(
+                [encoded_summary, attended_context], dim=-1
+            )
 
         if self.context_for_tag:
             tag_encoded_text = torch.cat(
@@ -386,7 +414,9 @@ class MILU(Model):
                     for j, tag_id in enumerate(instance_tags):
                         class_probabilities[i, j, tag_id] = 1
             else:
-                loss = sequence_cross_entropy_with_logits(sequence_logits, tags, mask)
+                loss = sequence_cross_entropy_with_logits(
+                    sequence_logits, tags, mask
+                )
                 class_probabilities = sequence_logits
                 output["loss"] = loss
 
@@ -417,7 +447,9 @@ class MILU(Model):
 
         return output
 
-    def get_predicted_tags(self, sequence_logits: torch.Tensor) -> torch.Tensor:
+    def get_predicted_tags(
+        self, sequence_logits: torch.Tensor
+    ) -> torch.Tensor:
         """
         Does a simple position-wise argmax over each token, converts indices to string labels, and
         adds a ``"tags"`` key to the dictionary with the result.
@@ -437,7 +469,9 @@ class MILU(Model):
         return all_tags
 
     @overrides
-    def decode(self, output_dict: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+    def decode(
+        self, output_dict: Dict[str, torch.Tensor]
+    ) -> Dict[str, torch.Tensor]:
         """
         Converts the tag ids to the actual tags.
         ``output_dict["tags"]`` is a list of lists of tag_ids,
@@ -470,7 +504,9 @@ class MILU(Model):
             for span in spans:
                 domain_act = span[0].split("+")[0]
                 slot = span[0].split("+")[1]
-                value = " ".join(output_dict["words"][i][span[1][0] : span[1][1] + 1])
+                value = " ".join(
+                    output_dict["words"][i][span[1][0] : span[1][1] + 1]
+                )
                 if domain_act not in dialog_act:
                     dialog_act[domain_act] = [[slot, value]]
                 else:
@@ -483,9 +519,13 @@ class MILU(Model):
                         value = "?"
                     domain_act = intent.split("+")[0]
                     if domain_act not in dialog_act:
-                        dialog_act[domain_act] = [[intent.split("+")[1], value]]
+                        dialog_act[domain_act] = [
+                            [intent.split("+")[1], value]
+                        ]
                     else:
-                        dialog_act[domain_act].append([intent.split("+")[1], value])
+                        dialog_act[domain_act].append(
+                            [intent.split("+")[1], value]
+                        )
                 else:
                     dialog_act[intent] = [["none", "none"]]
             output_dict["dialog_act"].append(dialog_act)
@@ -497,12 +537,20 @@ class MILU(Model):
         metrics_to_return = {}
         intent_f1_dict = self._intent_f1_metric.get_metric(reset=reset)
         metrics_to_return.update(
-            {"int_" + x[:1]: y for x, y in intent_f1_dict.items() if "overall" in x}
+            {
+                "int_" + x[:1]: y
+                for x, y in intent_f1_dict.items()
+                if "overall" in x
+            }
         )
         if self.calculate_span_f1:
             f1_dict = self._f1_metric.get_metric(reset=reset)
             metrics_to_return.update(
-                {"tag_" + x[:1]: y for x, y in f1_dict.items() if "overall" in x}
+                {
+                    "tag_" + x[:1]: y
+                    for x, y in f1_dict.items()
+                    if "overall" in x
+                }
             )
         metrics_to_return.update(self._dai_f1_metric.get_metric(reset=reset))
         return metrics_to_return

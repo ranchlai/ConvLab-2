@@ -1,10 +1,12 @@
+# -*- coding: utf-8 -*-
 """Dialog agent interface and classes."""
 from abc import ABC, abstractmethod
-from convlab2.nlu import NLU
-from convlab2.dst import DST
-from convlab2.policy import Policy
-from convlab2.nlg import NLG
 from copy import deepcopy
+
+from convlab2.dst import DST
+from convlab2.nlg import NLG
+from convlab2.nlu import NLU
+from convlab2.policy import Policy
 
 
 class Agent(ABC):
@@ -59,7 +61,9 @@ class PipelineAgent(Agent):
            =====   =====    ======  ===     ==      ===
     """
 
-    def __init__(self, nlu: NLU, dst: DST, policy: Policy, nlg: NLG, name: str):
+    def __init__(
+        self, nlu: NLU, dst: DST, policy: Policy, nlg: NLG, name: str
+    ):
         """The constructor of PipelineAgent class.
 
         Here are some special combination cases:
@@ -126,7 +130,9 @@ class PipelineAgent(Agent):
             )
         else:
             self.input_action = observation
-        self.input_action = deepcopy(self.input_action)  # get rid of reference problem
+        self.input_action = deepcopy(
+            self.input_action
+        )  # get rid of reference problem
         # get state
         if self.dst is not None:
             if self.name == "sys":

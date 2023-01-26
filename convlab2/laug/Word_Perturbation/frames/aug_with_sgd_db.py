@@ -1,10 +1,11 @@
-from convlab2.laug.Word_Perturbation.multiwoz.multiwoz_eda import MultiwozEDA
+# -*- coding: utf-8 -*-
+from convlab2 import DATA_ROOT, get_root_path
 from convlab2.laug.Word_Perturbation.multiwoz.db.slot_value_replace import (
     MultiSourceDBLoader,
     MultiSourceDBLoaderArgs,
 )
-from convlab2.laug.Word_Perturbation.multiwoz.util import load_json, dump_json
-from convlab2 import DATA_ROOT, get_root_path
+from convlab2.laug.Word_Perturbation.multiwoz.multiwoz_eda import MultiwozEDA
+from convlab2.laug.Word_Perturbation.multiwoz.util import dump_json, load_json
 
 
 def read_zipped_json(filepath, filename):
@@ -18,7 +19,8 @@ class frames_eda_config:
         self,
     ):
         self.frames = read_zipped_json(
-            os.path.join(DATA_ROOT, "frames/Ori", "train.json.zip"), "train.json"
+            os.path.join(DATA_ROOT, "frames/Ori", "train.json.zip"),
+            "train.json",
         )
 
         frames_frames_domain_slot_map = {
@@ -43,7 +45,9 @@ class frames_eda_config:
         )
 
         loader_args = [
-            MultiSourceDBLoaderArgs(frames_db_dir, frames_frames_domain_slot_map),
+            MultiSourceDBLoaderArgs(
+                frames_db_dir, frames_frames_domain_slot_map
+            ),
             MultiSourceDBLoaderArgs(sgd_db_dir, frames_sgd_domain_slot_map),
         ]
         self.db_loader = MultiSourceDBLoader(loader_args)
@@ -105,10 +109,16 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--frames_filepath", default="multiwoz.json")
     parser.add_argument(
-        "--output_filepath", "--output", "-o", default="augmented_multiwoz.json"
+        "--output_filepath",
+        "--output",
+        "-o",
+        default="augmented_multiwoz.json",
     )
     parser.add_argument(
-        "--alpha_sr", type=float, default=0.1, help="probability of replacement"
+        "--alpha_sr",
+        type=float,
+        default=0.1,
+        help="probability of replacement",
     )
     parser.add_argument(
         "--alpha_ri", type=float, default=0.1, help="probability of insertion"

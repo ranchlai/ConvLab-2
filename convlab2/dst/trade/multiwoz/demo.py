@@ -1,10 +1,10 @@
+# -*- coding: utf-8 -*-
 import os
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
-from convlab2.dst.trade.multiwoz.utils.config import *
 from convlab2.dst.trade.multiwoz.trade import *
-
+from convlab2.dst.trade.multiwoz.utils.config import *
 
 """
 python demo.py

@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 import torch
-from convlab2.dst.comer.multiwoz.convert_mw import bert, tokenizer, bert_type
 from pytorch_pretrained_bert import BertModel
+
+from convlab2.dst.comer.multiwoz.convert_mw import bert, bert_type, tokenizer
 
 torch.cuda.set_device(0)
 torch.cuda.manual_seed(1234)

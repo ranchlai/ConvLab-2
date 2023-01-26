@@ -1,7 +1,10 @@
-from convlab2.laug import Word_Perturbation
-from convlab2.laug import Text_Paraphrasing
-from convlab2.laug import Speech_Recognition
-from convlab2.laug import Speech_Disfluency
+# -*- coding: utf-8 -*-
+from convlab2.laug import (
+    Speech_Disfluency,
+    Speech_Recognition,
+    Text_Paraphrasing,
+    Word_Perturbation,
+)
 
 if __name__ == "__main__":
     text = "I want a train to Cambridge"

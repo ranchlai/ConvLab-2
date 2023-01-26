@@ -1,11 +1,14 @@
-import numpy as np
-from convlab2.policy.larl.multiwoz.latent_dialog.enc2dec.decoders import (
-    TEACH_FORCE,
-    GEN,
-    DecoderRNN,
-    GEN_VALID,
-)
+# -*- coding: utf-8 -*-
 from collections import Counter
+
+import numpy as np
+
+from convlab2.policy.larl.multiwoz.latent_dialog.enc2dec.decoders import (
+    GEN,
+    GEN_VALID,
+    TEACH_FORCE,
+    DecoderRNN,
+)
 
 
 class UniquenessSentMetric(object):
@@ -39,13 +42,23 @@ class UniquenessWordMetric(object):
         return len(self.seen)
 
 
-def record_task(n_epsd, model, val_data, config, ppl_f, dialog, ctx_gen_eval, rl_f):
+def record_task(
+    n_epsd, model, val_data, config, ppl_f, dialog, ctx_gen_eval, rl_f
+):
     record_ppl(n_epsd, model, val_data, config, ppl_f)
     record_rl_task(n_epsd, dialog, ctx_gen_eval, rl_f)
 
 
 def record(
-    n_epsd, model, val_data, sv_config, lm_model, ppl_f, dialog, ctx_gen_eval, rl_f
+    n_epsd,
+    model,
+    val_data,
+    sv_config,
+    lm_model,
+    ppl_f,
+    dialog,
+    ctx_gen_eval,
+    rl_f,
 ):
     record_ppl_with_lm(n_epsd, model, val_data, sv_config, lm_model, ppl_f)
     record_rl(n_epsd, dialog, ctx_gen_eval, rl_f)
@@ -75,12 +88,16 @@ def record_ppl_with_lm(n_epsd, model, data, config, lm_model, ppl_f):
         outputs, labels = model(batch, mode=GEN, gen_type=config.gen_type)
         # move from GPU to CPU
         labels = labels.cpu()
-        pred_labels = [t.cpu().data.numpy() for t in outputs[DecoderRNN.KEY_SEQUENCE]]
+        pred_labels = [
+            t.cpu().data.numpy() for t in outputs[DecoderRNN.KEY_SEQUENCE]
+        ]
         pred_labels = (
             np.array(pred_labels, dtype=int).squeeze(-1).swapaxes(0, 1)
         )  # (batch_size, max_dec_len)
         # clean up the pred labels
-        clean_pred_labels = np.zeros((pred_labels.shape[0], pred_labels.shape[1] + 1))
+        clean_pred_labels = np.zeros(
+            (pred_labels.shape[0], pred_labels.shape[1] + 1)
+        )
         clean_pred_labels[:, 0] = model.sys_id
         for b_id in range(pred_labels.shape[0]):
             for t_id in range(pred_labels.shape[1]):
@@ -180,7 +197,9 @@ def record_rl_task(n_epsd, dialog, goal_gen, rl_f):
     unique_sent_num = sent_metric.value()
     unique_word_num = word_metric.value()
     rl_f.write(
-        "{}\t{}\t{}\t{}\n".format(n_epsd, aver_reward, unique_sent_num, unique_word_num)
+        "{}\t{}\t{}\t{}\n".format(
+            n_epsd, aver_reward, unique_sent_num, unique_word_num
+        )
     )
     rl_f.flush()
     print("End RL testing")

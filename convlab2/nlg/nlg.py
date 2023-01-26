@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Natural Language Generation Interface"""
 from convlab2.util.module import Module
 

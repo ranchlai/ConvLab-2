@@ -1,10 +1,12 @@
-import re
+# -*- coding: utf-8 -*-
 import os
+import re
+from abc import ABC
 from functools import lru_cache
 from typing import Optional
-from abc import ABC
-from .db import DB, BaseDB
+
 from ..util import load_json
+from .db import DB, BaseDB
 
 
 def list_db_filename(db_dir):
@@ -12,7 +14,9 @@ def list_db_filename(db_dir):
     db_filenames = {}
     for filename in filenames:
         match = re.match(r"^(\w+)_db\.json$", filename)
-        if match is not None and os.path.isfile(os.path.join(db_dir, filename)):
+        if match is not None and os.path.isfile(
+            os.path.join(db_dir, filename)
+        ):
             domain = match.group(1)
             db_filenames[domain] = filename
     return db_filenames
@@ -26,7 +30,9 @@ def list_db_filepath(db_dir):
 
 
 class BaseDBLoader(ABC):
-    def load_db(self, domain: str, slot: Optional[str] = None) -> Optional[BaseDB]:
+    def load_db(
+        self, domain: str, slot: Optional[str] = None
+    ) -> Optional[BaseDB]:
         """given a domain and a slot, load corresponding db."""
         raise NotImplementedError
 

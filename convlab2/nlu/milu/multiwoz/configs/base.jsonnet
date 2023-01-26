@@ -63,7 +63,7 @@
       "type": "bilinear",
       "vector_dim": 400,
       "matrix_dim": 400
-    },    
+    },
     "context_for_intent": true,
     "context_for_tag": false,
     "attention_for_intent": false,

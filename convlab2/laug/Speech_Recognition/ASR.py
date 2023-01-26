@@ -1,17 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
-import os
+
 import argparse
-import numpy as np
+import json
+import os
 import shlex
 import subprocess
 import sys
 import wave
-import json
-
-from deepspeech import Model, version
 from timeit import default_timer as timer
+
+import numpy as np
+from deepspeech import Model, version
 
 try:
     from shhlex import quote
@@ -24,7 +25,9 @@ def convert_samplerate(audio_path, desired_sample_rate):
         quote(audio_path), desired_sample_rate
     )
     try:
-        output = subprocess.check_output(shlex.split(sox_cmd), stderr=subprocess.PIPE)
+        output = subprocess.check_output(
+            shlex.split(sox_cmd), stderr=subprocess.PIPE
+        )
     except subprocess.CalledProcessError as e:
         raise RuntimeError("SoX returned non-zero status: {}".format(e.stderr))
     except OSError as e:
@@ -109,7 +112,9 @@ class wav2text:
         ds = Model(os.path.join(model_path, args.model))
         # sphinx-doc: python_ref_model_stop
         model_load_end = timer() - model_load_start
-        print("Loaded model in {:.3}s.".format(model_load_end), file=sys.stderr)
+        print(
+            "Loaded model in {:.3}s.".format(model_load_end), file=sys.stderr
+        )
 
         if args.beam_width:
             ds.setBeamWidth(args.beam_width)
@@ -117,11 +122,17 @@ class wav2text:
         self.desired_sample_rate = ds.sampleRate()
 
         if args.scorer:
-            print("Loading scorer from files {}".format(args.scorer), file=sys.stderr)
+            print(
+                "Loading scorer from files {}".format(args.scorer),
+                file=sys.stderr,
+            )
             scorer_load_start = timer()
             ds.enableExternalScorer(os.path.join(model_path, args.scorer))
             scorer_load_end = timer() - scorer_load_start
-            print("Loaded scorer in {:.3}s.".format(scorer_load_end), file=sys.stderr)
+            print(
+                "Loaded scorer in {:.3}s.".format(scorer_load_end),
+                file=sys.stderr,
+            )
 
             if args.lm_alpha and args.lm_beta:
                 ds.setScorerAlphaBeta(args.lm_alpha, args.lm_beta)
@@ -174,9 +185,13 @@ parser.add_argument(
     help="Path to the external scorer file",
 )
 parser.add_argument(
-    "--audio", required=False, help="Path to the audio file to run (WAV format)"
+    "--audio",
+    required=False,
+    help="Path to the audio file to run (WAV format)",
 )
-parser.add_argument("--beam_width", type=int, help="Beam width for the CTC decoder")
+parser.add_argument(
+    "--beam_width", type=int, help="Beam width for the CTC decoder"
+)
 parser.add_argument(
     "--lm_alpha",
     type=float,
@@ -187,7 +202,9 @@ parser.add_argument(
     type=float,
     help="Word insertion bonus (lm_beta). If not specified, use default from the scorer package.",
 )
-parser.add_argument("--version", action=VersionAction, help="Print version and exits")
+parser.add_argument(
+    "--version", action=VersionAction, help="Print version and exits"
+)
 parser.add_argument(
     "--extended",
     required=False,
@@ -206,5 +223,7 @@ parser.add_argument(
     default=3,
     help="Number of candidate transcripts to include in JSON output",
 )
-parser.add_argument("--hot_words", type=str, help="Hot-words and their boosts.")
+parser.add_argument(
+    "--hot_words", type=str, help="Hot-words and their boosts."
+)
 args = parser.parse_args()

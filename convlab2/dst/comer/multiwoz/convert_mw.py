@@ -1,9 +1,11 @@
-import os
+# -*- coding: utf-8 -*-
 import json
+import os
 import pickle
+from collections import defaultdict
+
 import torch
 from pytorch_pretrained_bert import BertTokenizer
-from collections import defaultdict
 
 ### this file is to convert the raw woz data into the format required for prepross.py
 bert = True
@@ -23,7 +25,11 @@ def _truncate_seq_pair(tokens_a, tokens_b, max_length):
             tokens_b.pop()
 
 
-cldict = {"pricerange": "price range", "leaveat": "leave at", "arriveby": "arrive by"}
+cldict = {
+    "pricerange": "price range",
+    "leaveat": "leave at",
+    "arriveby": "arrive by",
+}
 
 
 def preslot(strl):
@@ -75,7 +81,9 @@ def convert_data():
                         sl = cldict[sl]
                     svs[dm].append((sl, val))
                     svs[dm].sort(key=lambda x: sl_dict[dm][x[0]], reverse=True)
-            svs = sorted(svs.items(), key=lambda x: dm_dict[x[0]], reverse=True)
+            svs = sorted(
+                svs.items(), key=lambda x: dm_dict[x[0]], reverse=True
+            )
 
             sdict["belief_input"].append(belief_input)
 
@@ -90,7 +98,9 @@ def convert_data():
                 belief_input.extend([dsv[0]] + ["-"])
                 for sv in dsv[1]:
                     labels[-1].append(sv[0])
-                    labelv[-1].append(["[CLS]"] + tokenizer.tokenize(sv[1]) + ["[SEP]"])
+                    labelv[-1].append(
+                        ["[CLS]"] + tokenizer.tokenize(sv[1]) + ["[SEP]"]
+                    )
                     belief_input.extend(
                         [sv[0]] + [","] + tokenizer.tokenize(sv[1]) + [";"]
                     )
@@ -109,7 +119,11 @@ def convert_data():
             a = turn["system_transcript"]
             b = turn["transcript"]
             if bert:
-                ta = ["[CLS]", "system", ":"] + tokenizer.tokenize(a) + ["[SEP]"]
+                ta = (
+                    ["[CLS]", "system", ":"]
+                    + tokenizer.tokenize(a)
+                    + ["[SEP]"]
+                )
                 tb = ["[CLS]", "user", ":"] + tokenizer.tokenize(b) + ["[SEP]"]
             sdict["system_input"].append(ta)
             sdict["user_input"].append(tb)

@@ -1,10 +1,12 @@
+# -*- coding: utf-8 -*-
 import json
 import zipfile
 from collections import Counter
+from copy import deepcopy
 from pprint import pprint
+
 from convlab2.dst.rule.crosswoz.dst import RuleDST
 from convlab2.util.crosswoz.state import default_state
-from copy import deepcopy
 
 
 def calculateJointState(predict_golden):
@@ -43,10 +45,14 @@ def test_sys_state(data, goal_type):
             if turn["role"] == "sys":
                 usr_da = item["messages"][i - 1]["dialog_act"]
                 if i > 2:
-                    for domain, svs in item["messages"][i - 2]["sys_state"].items():
+                    for domain, svs in item["messages"][i - 2][
+                        "sys_state"
+                    ].items():
                         for slot, value in svs.items():
                             if slot != "selectedResults":
-                                ruleDST.state["belief_state"][domain][slot] = value
+                                ruleDST.state["belief_state"][domain][
+                                    slot
+                                ] = value
                 ruleDST.update(usr_da)
                 new_state = deepcopy(ruleDST.state["belief_state"])
                 golden_state = deepcopy(turn["sys_state_init"])

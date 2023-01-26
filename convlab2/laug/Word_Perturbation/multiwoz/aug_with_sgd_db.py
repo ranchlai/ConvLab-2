@@ -1,13 +1,15 @@
+# -*- coding: utf-8 -*-
+import json
 import os
-from convlab2.laug.Word_Perturbation.multiwoz.multiwoz_eda import MultiwozEDA
+import zipfile
+
+from convlab2 import DATA_ROOT, get_root_path
 from convlab2.laug.Word_Perturbation.multiwoz.db.slot_value_replace import (
     MultiSourceDBLoader,
     MultiSourceDBLoaderArgs,
 )
-from convlab2.laug.Word_Perturbation.multiwoz.util import load_json, dump_json
-from convlab2 import DATA_ROOT, get_root_path
-import json
-import zipfile
+from convlab2.laug.Word_Perturbation.multiwoz.multiwoz_eda import MultiwozEDA
+from convlab2.laug.Word_Perturbation.multiwoz.util import dump_json, load_json
 
 
 def read_zipped_json(filepath, filename):
@@ -53,7 +55,9 @@ class multiwoz_eda_config:
             ("restaurant", "addr"): ("restaurants", "street_address"),
         }
         loader_args = [
-            MultiSourceDBLoaderArgs(multiwoz_db_dir, multiwoz_multiwoz_domain_slot_map)
+            MultiSourceDBLoaderArgs(
+                multiwoz_db_dir, multiwoz_multiwoz_domain_slot_map
+            )
         ]
         sgd_db_dir = os.path.join(
             get_root_path(), "convlab2/laug/Word_Perturbation/db/sgd-db/"
@@ -107,7 +111,9 @@ def main(
         ("restaurant", "addr"): ("restaurants", "street_address"),
     }
     loader_args = [
-        MultiSourceDBLoaderArgs(multiwoz_db_dir, multiwoz_multiwoz_domain_slot_map)
+        MultiSourceDBLoaderArgs(
+            multiwoz_db_dir, multiwoz_multiwoz_domain_slot_map
+        )
     ]
     assert sgd_db_dir is not None
     loader_args.append(
@@ -134,12 +140,20 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--multiwoz_filepath", "--multiwoz", default="multiwoz.json")
     parser.add_argument(
-        "--output_filepath", "--output", "-o", default="augmented_multiwoz.json"
+        "--multiwoz_filepath", "--multiwoz", default="multiwoz.json"
     )
     parser.add_argument(
-        "--alpha_sr", type=float, default=0.1, help="probability of replacement"
+        "--output_filepath",
+        "--output",
+        "-o",
+        default="augmented_multiwoz.json",
+    )
+    parser.add_argument(
+        "--alpha_sr",
+        type=float,
+        default=0.1,
+        help="probability of replacement",
     )
     parser.add_argument(
         "--alpha_ri", type=float, default=0.1, help="probability of insertion"

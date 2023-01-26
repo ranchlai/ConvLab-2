@@ -1,8 +1,10 @@
-import os
+# -*- coding: utf-8 -*-
 import csv
-import yaml
+import os
 import time
+
 import numpy as np
+import yaml
 
 
 class AttrDict(dict):

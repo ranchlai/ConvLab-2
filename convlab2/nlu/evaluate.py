@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Evaluate NLU models on specified dataset
 Metric: dataset level Precision/Recall/F1
@@ -8,9 +9,10 @@ import json
 import random
 import sys
 import zipfile
+from pprint import pprint
+
 import numpy
 import torch
-from pprint import pprint
 from tqdm import tqdm
 
 
@@ -32,7 +34,11 @@ def calculateF1(predict_golden):
     # print(TP, FP, FN)
     precision = 1.0 * TP / (TP + FP)
     recall = 1.0 * TP / (TP + FN)
-    F1 = 2.0 * precision * recall / (precision + recall) if precision + recall else 0.0
+    F1 = (
+        2.0 * precision * recall / (precision + recall)
+        if precision + recall
+        else 0.0
+    )
     return precision, recall, F1
 
 
@@ -67,10 +73,16 @@ if __name__ == "__main__":
         else:
             raise Exception("Available models: MILU, SVMNLU, BERTNLU")
 
-        from convlab2.util.dataloader.module_dataloader import MultiTurnNLUDataloader
-        from convlab2.util.dataloader.dataset_dataloader import MultiWOZDataloader
+        from convlab2.util.dataloader.dataset_dataloader import (
+            MultiWOZDataloader,
+        )
+        from convlab2.util.dataloader.module_dataloader import (
+            MultiTurnNLUDataloader,
+        )
 
-        dataloader = MultiTurnNLUDataloader(dataset_dataloader=MultiWOZDataloader())
+        dataloader = MultiTurnNLUDataloader(
+            dataset_dataloader=MultiWOZDataloader()
+        )
         data = dataloader.load_data(data_key="test", role=sys.argv[3])["test"]
         predict_golden = []
         for i in tqdm(range(len(data["utterance"]))):

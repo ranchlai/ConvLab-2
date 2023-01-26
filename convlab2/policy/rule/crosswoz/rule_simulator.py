@@ -1,9 +1,11 @@
-from convlab2.task.crosswoz.goal_generator import GoalGenerator
-from convlab2.policy.policy import Policy
-from pprint import pprint
+# -*- coding: utf-8 -*-
 import random
-from copy import deepcopy
 import re
+from copy import deepcopy
+from pprint import pprint
+
+from convlab2.policy.policy import Policy
+from convlab2.task.crosswoz.goal_generator import GoalGenerator
 
 
 class Simulator(Policy):
@@ -25,7 +27,9 @@ class Simulator(Policy):
         if goal[-1][0] == 1:
             return "单领域"
         elif "出租" not in sub_goals and "地铁" not in sub_goals:
-            goal_content = " ".join([x[3] for x in goal if not isinstance(x[3], list)])
+            goal_content = " ".join(
+                [x[3] for x in goal if not isinstance(x[3], list)]
+            )
             if "出现在id" in goal_content:
                 return "不独立多领域"
             else:
@@ -183,7 +187,9 @@ class Simulator(Policy):
                                         )
                                         if re.match("(\d\.\d|\d)", value):
                                             cur = float(
-                                                re.match("(\d\.\d|\d)", value)[0]
+                                                re.match("(\d\.\d|\d)", value)[
+                                                    0
+                                                ]
                                             )
                                             if cur < original:
                                                 y[3] = value
@@ -193,7 +199,11 @@ class Simulator(Policy):
                                             y[3] = value
                                             y[4] = True
                                             break
-                                    elif slot == "价格" or slot == "人均消费" or slot == "门票":
+                                    elif (
+                                        slot == "价格"
+                                        or slot == "人均消费"
+                                        or slot == "门票"
+                                    ):
                                         if not (
                                             re.match("\d+", x[3])
                                             and re.match("\d+", value)
@@ -203,14 +213,20 @@ class Simulator(Policy):
                                             break
                                         if re.match("(\d+)-(\d+)", x[3]):
                                             low = float(
-                                                re.match("(\d+)-(\d+)", x[3])[1]
+                                                re.match("(\d+)-(\d+)", x[3])[
+                                                    1
+                                                ]
                                             )
                                             high = float(
-                                                re.match("(\d+)-(\d+)", x[3])[2]
+                                                re.match("(\d+)-(\d+)", x[3])[
+                                                    2
+                                                ]
                                             )
                                         else:
                                             assert re.match("\d+", x[3])
-                                            low = float(re.match("\d+", x[3])[0])
+                                            low = float(
+                                                re.match("\d+", x[3])[0]
+                                            )
                                             high = 10000
                                         cur = float(re.match("\d+", value)[0])
                                         if cur < low or cur > high:
@@ -291,7 +307,9 @@ class Simulator(Policy):
                             y[3] = []
                         for domain, slot, value in sys_inform:
                             if domain == cur_domain and slot == x[2]:
-                                if (slot == "推荐菜" or "周边" in slot) and value != "无":
+                                if (
+                                    slot == "推荐菜" or "周边" in slot
+                                ) and value != "无":
                                     # list type
                                     y[3].append(value)
                                 else:
@@ -323,7 +341,13 @@ class Simulator(Policy):
             # cur_sub_goal = None
             # cur_domain = None
             for sub_goal_state in self.sub_goals_state[1:]:
-                for sub_goal_id, domain, slot, value, expressed in sub_goal_state:
+                for (
+                    sub_goal_id,
+                    domain,
+                    slot,
+                    value,
+                    expressed,
+                ) in sub_goal_state:
                     if not expressed or not value or "id" in value:
                         break
                 else:
@@ -350,14 +374,38 @@ class Simulator(Policy):
                                     if x[2] == "名称":
                                         if t[2] == "名称":
                                             cross_constraints.append(
-                                                [t, ["Select", t[1], "源领域", x[1]]]
+                                                [
+                                                    t,
+                                                    [
+                                                        "Select",
+                                                        t[1],
+                                                        "源领域",
+                                                        x[1],
+                                                    ],
+                                                ]
                                             )
                                             cross_constraints.append(
-                                                [t, ["Inform", x[1], "名称", x[3]]]
+                                                [
+                                                    t,
+                                                    [
+                                                        "Inform",
+                                                        x[1],
+                                                        "名称",
+                                                        x[3],
+                                                    ],
+                                                ]
                                             )
                                         else:
                                             cross_constraints.append(
-                                                [t, ["Inform", t[1], t[2], x[3]]]
+                                                [
+                                                    t,
+                                                    [
+                                                        "Inform",
+                                                        t[1],
+                                                        t[2],
+                                                        x[3],
+                                                    ],
+                                                ]
                                             )
                                         break
                             else:

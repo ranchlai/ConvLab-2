@@ -1,13 +1,14 @@
+# -*- coding: utf-8 -*-
 import random
 import re
-from typing import List, Dict, Optional, Union, Iterable
-from copy import deepcopy
 from collections import defaultdict, namedtuple
+from copy import deepcopy
+from typing import Dict, Iterable, List, Optional, Union
 
-from .db_loader import BaseDBLoader, DBLoader
-from .db import BaseDB, DB, choice
 from ..tokenize_util import tokenize
 from ..util import p_str
+from .db import DB, BaseDB, choice
+from .db_loader import BaseDBLoader, DBLoader
 
 MultiSourceDBLoaderArgs = namedtuple(
     "MultiSourceDBLoaderArgs", "db_dir domain_slot_map"
@@ -43,18 +44,25 @@ class MultiSourceDBLoader(BaseDBLoader):
             loader = DBLoader(db_dir)
             self.loaders_and_maps.append((loader, domain_slot_map))
 
-    def load_db(self, domain, slot: Optional[str] = None) -> Optional["MultiSourceDB"]:
+    def load_db(
+        self, domain, slot: Optional[str] = None
+    ) -> Optional["MultiSourceDB"]:
         dbs = []
         for loader, domain_slot_map in self.loaders_and_maps:
             if slot is not None:
                 if (domain.lower(), slot.lower()) in domain_slot_map:
-                    db_domain, db_slot = domain_slot_map[(domain.lower(), slot.lower())]
+                    db_domain, db_slot = domain_slot_map[
+                        (domain.lower(), slot.lower())
+                    ]
                     db = loader.load_db(db_domain, db_slot)
                     if db is not None:
                         dbs.append((db, db_domain, domain_slot_map))
             else:
                 domain_to_db = {}
-                for domain_slot_tuple, db_domain_slot_tuple in domain_slot_map.items():
+                for (
+                    domain_slot_tuple,
+                    db_domain_slot_tuple,
+                ) in domain_slot_map.items():
                     if domain.lower() == domain_slot_tuple[0].lower():
                         db_domain = db_domain_slot_tuple[0]
                         if db_domain not in domain_to_db:
@@ -71,7 +79,9 @@ class MultiSourceDBLoader(BaseDBLoader):
         return MultiSourceDB(dbs)
 
 
-MultiSourceDBArgs = namedtuple("MultiSourceDBArgs", "db db_domain domain_slot_map")
+MultiSourceDBArgs = namedtuple(
+    "MultiSourceDBArgs", "db db_domain domain_slot_map"
+)
 
 
 class MultiSourceDB(BaseDB):
@@ -92,11 +102,14 @@ class MultiSourceDB(BaseDB):
         return args
 
     def __init__(
-        self, args: Union[MultiSourceDBArgs, List[MultiSourceDBArgs], List[tuple]]
+        self,
+        args: Union[MultiSourceDBArgs, List[MultiSourceDBArgs], List[tuple]],
     ):
         self.args = self._parse_init_args(args)
 
-    def find_different_values(self, domain, slot, excluding_values=()) -> Iterable:
+    def find_different_values(
+        self, domain, slot, excluding_values=()
+    ) -> Iterable:
         """find different values, which belong to the same domain and slot."""
         for db, db_domain, domain_slot_map in self.args:
             k = (domain.lower(), slot.lower())
@@ -106,7 +119,8 @@ class MultiSourceDB(BaseDB):
                 continue
             db_domain, db_slot = domain_slot_map[k]
             r = db.query(
-                lambda item: db_slot in item and item[db_slot] not in excluding_values
+                lambda item: db_slot in item
+                and item[db_slot] not in excluding_values
             )
             yield from (dict_[db_slot] for dict_ in r)
 
@@ -143,7 +157,9 @@ def _get_positions(
 def fix_text(text):
     # strip; split punctuation and word
     text = re.sub(
-        r"(?:^|(?<=\s))([\w$']+)([,.?*/!;<=>\]\"]+)(?:$|(?=[A-Z\s]))", r"\1 \2", text
+        r"(?:^|(?<=\s))([\w$']+)([,.?*/!;<=>\]\"]+)(?:$|(?=[A-Z\s]))",
+        r"\1 \2",
+        text,
     )  # split word and punctuation
     return text
 
@@ -208,10 +224,14 @@ def assert_correct_turn(turn: dict):
         new_dialog_act[domain_intent].append([slot, value])
     for domain_intent, new_slot_value_list in new_dialog_act.items():
         assert domain_intent in dialog_act
-        new_slot_value_set = {tuple(slot_value) for slot_value in new_slot_value_list}
+        new_slot_value_set = {
+            tuple(slot_value) for slot_value in new_slot_value_list
+        }
         slot_value_list = dialog_act[domain_intent]
         slot_value_set = {tuple(slot_value) for slot_value in slot_value_list}
-        assert new_slot_value_set <= slot_value_set, p_str([turn, new_dialog_act])
+        assert new_slot_value_set <= slot_value_set, p_str(
+            [turn, new_dialog_act]
+        )
         diff = slot_value_set - new_slot_value_set
         assert all(
             slot == "none" or value == "?" for slot, value in diff
@@ -219,7 +239,10 @@ def assert_correct_turn(turn: dict):
 
 
 def replace_slot_values_in_turn(
-    turn: dict, db_loader: MultiSourceDBLoader, p=0.25, inform_intents=("inform",)
+    turn: dict,
+    db_loader: MultiSourceDBLoader,
+    p=0.25,
+    inform_intents=("inform",),
 ):
     orig_turn = turn
     turn = deepcopy(orig_turn)
@@ -233,7 +256,10 @@ def replace_slot_values_in_turn(
     span_info = turn["span_info"]
     span_info.sort(key=lambda item: item[-2:])
     dialog_act = turn["dialog_act"]
-    if any(span_info[i][-2] <= span_info[i - 1][-1] for i in range(1, len(span_info))):
+    if any(
+        span_info[i][-2] <= span_info[i - 1][-1]
+        for i in range(1, len(span_info))
+    ):
         return turn
 
     new_turn = deepcopy(turn)
@@ -257,7 +283,9 @@ def replace_slot_values_in_turn(
         db = db_loader.load_db(domain, slot)
         if db is None:
             continue
-        new_value = db.sample_value(domain, slot, excluding_values=(value, "none", "?"))
+        new_value = db.sample_value(
+            domain, slot, excluding_values=(value, "none", "?")
+        )
         if new_value is None:
             continue
         if random.random() > p:
@@ -280,7 +308,10 @@ def replace_slot_values_in_turn(
             new_value = tokenize(new_value)
             num_words = len(new_value)
             new_words[offset + begin : offset + end + 1] = new_value
-            new_span_info[i][-2:] = [begin + offset, begin + offset + num_words - 1]
+            new_span_info[i][-2:] = [
+                begin + offset,
+                begin + offset + num_words - 1,
+            ]
             offset += num_words - (end - begin + 1)
         new_turn["text"] = " ".join(new_words)
         assert_correct_turn(new_turn)

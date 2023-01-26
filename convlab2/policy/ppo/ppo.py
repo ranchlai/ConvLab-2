@@ -1,20 +1,24 @@
 # -*- coding: utf-8 -*-
-import torch
-from torch import optim
-import numpy as np
+import json
 import logging
 import os
-import json
+import sys
+import zipfile
+
+import numpy as np
+import torch
+from torch import optim
+
 from convlab2.policy.policy import Policy
 from convlab2.policy.rlmodule import MultiDiscretePolicy, Value
-from convlab2.util.train_util import init_logging_handler
 from convlab2.policy.vector.vector_multiwoz import MultiWozVector
 from convlab2.util.file_util import cached_path
-import zipfile
-import sys
+from convlab2.util.train_util import init_logging_handler
 
 root_dir = os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
 )
 sys.path.append(root_dir)
 
@@ -25,7 +29,10 @@ class PPO(Policy):
     def __init__(self, is_train=False, dataset="Multiwoz"):
 
         with open(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json"), "r"
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "config.json"
+            ),
+            "r",
         ) as f:
             cfg = json.load(f)
         self.save_dir = os.path.join(
@@ -40,24 +47,32 @@ class PPO(Policy):
         self.is_train = is_train
         if is_train:
             init_logging_handler(
-                os.path.join(os.path.dirname(os.path.abspath(__file__)), cfg["log_dir"])
+                os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)), cfg["log_dir"]
+                )
             )
 
         # construct policy and value network
         if dataset == "Multiwoz":
             voc_file = os.path.join(root_dir, "data/multiwoz/sys_da_voc.txt")
-            voc_opp_file = os.path.join(root_dir, "data/multiwoz/usr_da_voc.txt")
+            voc_opp_file = os.path.join(
+                root_dir, "data/multiwoz/usr_da_voc.txt"
+            )
             self.vector = MultiWozVector(voc_file, voc_opp_file)
             self.policy = MultiDiscretePolicy(
                 self.vector.state_dim, cfg["h_dim"], self.vector.da_dim
             ).to(device=DEVICE)
 
-        self.value = Value(self.vector.state_dim, cfg["hv_dim"]).to(device=DEVICE)
+        self.value = Value(self.vector.state_dim, cfg["hv_dim"]).to(
+            device=DEVICE
+        )
         if is_train:
             self.policy_optim = optim.RMSprop(
                 self.policy.parameters(), lr=cfg["policy_lr"]
             )
-            self.value_optim = optim.Adam(self.value.parameters(), lr=cfg["value_lr"])
+            self.value_optim = optim.Adam(
+                self.value.parameters(), lr=cfg["value_lr"]
+            )
 
     def predict(self, state):
         """
@@ -188,7 +203,8 @@ class PPO(Policy):
                 ratio = torch.clamp(ratio, 0, 10)
                 surrogate1 = ratio * A_sa_b
                 surrogate2 = (
-                    torch.clamp(ratio, 1 - self.epsilon, 1 + self.epsilon) * A_sa_b
+                    torch.clamp(ratio, 1 - self.epsilon, 1 + self.epsilon)
+                    * A_sa_b
                 )
                 # this is element-wise comparing.
                 # we add negative symbol to convert gradient ascent to gradient descent
@@ -228,28 +244,36 @@ class PPO(Policy):
             os.makedirs(directory)
 
         torch.save(
-            self.value.state_dict(), directory + "/" + str(epoch) + "_ppo.val.mdl"
+            self.value.state_dict(),
+            directory + "/" + str(epoch) + "_ppo.val.mdl",
         )
         torch.save(
-            self.policy.state_dict(), directory + "/" + str(epoch) + "_ppo.pol.mdl"
+            self.policy.state_dict(),
+            directory + "/" + str(epoch) + "_ppo.pol.mdl",
         )
 
-        logging.info("<<dialog policy>> epoch {}: saved network to mdl".format(epoch))
+        logging.info(
+            "<<dialog policy>> epoch {}: saved network to mdl".format(epoch)
+        )
 
     def load(self, filename):
         value_mdl_candidates = [
             filename + ".val.mdl",
             filename + "_ppo.val.mdl",
             os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), filename + ".val.mdl"
+                os.path.dirname(os.path.abspath(__file__)),
+                filename + ".val.mdl",
             ),
             os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), filename + "_ppo.val.mdl"
+                os.path.dirname(os.path.abspath(__file__)),
+                filename + "_ppo.val.mdl",
             ),
         ]
         for value_mdl in value_mdl_candidates:
             if os.path.exists(value_mdl):
-                self.value.load_state_dict(torch.load(value_mdl, map_location=DEVICE))
+                self.value.load_state_dict(
+                    torch.load(value_mdl, map_location=DEVICE)
+                )
                 logging.info(
                     "<<dialog policy>> loaded checkpoint from file: {}".format(
                         value_mdl
@@ -261,15 +285,19 @@ class PPO(Policy):
             filename + ".pol.mdl",
             filename + "_ppo.pol.mdl",
             os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), filename + ".pol.mdl"
+                os.path.dirname(os.path.abspath(__file__)),
+                filename + ".pol.mdl",
             ),
             os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), filename + "_ppo.pol.mdl"
+                os.path.dirname(os.path.abspath(__file__)),
+                filename + "_ppo.pol.mdl",
             ),
         ]
         for policy_mdl in policy_mdl_candidates:
             if os.path.exists(policy_mdl):
-                self.policy.load_state_dict(torch.load(policy_mdl, map_location=DEVICE))
+                self.policy.load_state_dict(
+                    torch.load(policy_mdl, map_location=DEVICE)
+                )
                 logging.info(
                     "<<dialog policy>> loaded checkpoint from file: {}".format(
                         policy_mdl
@@ -282,7 +310,9 @@ class PPO(Policy):
             if not model_file:
                 raise Exception("No model for PPO Policy is specified!")
             archive_file = cached_path(model_file)
-        model_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "save")
+        model_dir = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "save"
+        )
         if not os.path.exists(model_dir):
             os.mkdir(model_dir)
         if not os.path.exists(os.path.join(model_dir, "best_ppo.pol.mdl")):
@@ -290,21 +320,31 @@ class PPO(Policy):
             archive.extractall(model_dir)
 
         policy_mdl = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), filename + "_ppo.pol.mdl"
+            os.path.dirname(os.path.abspath(__file__)),
+            filename + "_ppo.pol.mdl",
         )
         if os.path.exists(policy_mdl):
-            self.policy.load_state_dict(torch.load(policy_mdl, map_location=DEVICE))
+            self.policy.load_state_dict(
+                torch.load(policy_mdl, map_location=DEVICE)
+            )
             logging.info(
-                "<<dialog policy>> loaded checkpoint from file: {}".format(policy_mdl)
+                "<<dialog policy>> loaded checkpoint from file: {}".format(
+                    policy_mdl
+                )
             )
 
         value_mdl = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), filename + "_ppo.val.mdl"
+            os.path.dirname(os.path.abspath(__file__)),
+            filename + "_ppo.val.mdl",
         )
         if os.path.exists(value_mdl):
-            self.value.load_state_dict(torch.load(value_mdl, map_location=DEVICE))
+            self.value.load_state_dict(
+                torch.load(value_mdl, map_location=DEVICE)
+            )
             logging.info(
-                "<<dialog policy>> loaded checkpoint from file: {}".format(value_mdl)
+                "<<dialog policy>> loaded checkpoint from file: {}".format(
+                    value_mdl
+                )
             )
 
     @classmethod
@@ -316,7 +356,10 @@ class PPO(Policy):
         dataset="Multiwoz",
     ):
         with open(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json"), "r"
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "config.json"
+            ),
+            "r",
         ) as f:
             cfg = json.load(f)
         model = cls(is_train=is_train, dataset=dataset)

@@ -1,18 +1,23 @@
-import numpy as np
-import os, random, json, re
-import spacy
-from copy import deepcopy
+# -*- coding: utf-8 -*-
+import json
+import os
+import random
+import re
 from collections import Counter
+from copy import deepcopy
 
-from convlab2.e2e.damd.multiwoz.db_ops import MultiWozDB
-from convlab2.e2e.damd.multiwoz.config import global_config as cfg
+import numpy as np
+import spacy
+
 from convlab2.e2e.damd.multiwoz.clean_dataset import clean_text
+from convlab2.e2e.damd.multiwoz.config import global_config as cfg
+from convlab2.e2e.damd.multiwoz.db_ops import MultiWozDB
 from convlab2.e2e.damd.multiwoz.ontology import (
     all_domains,
-    get_slot,
-    dialog_acts,
     dialog_act_params,
+    dialog_acts,
     eos_tokens,
+    get_slot,
 )
 from convlab2.e2e.damd.multiwoz.utils import Vocab, padSeqs
 
@@ -54,7 +59,9 @@ class MultiWozReader(object):
         self.vocab_size = self._build_vocab()
         # self.domain_files = json.loads(open(cfg.domain_file_path, 'r').read())
         self.slot_value_set = json.loads(
-            open(os.path.join(DEFAULT_DIRECTORY, cfg.slot_value_set_path), "r").read()
+            open(
+                os.path.join(DEFAULT_DIRECTORY, cfg.slot_value_set_path), "r"
+            ).read()
         )
 
         self.delex_sg_valdict_path = os.path.join(
@@ -63,12 +70,20 @@ class MultiWozReader(object):
         self.delex_mt_valdict_path = os.path.join(
             default_path, "delex_multi_valdict.json"
         )
-        self.ambiguous_val_path = os.path.join(default_path, "ambiguous_values.json")
+        self.ambiguous_val_path = os.path.join(
+            default_path, "ambiguous_values.json"
+        )
         # self.delex_refs_path = os.path.join(default_path, 'reference_no.json')
         # self.delex_refs = json.loads(open(self.delex_refs_path, 'r').read())
-        self.delex_sg_valdict = json.loads(open(self.delex_sg_valdict_path, "r").read())
-        self.delex_mt_valdict = json.loads(open(self.delex_mt_valdict_path, "r").read())
-        self.ambiguous_vals = json.loads(open(self.ambiguous_val_path, "r").read())
+        self.delex_sg_valdict = json.loads(
+            open(self.delex_sg_valdict_path, "r").read()
+        )
+        self.delex_mt_valdict = json.loads(
+            open(self.delex_mt_valdict_path, "r").read()
+        )
+        self.ambiguous_vals = json.loads(
+            open(self.ambiguous_val_path, "r").read()
+        )
         # if cfg.multi_acts_training:
         #     self.multi_acts = json.loads(open(cfg.multi_acts_path, 'r').read())
 
@@ -89,7 +104,9 @@ class MultiWozReader(object):
 
     def _build_vocab(self):
         self.vocab = Vocab(cfg.vocab_size)
-        self.vocab.load_vocab(os.path.join(DEFAULT_DIRECTORY, cfg.vocab_path_eval))
+        self.vocab.load_vocab(
+            os.path.join(DEFAULT_DIRECTORY, cfg.vocab_path_eval)
+        )
         return self.vocab.vocab_size
 
     def delex_by_valdict(self, text):
@@ -97,7 +114,9 @@ class MultiWozReader(object):
 
         text = re.sub(r"\d{5}\s?\d{5,7}", "[value_phone]", text)
         text = re.sub(r"\d[\s-]stars?", "[value_stars]", text)
-        text = re.sub(r"\$\d+|\$?\d+.?(\d+)?\s(pounds?|gbps?)", "[value_price]", text)
+        text = re.sub(
+            r"\$\d+|\$?\d+.?(\d+)?\s(pounds?|gbps?)", "[value_price]", text
+        )
         text = re.sub(r"tr[\d]{4}", "[value_id]", text)
         text = re.sub(
             r"([a-z]{1}[\. ]?[a-z]{1}[\. ]?\d{1,2}[, ]+\d{1}[\. ]?[a-z]{1}[\. ]?[a-z]{1}|[a-z]{2}\d{2}[a-z]{2})",
@@ -157,7 +176,9 @@ class MultiWozReader(object):
                     "pulls",
                 ]:
                     slot = (
-                        "[value_leave]" if ent_type == "time" else "[value_departure]"
+                        "[value_leave]"
+                        if ent_type == "time"
+                        else "[value_departure]"
                     )
                     text = re.sub(" " + ambg_ent, " " + slot, text)
 
@@ -196,7 +217,9 @@ class MultiWozReader(object):
                     continue
                 if not cfg.enable_bspn and "bspn" in item:
                     continue
-                prev_np = padSeqs(py_list, truncated=cfg.truncated, trunc_method="pre")
+                prev_np = padSeqs(
+                    py_list, truncated=cfg.truncated, trunc_method="pre"
+                )
                 inputs[item + "_np"] = prev_np
                 if item in ["pv_resp", "pv_bspn"]:
                     inputs[item + "_unk_np"] = deepcopy(inputs[item + "_np"])
@@ -242,7 +265,11 @@ class MultiWozReader(object):
                     # handle confusion of value name "people's portraits..." and slot people
                     try:
                         ns = bspan[idx + 1]
-                        ns = self.vocab.decode(ns) if type(ns) is not str else ns
+                        ns = (
+                            self.vocab.decode(ns)
+                            if type(ns) is not str
+                            else ns
+                        )
                         if ns == "'s":
                             continue
                     except:
@@ -307,7 +334,11 @@ class MultiWozReader(object):
                 vt = aspan[vidx]
                 vt = self.vocab.decode(vt) if type(vt) is not str else vt
                 no_param_act = True
-                while vidx < conslen and vt != eos_tokens["aspn"] and "[" not in vt:
+                while (
+                    vidx < conslen
+                    and vt != eos_tokens["aspn"]
+                    and "[" not in vt
+                ):
                     no_param_act = False
                     acts.append(domain + "-" + cons[1:-1] + "-" + vt)
                     vidx += 1
@@ -426,15 +457,25 @@ class MultiWozReader(object):
             constraint = constraint_dict.get(d, None)
             if constraint:
                 if "stay" in constraint:
-                    restored = restored.replace("[value_stay]", constraint["stay"])
+                    restored = restored.replace(
+                        "[value_stay]", constraint["stay"]
+                    )
                 if "day" in constraint:
-                    restored = restored.replace("[value_day]", constraint["day"])
+                    restored = restored.replace(
+                        "[value_day]", constraint["day"]
+                    )
                 if "people" in constraint:
-                    restored = restored.replace("[value_people]", constraint["people"])
+                    restored = restored.replace(
+                        "[value_people]", constraint["people"]
+                    )
                 if "time" in constraint:
-                    restored = restored.replace("[value_time]", constraint["time"])
+                    restored = restored.replace(
+                        "[value_time]", constraint["time"]
+                    )
                 if "type" in constraint:
-                    restored = restored.replace("[value_type]", constraint["type"])
+                    restored = restored.replace(
+                        "[value_type]", constraint["type"]
+                    )
                 if d in mat_ents and len(mat_ents[d]) == 0:
                     for s in constraint:
                         if (
@@ -446,10 +487,14 @@ class MultiWozReader(object):
                                 "[value_price]", constraint["pricerange"]
                             )
                         if s + "]" in restored:
-                            restored = restored.replace("[value_%s]" % s, constraint[s])
+                            restored = restored.replace(
+                                "[value_%s]" % s, constraint[s]
+                            )
 
             if "[value_choice" in restored and mat_ents.get(d):
-                restored = restored.replace("[value_choice]", str(len(mat_ents[d])))
+                restored = restored.replace(
+                    "[value_choice]", str(len(mat_ents[d]))
+                )
         if "[value_choice" in restored:
             restored = restored.replace(
                 "[value_choice]", str(random.choice([1, 2, 3, 4, 5]))
@@ -463,7 +508,11 @@ class MultiWozReader(object):
             restored_split = restored.split()
             token_count = Counter(restored_split)
             for idx, t in enumerate(restored_split):
-                if "[value" in t and token_count[t] > 1 and token_count[t] <= len(ent):
+                if (
+                    "[value" in t
+                    and token_count[t] > 1
+                    and token_count[t] <= len(ent)
+                ):
                     slot = t[7:-1]
                     pattern = r"\[" + t[1:-1] + r"\]"
                     for e in ent:
@@ -473,7 +522,9 @@ class MultiWozReader(object):
                             if slot in ["name", "address"]:
                                 rep = " ".join(
                                     [
-                                        i.capitalize() if i not in stopwords else i
+                                        i.capitalize()
+                                        if i not in stopwords
+                                        else i
                                         for i in e[slot].split()
                                     ]
                                 )
@@ -483,7 +534,9 @@ class MultiWozReader(object):
                                 rep = e[slot]
                             restored = re.sub(pattern, rep, restored, 1)
                         elif slot == "price" and e.get("pricerange"):
-                            restored = re.sub(pattern, e["pricerange"], restored, 1)
+                            restored = re.sub(
+                                pattern, e["pricerange"], restored, 1
+                            )
 
             # handle normal 1 entity case
             ent = ent[0]

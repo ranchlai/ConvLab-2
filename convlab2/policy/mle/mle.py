@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
-import torch
+import logging
 import os
 import zipfile
+
+import torch
+
 from convlab2.policy.policy import Policy
 from convlab2.util.file_util import cached_path
-import logging
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -39,7 +41,9 @@ class MLEAbstract(Policy):
             if not model_file:
                 raise Exception("No model for MLE Policy is specified!")
             archive_file = cached_path(model_file)
-        model_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "save")
+        model_dir = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "save"
+        )
         if not os.path.exists(model_dir):
             os.mkdir(model_dir)
         if not os.path.exists(os.path.join(model_dir, "best_mle.pol.mdl")):
@@ -47,12 +51,17 @@ class MLEAbstract(Policy):
             archive.extractall(model_dir)
 
         policy_mdl = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), filename + "_mle.pol.mdl"
+            os.path.dirname(os.path.abspath(__file__)),
+            filename + "_mle.pol.mdl",
         )
         if os.path.exists(policy_mdl):
-            self.policy.load_state_dict(torch.load(policy_mdl, map_location=DEVICE))
+            self.policy.load_state_dict(
+                torch.load(policy_mdl, map_location=DEVICE)
+            )
             logging.info(
-                "<<dialog policy>> loaded checkpoint from file: {}".format(policy_mdl)
+                "<<dialog policy>> loaded checkpoint from file: {}".format(
+                    policy_mdl
+                )
             )
 
     def load(self, filename):
@@ -60,15 +69,19 @@ class MLEAbstract(Policy):
             filename + ".pol.mdl",
             filename + "_mle.pol.mdl",
             os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), filename + ".pol.mdl"
+                os.path.dirname(os.path.abspath(__file__)),
+                filename + ".pol.mdl",
             ),
             os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), filename + "_mle.pol.mdl"
+                os.path.dirname(os.path.abspath(__file__)),
+                filename + "_mle.pol.mdl",
             ),
         ]
         for policy_mdl in policy_mdl_candidates:
             if os.path.exists(policy_mdl):
-                self.policy.load_state_dict(torch.load(policy_mdl, map_location=DEVICE))
+                self.policy.load_state_dict(
+                    torch.load(policy_mdl, map_location=DEVICE)
+                )
                 logging.info(
                     "<<dialog policy>> loaded checkpoint from file: {}".format(
                         policy_mdl

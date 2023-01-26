@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-import re, os
+import os
+import re
+
 import convlab2.e2e.damd.multiwoz.ontology
 
 DEFAULT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
@@ -47,7 +49,9 @@ def clean_text(text):
     for tmpl, good in baddata.items():
         text = re.sub(tmpl, good, text)
 
-    text = re.sub(r"([a-zT]+)\.([a-z])", r"\1 . \2", text)  # 'abc.xyz' -> 'abc . xyz'
+    text = re.sub(
+        r"([a-zT]+)\.([a-z])", r"\1 . \2", text
+    )  # 'abc.xyz' -> 'abc . xyz'
     text = re.sub(r"(\w+)\.\.? ", r"\1 . ", text)  # if 'abc. ' -> 'abc . '
 
     with open(
@@ -67,9 +71,13 @@ def clean_time(utter):
     )  # 9 am -> 9am
     utter = re.sub(r"((?<!\d)\d:\d+)(am)?", r"0\1", utter)
     utter = re.sub(r"((?<!\d)\d)am", r"0\1:00", utter)
-    utter = re.sub(r"((?<!\d)\d)pm", lambda x: str(int(x.group(1)) + 12) + ":00", utter)
     utter = re.sub(
-        r"(\d+)(:\d+)pm", lambda x: str(int(x.group(1)) + 12) + x.group(2), utter
+        r"((?<!\d)\d)pm", lambda x: str(int(x.group(1)) + 12) + ":00", utter
+    )
+    utter = re.sub(
+        r"(\d+)(:\d+)pm",
+        lambda x: str(int(x.group(1)) + 12) + x.group(2),
+        utter,
     )
     utter = re.sub(r"(\d+)a\.?m", r"\1", utter)
     return utter
@@ -90,7 +98,13 @@ def clean_slot_values(domain, slot, value):
         elif slot == "area":
             if value in ["town centre", "cent", "center", "ce"]:
                 value = "centre"
-            elif value in ["ely", "in town", "museum", "norwich", "same area as hotel"]:
+            elif value in [
+                "ely",
+                "in town",
+                "museum",
+                "norwich",
+                "same area as hotel",
+            ]:
                 value = ""
             elif value in ["we"]:
                 value = "west"
@@ -107,7 +121,12 @@ def clean_slot_values(domain, slot, value):
                 value = "concert hall"
             elif value in ["night club"]:
                 value = "nightclub"
-            elif value in ["mutiple sports", "mutliple sports", "sports", "galleria"]:
+            elif value in [
+                "mutiple sports",
+                "mutliple sports",
+                "sports",
+                "galleria",
+            ]:
                 value = "multiple sports"
             elif value in ["ol", "science", "gastropub", "la raza"]:
                 value = ""
@@ -118,7 +137,12 @@ def clean_slot_values(domain, slot, value):
 
     elif domain == "hotel":
         if slot == "area":
-            if value in ["cen", "centre of town", "near city center", "center"]:
+            if value in [
+                "cen",
+                "centre of town",
+                "near city center",
+                "center",
+            ]:
                 value = "centre"
             elif value in ["east area", "east side"]:
                 value = "east"
@@ -177,7 +201,13 @@ def clean_slot_values(domain, slot, value):
                 value = "2"
             elif value == "three":
                 value = "3"
-            elif value in ["4-star", "4 stars", "4 star", "four star", "four stars"]:
+            elif value in [
+                "4-star",
+                "4 stars",
+                "4 star",
+                "four star",
+                "four stars",
+            ]:
                 value = "4"
         elif slot == "type":
             if value == "0 star rarting":
@@ -306,7 +336,13 @@ def clean_slot_values(domain, slot, value):
                 value = "07:54"
             elif value == "after 5:45 pm":
                 value = "17:45"
-            elif value in ["early evening", "friday", "sunday", "tuesday", "afternoon"]:
+            elif value in [
+                "early evening",
+                "friday",
+                "sunday",
+                "tuesday",
+                "afternoon",
+            ]:
                 value = ""
             elif value == "12":
                 value = "12:00"

@@ -1,30 +1,39 @@
+# -*- coding: utf-8 -*-
+import numpy as np
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
+
+from convlab2.policy.larl.multiwoz.latent_dialog import nn_lib
 from convlab2.policy.larl.multiwoz.latent_dialog.base_models import BaseModel
-from convlab2.policy.larl.multiwoz.latent_dialog.corpora import SYS, EOS, PAD, BOS
+from convlab2.policy.larl.multiwoz.latent_dialog.corpora import (
+    BOS,
+    EOS,
+    PAD,
+    SYS,
+)
+from convlab2.policy.larl.multiwoz.latent_dialog.criterions import (
+    CatKLLoss,
+    Entropy,
+    NLLEntropy,
+    NormKLLoss,
+)
+from convlab2.policy.larl.multiwoz.latent_dialog.enc2dec.decoders import (
+    GEN,
+    TEACH_FORCE,
+    DecoderRNN,
+)
+from convlab2.policy.larl.multiwoz.latent_dialog.enc2dec.encoders import (
+    RnnUttEncoder,
+)
 from convlab2.policy.larl.multiwoz.latent_dialog.utils import (
-    INT,
     FLOAT,
+    INT,
     LONG,
     Pack,
     cast_type,
 )
-from convlab2.policy.larl.multiwoz.latent_dialog.enc2dec.encoders import RnnUttEncoder
-from convlab2.policy.larl.multiwoz.latent_dialog.enc2dec.decoders import (
-    DecoderRNN,
-    GEN,
-    TEACH_FORCE,
-)
-from convlab2.policy.larl.multiwoz.latent_dialog.criterions import (
-    NLLEntropy,
-    CatKLLoss,
-    Entropy,
-    NormKLLoss,
-)
-from convlab2.policy.larl.multiwoz.latent_dialog import nn_lib
-import numpy as np
 
 
 class SysPerfectBD2Word(BaseModel):
@@ -87,13 +96,20 @@ class SysPerfectBD2Word(BaseModel):
         self.nll = NLLEntropy(self.pad_id, config.avg_type)
 
     def forward(
-        self, data_feed, mode, clf=False, gen_type="greedy", return_latent=False
+        self,
+        data_feed,
+        mode,
+        clf=False,
+        gen_type="greedy",
+        return_latent=False,
     ):
         ctx_lens = data_feed["context_lens"]  # (batch_size, )
         short_ctx_utts = self.np2var(
             self.extract_short_ctx(data_feed["contexts"], ctx_lens), LONG
         )
-        out_utts = self.np2var(data_feed["outputs"], LONG)  # (batch_size, max_out_len)
+        out_utts = self.np2var(
+            data_feed["outputs"], LONG
+        )  # (batch_size, max_out_len)
         bs_label = self.np2var(
             data_feed["bs"], FLOAT
         )  # (batch_size, max_ctx_len, max_utt_len)
@@ -102,7 +118,9 @@ class SysPerfectBD2Word(BaseModel):
         )  # (batch_size, max_ctx_len, max_utt_len)
         batch_size = len(ctx_lens)
 
-        utt_summary, _, enc_outs = self.utt_encoder(short_ctx_utts.unsqueeze(1))
+        utt_summary, _, enc_outs = self.utt_encoder(
+            short_ctx_utts.unsqueeze(1)
+        )
 
         # get decoder inputs
         dec_inputs = out_utts[:, :-1]
@@ -138,7 +156,9 @@ class SysPerfectBD2Word(BaseModel):
         if mode == GEN:
             return ret_dict, labels
         if return_latent:
-            return Pack(nll=self.nll(dec_outputs, labels), latent_action=dec_init_state)
+            return Pack(
+                nll=self.nll(dec_outputs, labels), latent_action=dec_init_state
+            )
         else:
             return Pack(nll=self.nll(dec_outputs, labels))
 
@@ -147,7 +167,9 @@ class SysPerfectBD2Word(BaseModel):
         short_ctx_utts = self.np2var(
             self.extract_short_ctx(data_feed["contexts"], ctx_lens), LONG
         )
-        out_utts = self.np2var(data_feed["outputs"], LONG)  # (batch_size, max_out_len)
+        out_utts = self.np2var(
+            data_feed["outputs"], LONG
+        )  # (batch_size, max_out_len)
         bs_label = self.np2var(
             data_feed["bs"], FLOAT
         )  # (batch_size, max_ctx_len, max_utt_len)
@@ -156,7 +178,9 @@ class SysPerfectBD2Word(BaseModel):
         )  # (batch_size, max_ctx_len, max_utt_len)
         batch_size = len(ctx_lens)
 
-        utt_summary, _, enc_outs = self.utt_encoder(short_ctx_utts.unsqueeze(1))
+        utt_summary, _, enc_outs = self.utt_encoder(
+            short_ctx_utts.unsqueeze(1)
+        )
 
         # pack attention context
         if self.config.dec_use_attn:
@@ -230,7 +254,9 @@ class SysPerfectBD2Cat(BaseModel):
         if not self.simple_posterior:
             if self.contextual_posterior:
                 self.xc2z = nn_lib.Hidden2Discrete(
-                    self.utt_encoder.output_size * 2 + self.db_size + self.bs_size,
+                    self.utt_encoder.output_size * 2
+                    + self.db_size
+                    + self.bs_size,
                     config.y_size,
                     config.k_size,
                     is_lstm=False,
@@ -301,7 +327,9 @@ class SysPerfectBD2Cat(BaseModel):
         short_ctx_utts = self.np2var(
             self.extract_short_ctx(data_feed["contexts"], ctx_lens), LONG
         )
-        out_utts = self.np2var(data_feed["outputs"], LONG)  # (batch_size, max_out_len)
+        out_utts = self.np2var(
+            data_feed["outputs"], LONG
+        )  # (batch_size, max_out_len)
         bs_label = self.np2var(
             data_feed["bs"], FLOAT
         )  # (batch_size, max_ctx_len, max_utt_len)
@@ -310,7 +338,9 @@ class SysPerfectBD2Cat(BaseModel):
         )  # (batch_size, max_ctx_len, max_utt_len)
         batch_size = len(ctx_lens)
 
-        utt_summary, _, enc_outs = self.utt_encoder(short_ctx_utts.unsqueeze(1))
+        utt_summary, _, enc_outs = self.utt_encoder(
+            short_ctx_utts.unsqueeze(1)
+        )
 
         # get decoder inputs
         dec_inputs = out_utts[:, :-1]
@@ -328,7 +358,9 @@ class SysPerfectBD2Cat(BaseModel):
             # encode response and use posterior to find q(z|x, c)
             x_h, _, _ = self.utt_encoder(out_utts.unsqueeze(1))
             if self.contextual_posterior:
-                logits_qy, log_qy = self.xc2z(th.cat([enc_last, x_h.squeeze(1)], dim=1))
+                logits_qy, log_qy = self.xc2z(
+                    th.cat([enc_last, x_h.squeeze(1)], dim=1)
+                )
             else:
                 logits_qy, log_qy = self.xc2z(x_h.squeeze(1))
 
@@ -340,12 +372,18 @@ class SysPerfectBD2Cat(BaseModel):
 
         # pack attention context
         if self.config.dec_use_attn:
-            z_embeddings = th.t(self.z_embedding.weight).split(self.k_size, dim=0)
+            z_embeddings = th.t(self.z_embedding.weight).split(
+                self.k_size, dim=0
+            )
             attn_context = []
-            temp_sample_y = sample_y.view(-1, self.config.y_size, self.config.k_size)
+            temp_sample_y = sample_y.view(
+                -1, self.config.y_size, self.config.k_size
+            )
             for z_id in range(self.y_size):
                 attn_context.append(
-                    th.mm(temp_sample_y[:, z_id], z_embeddings[z_id]).unsqueeze(1)
+                    th.mm(
+                        temp_sample_y[:, z_id], z_embeddings[z_id]
+                    ).unsqueeze(1)
                 )
             attn_context = th.cat(attn_context, dim=1)
             dec_init_state = th.sum(attn_context, dim=1).unsqueeze(0)
@@ -378,16 +416,22 @@ class SysPerfectBD2Cat(BaseModel):
         else:
             result = Pack(nll=self.nll(dec_outputs, labels))
             # regularization qy to be uniform
-            avg_log_qy = th.exp(log_qy.view(-1, self.config.y_size, self.config.k_size))
+            avg_log_qy = th.exp(
+                log_qy.view(-1, self.config.y_size, self.config.k_size)
+            )
             avg_log_qy = th.log(th.mean(avg_log_qy, dim=0) + 1e-15)
             b_pr = self.cat_kl_loss(
                 avg_log_qy, self.log_uniform_y, batch_size, unit_average=True
             )
-            mi = self.entropy_loss(avg_log_qy, unit_average=True) - self.entropy_loss(
-                log_qy, unit_average=True
+            mi = self.entropy_loss(
+                avg_log_qy, unit_average=True
+            ) - self.entropy_loss(log_qy, unit_average=True)
+            pi_kl = self.cat_kl_loss(
+                log_qy, log_py, batch_size, unit_average=True
             )
-            pi_kl = self.cat_kl_loss(log_qy, log_py, batch_size, unit_average=True)
-            q_y = th.exp(log_qy).view(-1, self.config.y_size, self.config.k_size)  # b
+            q_y = th.exp(log_qy).view(
+                -1, self.config.y_size, self.config.k_size
+            )  # b
             p = th.pow(th.bmm(q_y, th.transpose(q_y, 1, 2)) - self.eye, 2)
 
             result["pi_kl"] = pi_kl
@@ -411,7 +455,9 @@ class SysPerfectBD2Cat(BaseModel):
         )  # (batch_size, max_ctx_len, max_utt_len)
         batch_size = len(ctx_lens)
 
-        utt_summary, _, enc_outs = self.utt_encoder(short_ctx_utts.unsqueeze(1))
+        utt_summary, _, enc_outs = self.utt_encoder(
+            short_ctx_utts.unsqueeze(1)
+        )
 
         # create decoder initial states
         enc_last = th.cat([bs_label, db_label, utt_summary.squeeze(1)], dim=1)
@@ -426,17 +472,25 @@ class SysPerfectBD2Cat(BaseModel):
         idx = th.multinomial(qy, 1).detach()
         logprob_sample_z = log_qy.gather(1, idx).view(-1, self.y_size)
         joint_logpz = th.sum(logprob_sample_z, dim=1)
-        sample_y = cast_type(Variable(th.zeros(log_qy.size())), FLOAT, self.use_gpu)
+        sample_y = cast_type(
+            Variable(th.zeros(log_qy.size())), FLOAT, self.use_gpu
+        )
         sample_y.scatter_(1, idx, 1.0)
 
         # pack attention context
         if self.config.dec_use_attn:
-            z_embeddings = th.t(self.z_embedding.weight).split(self.k_size, dim=0)
+            z_embeddings = th.t(self.z_embedding.weight).split(
+                self.k_size, dim=0
+            )
             attn_context = []
-            temp_sample_y = sample_y.view(-1, self.config.y_size, self.config.k_size)
+            temp_sample_y = sample_y.view(
+                -1, self.config.y_size, self.config.k_size
+            )
             for z_id in range(self.y_size):
                 attn_context.append(
-                    th.mm(temp_sample_y[:, z_id], z_embeddings[z_id]).unsqueeze(1)
+                    th.mm(
+                        temp_sample_y[:, z_id], z_embeddings[z_id]
+                    ).unsqueeze(1)
                 )
             attn_context = th.cat(attn_context, dim=1)
             dec_init_state = th.sum(attn_context, dim=1).unsqueeze(0)
@@ -553,7 +607,9 @@ class SysPerfectBD2Gauss(BaseModel):
         short_ctx_utts = self.np2var(
             self.extract_short_ctx(data_feed["contexts"], ctx_lens), LONG
         )
-        out_utts = self.np2var(data_feed["outputs"], LONG)  # (batch_size, max_out_len)
+        out_utts = self.np2var(
+            data_feed["outputs"], LONG
+        )  # (batch_size, max_out_len)
         bs_label = self.np2var(
             data_feed["bs"], FLOAT
         )  # (batch_size, max_ctx_len, max_utt_len)
@@ -562,7 +618,9 @@ class SysPerfectBD2Gauss(BaseModel):
         )  # (batch_size, max_ctx_len, max_utt_len)
         batch_size = len(ctx_lens)
 
-        utt_summary, _, enc_outs = self.utt_encoder(short_ctx_utts.unsqueeze(1))
+        utt_summary, _, enc_outs = self.utt_encoder(
+            short_ctx_utts.unsqueeze(1)
+        )
 
         # get decoder inputs
         dec_inputs = out_utts[:, :-1]
@@ -580,7 +638,9 @@ class SysPerfectBD2Gauss(BaseModel):
             p_mu, p_logvar = self.c2z(enc_last)
             # encode response and use posterior to find q(z|x, c)
             x_h, _, _ = self.utt_encoder(out_utts.unsqueeze(1))
-            q_mu, q_logvar = self.xc2z(th.cat([enc_last, x_h.squeeze(1)], dim=1))
+            q_mu, q_logvar = self.xc2z(
+                th.cat([enc_last, x_h.squeeze(1)], dim=1)
+            )
 
             # use prior at inference time, otherwise use posterior
             if mode == GEN or use_py:
@@ -619,7 +679,9 @@ class SysPerfectBD2Gauss(BaseModel):
     def gaussian_logprob(self, mu, logvar, sample_z):
         var = th.exp(logvar)
         constant = float(-0.5 * np.log(2 * np.pi))
-        logprob = constant - 0.5 * logvar - th.pow((mu - sample_z), 2) / (2.0 * var)
+        logprob = (
+            constant - 0.5 * logvar - th.pow((mu - sample_z), 2) / (2.0 * var)
+        )
         return logprob
 
     def forward_rl(self, data_feed, max_words, temp=0.1):
@@ -635,7 +697,9 @@ class SysPerfectBD2Gauss(BaseModel):
         )  # (batch_size, max_ctx_len, max_utt_len)
         batch_size = len(ctx_lens)
 
-        utt_summary, _, enc_outs = self.utt_encoder(short_ctx_utts.unsqueeze(1))
+        utt_summary, _, enc_outs = self.utt_encoder(
+            short_ctx_utts.unsqueeze(1)
+        )
 
         # create decoder initial states
         enc_last = th.cat([bs_label, db_label, utt_summary.squeeze(1)], dim=1)

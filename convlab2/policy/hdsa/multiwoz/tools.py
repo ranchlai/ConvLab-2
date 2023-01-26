@@ -1,11 +1,14 @@
-from convlab2.policy.hdsa.multiwoz.transformer import Constants
+# -*- coding: utf-8 -*-
 import json
 import math
 import re
 from collections import Counter
-from nltk.util import ngrams
+
 import numpy
 import torch
+from nltk.util import ngrams
+
+from convlab2.policy.hdsa.multiwoz.transformer import Constants
 
 
 def get_n_params(*params_list):
@@ -129,7 +132,8 @@ def sentenceBLEU(hyps, refs, n=1):
                 for ng in hypcnts:
                     max_counts[ng] = max(max_counts.get(ng, 0), refcnts[ng])
             clipcnt = dict(
-                (ng, min(count, max_counts[ng])) for ng, count in hypcnts.items()
+                (ng, min(count, max_counts[ng]))
+                for ng, count in hypcnts.items()
             )
             clip_count[i] += sum(clipcnt.values())
 
@@ -196,7 +200,9 @@ class BLEUScorer(object):
                     for ref in refs:
                         refcnts = Counter(ngrams(ref, i + 1))
                         for ng in hypcnts:
-                            max_counts[ng] = max(max_counts.get(ng, 0), refcnts[ng])
+                            max_counts[ng] = max(
+                                max_counts.get(ng, 0), refcnts[ng]
+                            )
                     clipcnt = dict(
                         (ng, min(count, max_counts[ng]))
                         for ng, count in hypcnts.items()
@@ -219,8 +225,12 @@ class BLEUScorer(object):
         # computing bleu score
         p0 = 1e-7
         bp = 1 if c > r else math.exp(1 - float(r) / float(c))
-        p_ns = [float(clip_count[i]) / float(count[i] + p0) + p0 for i in range(4)]
-        s = math.fsum(w * math.log(p_n) for w, p_n in zip(weights, p_ns) if p_n)
+        p_ns = [
+            float(clip_count[i]) / float(count[i] + p0) + p0 for i in range(4)
+        ]
+        s = math.fsum(
+            w * math.log(p_n) for w, p_n in zip(weights, p_ns) if p_n
+        )
         bleu = bp * math.exp(s)
         return bleu
 
@@ -264,7 +274,9 @@ class Tokenizer(object):
     def convert_tokens_to_ids(self, sent, template=None):
         return [self.get_word_id(w, template) for w in sent]
 
-    def convert_id_to_tokens(self, word_ids, template_ids=None, remain_eos=False):
+    def convert_id_to_tokens(
+        self, word_ids, template_ids=None, remain_eos=False
+    ):
         if isinstance(word_ids, list):
             if remain_eos:
                 return " ".join(
@@ -301,7 +313,9 @@ class Tokenizer(object):
                 )
 
     def convert_template(self, template_ids):
-        return [self.get_word(wid) for wid in template_ids if wid != Constants.PAD]
+        return [
+            self.get_word(wid) for wid in template_ids if wid != Constants.PAD
+        ]
 
 
 def nondetokenize(d_p, d_r):

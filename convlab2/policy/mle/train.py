@@ -1,6 +1,8 @@
-import os
-import torch
+# -*- coding: utf-8 -*-
 import logging
+import os
+
+import torch
 import torch.nn as nn
 
 from convlab2.util.train_util import to_device
@@ -67,7 +69,9 @@ class MLE_Trainer_Abstract:
 
         a_loss /= len(self.data_valid)
         logging.debug(
-            "<<dialog policy>> validation, epoch {}, loss_a:{}".format(epoch, a_loss)
+            "<<dialog policy>> validation, epoch {}, loss_a:{}".format(
+                epoch, a_loss
+            )
         )
         if a_loss < best:
             logging.info("<<dialog policy>> best model saved")
@@ -120,7 +124,10 @@ class MLE_Trainer_Abstract:
             os.makedirs(directory)
 
         torch.save(
-            self.policy.state_dict(), directory + "/" + str(epoch) + "_mle.pol.mdl"
+            self.policy.state_dict(),
+            directory + "/" + str(epoch) + "_mle.pol.mdl",
         )
 
-        logging.info("<<dialog policy>> epoch {}: saved network to mdl".format(epoch))
+        logging.info(
+            "<<dialog policy>> epoch {}: saved network to mdl".format(epoch)
+        )

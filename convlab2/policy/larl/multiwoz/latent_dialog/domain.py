@@ -1,6 +1,7 @@
-import re
-import random
+# -*- coding: utf-8 -*-
 import json
+import random
+import re
 
 
 def get_domain(name):
@@ -24,7 +25,9 @@ class ObjectDivisionDomain(object):
 
         def gen(cnts, idx=0, choice=[]):
             if idx >= len(cnts):
-                left_choice = ["item%d=%d" % (i, c) for i, c in enumerate(choice)]
+                left_choice = [
+                    "item%d=%d" % (i, c) for i, c in enumerate(choice)
+                ]
                 right_choice = [
                     "item%d=%d" % (i, n - c)
                     for i, (n, c) in enumerate(zip(cnts, choice))

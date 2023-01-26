@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Manage beam search info structure.
 
     Heavily borrowed from OpenNMT-py.
@@ -6,6 +7,7 @@
 """
 
 import torch
+
 from convlab2.policy.hdsa.multiwoz.transformer import Constants
 
 

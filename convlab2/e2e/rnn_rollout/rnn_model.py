@@ -1,23 +1,24 @@
+# -*- coding: utf-8 -*-
 # Copyright 2017-present, Facebook, Inc.
 # All rights reserved.
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import sys
 import re
+import sys
 import time
 
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.nn.init
 from torch.autograd import Variable
-import torch.nn.functional as F
-from convlab2.e2e.rnn_rollout.domain import get_domain
 
 import convlab2.e2e.rnn_rollout.data as data
+from convlab2.e2e.rnn_rollout.domain import get_domain
 from convlab2.e2e.rnn_rollout.engines.rnn_engine import RnnEngine
-from convlab2.e2e.rnn_rollout.models.utils import *
 from convlab2.e2e.rnn_rollout.models.ctx_encoder import MlpContextEncoder
+from convlab2.e2e.rnn_rollout.models.utils import *
 
 
 class RnnModel(nn.Module):
@@ -57,7 +58,8 @@ class RnnModel(nn.Module):
         self.reader_dropout = nn.Dropout(args.dropout)
 
         self.decoder = nn.Sequential(
-            nn.Linear(args.nhid_lang, args.nembed_word), nn.Dropout(args.dropout)
+            nn.Linear(args.nhid_lang, args.nembed_word),
+            nn.Dropout(args.dropout),
         )
 
         self.writer = nn.GRUCell(
@@ -95,13 +97,18 @@ class RnnModel(nn.Module):
         )
         self.sel_decoders = nn.ModuleList()
         for i in range(domain.selection_length()):
-            self.sel_decoders.append(nn.Linear(args.nhid_sel, len(self.item_dict)))
+            self.sel_decoders.append(
+                nn.Linear(args.nhid_sel, len(self.item_dict))
+            )
 
         self.init_weights()
 
         self.special_token_mask = make_mask(
             len(word_dict),
-            [word_dict.get_idx(w) for w in ["<unk>", "YOU:", "THEM:", "<pad>"]],
+            [
+                word_dict.get_idx(w)
+                for w in ["<unk>", "YOU:", "THEM:", "<pad>"]
+            ],
         )
 
     def flatten_parameters(self):
@@ -137,7 +144,9 @@ class RnnModel(nn.Module):
         inpt_emb = self.word_encoder(inpt)
 
         # Append the context embedding to every input word embedding
-        ctx_h_rep = ctx_h.expand(inpt_emb.size(0), ctx_h.size(1), ctx_h.size(2))
+        ctx_h_rep = ctx_h.expand(
+            inpt_emb.size(0), ctx_h.size(1), ctx_h.size(2)
+        )
         inpt_emb = torch.cat([inpt_emb, ctx_h_rep], 2)
 
         # Finally read in the words
@@ -163,7 +172,9 @@ class RnnModel(nn.Module):
         h = torch.cat([attn, ctx_h], 1)
         h = self.sel_encoder.forward(h)
 
-        logits = [decoder.forward(h).squeeze(0) for decoder in self.sel_decoders]
+        logits = [
+            decoder.forward(h).squeeze(0) for decoder in self.sel_decoders
+        ]
         return logits
 
     def write_batch(self, bsz, lang_h, ctx_h, temperature, max_words=100):
@@ -181,7 +192,9 @@ class RnnModel(nn.Module):
             lang_h = self.writer(inpt_emb, lang_h)
             out = self.decoder(lang_h)
             scores = F.linear(out, self.word_encoder.weight).div(temperature)
-            scores.sub_(scores.max(1)[0].expand(scores.size(0), scores.size(1)))
+            scores.sub_(
+                scores.max(1)[0].expand(scores.size(0), scores.size(1))
+            )
             out = torch.multinomial(scores.exp(), 1).squeeze(1)
             outs.append(out.unsqueeze(0))
             lang_hs.append(lang_h.unsqueeze(0))
@@ -327,7 +340,9 @@ class RnnModel(nn.Module):
         )
         prob = F.softmax(logit, dim=1).unsqueeze(2).expand_as(h)
         attn = (
-            torch.sum(torch.mul(h, prob), 1, keepdim=True).transpose(0, 1).contiguous()
+            torch.sum(torch.mul(h, prob), 1, keepdim=True)
+            .transpose(0, 1)
+            .contiguous()
         )
 
         h = torch.cat([attn, ctx_h], 2).squeeze(0)

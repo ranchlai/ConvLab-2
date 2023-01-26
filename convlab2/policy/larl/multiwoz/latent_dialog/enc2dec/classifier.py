@@ -1,7 +1,11 @@
+# -*- coding: utf-8 -*-
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
-from convlab2.policy.larl.multiwoz.latent_dialog.enc2dec.base_modules import BaseRNN
+
+from convlab2.policy.larl.multiwoz.latent_dialog.enc2dec.base_modules import (
+    BaseRNN,
+)
 
 
 class EncoderGRUATTN(BaseRNN):
@@ -72,9 +76,13 @@ class EncoderGRUATTN(BaseRNN):
             if init_state is not None:
                 h, _ = self.rnn(embedded, init_state)
             else:
-                h, _ = self.rnn(embedded)  # (batch_size, max_dlg_len, 2*nhid_attn)
+                h, _ = self.rnn(
+                    embedded
+                )  # (batch_size, max_dlg_len, 2*nhid_attn)
 
-            logit = self.attn(h.contiguous().view(-1, 2 * self.nhid_attn)).view(
+            logit = self.attn(
+                h.contiguous().view(-1, 2 * self.nhid_attn)
+            ).view(
                 h.size(0), h.size(1)
             )  # (batch_size, max_dlg_len)
             # if mask is not None:
@@ -91,7 +99,9 @@ class EncoderGRUATTN(BaseRNN):
 
         else:
             logit = self.attn(
-                embedded.contiguous().view(input_cat.size(0) * input_cat.size(1), -1)
+                embedded.contiguous().view(
+                    input_cat.size(0) * input_cat.size(1), -1
+                )
             ).view(input_cat.size(0), input_cat.size(1))
             if mask is not None:
                 logit_mask = mask.view(input_cat.size(0), input_cat.size(1))
@@ -101,7 +111,9 @@ class EncoderGRUATTN(BaseRNN):
             prob = (
                 F.softmax(logit, dim=1).unsqueeze(2).expand_as(embedded)
             )  # (batch_size, max_dlg_len, 2*nhid_attn)
-            attn = th.sum(th.mul(embedded, prob), 1)  # (batch_size, 2*nhid_attn)
+            attn = th.sum(
+                th.mul(embedded, prob), 1
+            )  # (batch_size, 2*nhid_attn)
 
             return attn
 
@@ -110,10 +122,14 @@ class FeatureProjecter(nn.Module):
     def __init__(self, input_dropout_p, input_size, output_size):
         super(FeatureProjecter, self).__init__()
         self.input_dropout = nn.Dropout(p=input_dropout_p)
-        self.sel_encoder = nn.Sequential(nn.Linear(input_size, output_size), nn.Tanh())
+        self.sel_encoder = nn.Sequential(
+            nn.Linear(input_size, output_size), nn.Tanh()
+        )
 
     def forward(self, goals_h, attn_outs):
-        h = th.cat([attn_outs, goals_h], 1)  # (batch_size, 2*nhid_attn+goal_nhid)
+        h = th.cat(
+            [attn_outs, goals_h], 1
+        )  # (batch_size, 2*nhid_attn+goal_nhid)
         h = self.input_dropout(h)
         h = self.sel_encoder.forward(h)  # (batch_size, nhid_sel)
         return h
@@ -128,7 +144,8 @@ class SelectionClassifier(nn.Module):
 
     def forward(self, proj_outs):
         outs = [
-            decoder.forward(proj_outs).unsqueeze(1) for decoder in self.sel_decoders
+            decoder.forward(proj_outs).unsqueeze(1)
+            for decoder in self.sel_decoders
         ]  # outcome_len*(batch_size, 1, outcome_vocab_size)
         outs = th.cat(outs, 1)  # (batch_size, outcome_len, outcome_vocab_size)
         return outs
