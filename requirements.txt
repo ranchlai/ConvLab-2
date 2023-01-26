@@ -1,0 +1,6 @@
+# install dependencies using conda in macos
+pytorch
+transformers
+tokenizers
+scikit-learn
+scipy
